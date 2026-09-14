@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Results - {{ exam.title }}{% endblock %}
+{% block content %}
+<h2>Results: {{ exam.title }}</h2>
+<p style="color: var(--muted);">
+    {{ exam.start_time.strftime('%d %b %Y, %I:%M %p') }} &rarr; {{ exam.end_time.strftime('%d %b %Y, %I:%M %p') }}
+</p>
+
+<div class="card">
+    {% if not attempts %}
+        <p style="color: var(--muted);">No submissions yet.</p>
+    {% else %}
+        <table>
+            <tr><th>Student</th><th>Roll No</th><th>Score</th><th>Submitted At</th><th>Block</th></tr>
+            {% for a in attempts %}
+            <tr>
+                <td>{{ a.student.name }}</td>
+                <td>{{ a.student.identifier }}</td>
+                <td>{{ a.score }} / {{ a.total }}</td>
+                <td>{{ a.submitted_at.strftime('%d %b %Y, %I:%M %p') }}</td>
+                <td><a href="{{ url_for('show_result', block_index=a.block_id) }}">#{{ a.block_id }}</a></td>
+            </tr>
+            {% endfor %}
+        </table>
+        <p style="color: var(--muted); font-size: 0.85rem;">
+            Class average: {{ "%.1f"|format((attempts|sum(attribute='score')) / (attempts|length)) }}
+            / {{ attempts[0].total }}
+        </p>
+    {% endif %}
+</div>
+
+<a href="{{ url_for('view_blockchain') }}" class="btn btn-secondary">View Blockchain</a>
+{% endblock %}

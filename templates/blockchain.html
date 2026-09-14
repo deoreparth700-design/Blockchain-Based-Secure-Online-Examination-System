@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}View Blockchain{% endblock %}
+{% block content %}
+<h2>View Blockchain</h2>
+
+<div class="card" style="text-align:center;">
+    <h3>Chain Status</h3>
+    <div id="verify-result">
+        {% if chain_valid %}
+            <div class="status-badge status-valid" style="font-size:1rem; padding:8px 18px;">VALID - No tampering detected</div>
+        {% else %}
+            <div class="status-badge status-invalid" style="font-size:1rem; padding:8px 18px;">TAMPERING DETECTED</div>
+            <ul style="color: var(--danger); margin-top:10px; text-align:left; display:inline-block;">
+                {% for p in problems %}<li>{{ p }}</li>{% endfor %}
+            </ul>
+        {% endif %}
+    </div>
+    <button id="verify-btn" class="btn" style="margin-top:14px;">Verify Blockchain</button>
+</div>
+
+{% for b in blocks %}
+<div class="block-card {{ 'mismatch' if b.mismatch else '' }}">
+    <strong>Block #{{ b.index }}</strong>
+    {% if b.mismatch %}<span class="status-badge status-invalid">MISMATCH</span>{% else %}<span class="status-badge status-valid">OK</span>{% endif %}
+    <p style="color: var(--muted); font-size: 0.85rem;">{{ b.time_str }}</p>
+
+    {% if b.data.type == "exam_result" %}
+        <p>{{ b.data.student_name }} ({{ b.data.roll_no }}) — {{ b.data.exam_title }} — Score: {{ b.data.score }}/{{ b.data.total }}</p>
+    {% else %}
+        <p style="color: var(--muted);">{{ b.data.info }}</p>
+    {% endif %}
+
+    <label style="margin-top:10px;">Previous Hash</label>
+    <div class="hash-box">{{ b.previous_hash }}</div>
+
+    <label style="margin-top:10px;">Stored Hash</label>
+    <div class="hash-box">{{ b.hash }}</div>
+
+    <label style="margin-top:10px;">Recomputed Hash (right now)</label>
+    <div class="hash-box" style="{{ 'color: var(--danger); border-color: var(--danger);' if b.mismatch else '' }}">{{ b.recomputed_hash }}</div>
+</div>
+{% if not loop.last %}<div class="chain-link">&#8595;</div>{% endif %}
+{% endfor %}
+{% endblock %}

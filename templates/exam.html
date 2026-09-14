@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}{{ exam.title }}{% endblock %}
+{% block content %}
+<h2>{{ exam.title }}</h2>
+<p style="color: var(--muted);">
+    Logged in as <strong>{{ session.get('name') }}</strong>. Answer all questions, then submit —
+    you can only submit this exam once.
+</p>
+
+<form method="POST">
+    {% for q in exam.questions %}
+    {% set qi = loop.index0 %}
+    <div class="question-block">
+        <label style="color: var(--text); font-size: 1rem;">Q{{ loop.index }}. {{ q.question_text }}</label>
+        {% for opt in q.options %}
+        {% set oi = loop.index0 %}
+        <div class="option-row">
+            <input type="radio" name="answer_{{ qi }}" value="{{ oi }}" id="q{{ qi }}_o{{ oi }}" required>
+            <label for="q{{ qi }}_o{{ oi }}" style="margin: 0; color: var(--text);">{{ opt }}</label>
+        </div>
+        {% endfor %}
+    </div>
+    {% endfor %}
+
+    <button type="submit" class="btn">Submit Exam</button>
+</form>
+{% endblock %}

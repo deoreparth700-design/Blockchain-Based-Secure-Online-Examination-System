@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Create Exam{% endblock %}
+{% block content %}
+<h2>Create New Exam</h2>
+
+<form method="POST">
+    <div class="card">
+        <label>Exam Title</label>
+        <input type="text" name="title" required placeholder="e.g. Blockchain Basics - Quiz 1">
+
+        <label>Start Time</label>
+        <input type="datetime-local" name="start_time" required>
+
+        <label>End Time</label>
+        <input type="datetime-local" name="end_time" required>
+
+        <label>Suggested Duration (minutes) — shown to students, not enforced by a countdown</label>
+        <input type="number" name="duration" value="30" min="1">
+    </div>
+
+    <div id="questions"></div>
+
+    <button type="button" id="add-question-btn" class="btn btn-secondary">+ Add Question</button>
+    <br><br>
+    <button type="submit" class="btn">Save Exam</button>
+</form>
+{% endblock %}
