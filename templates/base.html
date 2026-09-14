@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}Blockchain Exam System{% endblock %}</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<nav class="navbar">
+    <a href="{{ url_for('index') }}" class="brand">&#9878; Exam<span>Chain</span></a>
+    <div class="nav-links">
+        {% if session.get('role') == 'teacher' %}
+            <a href="{{ url_for('teacher_dashboard') }}">My Exams</a>
+            <a href="{{ url_for('create_exam') }}">Create Exam</a>
+            <a href="{{ url_for('view_blockchain') }}">View Blockchain</a>
+            <a href="{{ url_for('logout') }}">Logout ({{ session.get('name') }})</a>
+        {% elif session.get('role') == 'student' %}
+            <a href="{{ url_for('student_dashboard') }}">My Exams</a>
+            <a href="{{ url_for('view_blockchain') }}">View Blockchain</a>
+            <a href="{{ url_for('logout') }}">Logout ({{ session.get('name') }})</a>
+        {% else %}
+            <a href="{{ url_for('login') }}">Login</a>
+            <a href="{{ url_for('register') }}">Student Sign Up</a>
+        {% endif %}
+    </div>
+</nav>
+
+<main class="container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="flash flash-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+</main>
+
+<footer>
+    <p>Blockchain-Based Secure Online Examination System</p>
+</footer>
+
+<script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

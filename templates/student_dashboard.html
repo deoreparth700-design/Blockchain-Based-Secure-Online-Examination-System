@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}My Exams{% endblock %}
+{% block content %}
+<h2>Available Exams</h2>
+
+{% if not exam_rows %}
+    <div class="card">
+        <p style="color: var(--muted);">No exams have been created yet.</p>
+    </div>
+{% else %}
+    {% for row in exam_rows %}
+    <div class="card">
+        <h3 style="margin:0 0 6px;">{{ row.exam.title }}</h3>
+        <p style="color: var(--muted); font-size: 0.88rem; margin: 0 0 10px;">
+            {{ row.exam.start_time.strftime('%d %b %Y, %I:%M %p') }} &rarr; {{ row.exam.end_time.strftime('%d %b %Y, %I:%M %p') }}
+            &middot; {{ row.exam.questions|length }} question(s)
+        </p>
+
+        {% if row.status == "attempted" %}
+            <span class="status-badge status-valid">Submitted — Score {{ row.attempt.score }}/{{ row.attempt.total }}</span>
+            <a href="{{ url_for('show_result', block_index=row.attempt.block_id) }}" class="btn btn-secondary btn-sm" style="margin-left:8px;">View Result</a>
+        {% elif row.status == "upcoming" %}
+            <span class="status-badge status-upcoming">Opens {{ row.exam.start_time.strftime('%d %b, %I:%M %p') }}</span>
+        {% elif row.status == "closed" %}
+            <span class="status-badge status-closed">Closed — you did not attempt this</span>
+        {% else %}
+            <span class="status-badge status-valid">Open Now</span>
+            <a href="{{ url_for('take_exam', exam_id=row.exam.id) }}" class="btn btn-sm" style="margin-left:8px;">Take Exam</a>
+        {% endif %}
+    </div>
+    {% endfor %}
+{% endif %}
+{% endblock %}

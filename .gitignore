@@ -1,0 +1,14 @@
+# Virtual environment
+venv/
+env/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# The real database file -- each deployment should create its own,
+# not share one committed to git (it would contain real student data)
+exam_system.db
+
+# Old JSON storage, no longer used
+data/

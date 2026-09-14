@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Result{% endblock %}
+{% block content %}
+<div class="card" style="max-width: 560px; margin: 0 auto; text-align:center;">
+    <h2>{{ block.data.exam_title }}</h2>
+    <p style="color: var(--muted);">{{ block.data.student_name }} ({{ block.data.roll_no }})</p>
+
+    <div class="score-big">{{ block.data.score }} / {{ block.data.total }}</div>
+    <p style="color: var(--muted); margin-top: 4px;">Submitted {{ block.data.submitted_at }}</p>
+
+    <div style="margin: 16px 0;">
+        {% if chain_valid %}
+            <span class="status-badge status-valid">Sealed on a VALID chain</span>
+        {% else %}
+            <span class="status-badge status-invalid">Chain currently shows tampering</span>
+        {% endif %}
+    </div>
+
+    <label style="text-align:left;">This result's block hash</label>
+    <div class="hash-box" style="text-align:left;">Block #{{ block.index }} — {{ block.hash }}</div>
+
+    <div style="margin-top: 18px;">
+        <a href="{{ url_for('view_blockchain') }}" class="btn btn-secondary">View Blockchain</a>
+        <a href="{{ url_for('index') }}" class="btn">Back to Home</a>
+    </div>
+</div>
+
+<div class="card">
+    <h4>Answer Breakdown</h4>
+    <table>
+        <tr><th>#</th><th>Question</th><th>Correct?</th></tr>
+        {% for a in block.data.answers %}
+        <tr>
+            <td>{{ loop.index }}</td>
+            <td>{{ a.question }}</td>
+            <td>{% if a.is_correct %}Yes{% else %}No{% endif %}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+{% endblock %}

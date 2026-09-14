@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Home - ExamChain{% endblock %}
+{% block content %}
+<div class="hero">
+    <h1>Blockchain-Based Secure Online Examination System</h1>
+    <p>Every submitted result is sealed into a tamper-evident, hash-linked block.</p>
+    <div style="margin-top: 16px;">
+        <a href="{{ url_for('login') }}" class="btn">Login</a>
+        <a href="{{ url_for('register') }}" class="btn btn-secondary">Student Sign Up</a>
+    </div>
+</div>
+
+<div class="card">
+    <h3>How a result becomes tamper-evident</h3>
+    <div class="flow-diagram">
+        <div class="flow-step"><strong>Data</strong>name, answers, score</div>
+        <div class="flow-arrow">&#8594;</div>
+        <div class="flow-step"><strong>Hash</strong>SHA-256 fingerprint</div>
+        <div class="flow-arrow">&#8594;</div>
+        <div class="flow-step"><strong>Block</strong>index + data + hash</div>
+        <div class="flow-arrow">&#8594;</div>
+        <div class="flow-step"><strong>Previous Hash</strong>links to prior block</div>
+        <div class="flow-arrow">&#8594;</div>
+        <div class="flow-step"><strong>Next Block</strong>chain continues</div>
+    </div>
+    <p style="color: var(--muted); font-size: 0.88rem;">
+        Because each block's hash depends on the block before it, changing any old
+        block's data changes its hash — breaking the chain of links to every block
+        after it. Log in to see it for yourself on the View Blockchain page.
+    </p>
+</div>
+
+<div class="card">
+    <h3>Who uses this system</h3>
+    <p><strong>Teachers</strong> log in with the account created for them, create exams with a
+    start/end time window, and view results once students submit.</p>
+    <p><strong>Students</strong> sign up with their name, roll number and a password, then log in
+    to take any exam that is currently open.</p>
+</div>
+{% endblock %}

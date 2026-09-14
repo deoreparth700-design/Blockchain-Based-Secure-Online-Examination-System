@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}My Exams{% endblock %}
+{% block content %}
+<h2>My Exams</h2>
+<a href="{{ url_for('create_exam') }}" class="btn">+ Create New Exam</a>
+
+{% if not exams %}
+    <div class="card" style="margin-top:16px;">
+        <p style="color: var(--muted);">You haven't created any exams yet.</p>
+    </div>
+{% else %}
+    {% for exam in exams %}
+    <div class="card" style="margin-top:16px;">
+        <h3 style="margin:0 0 6px;">{{ exam.title }}</h3>
+        <p style="color: var(--muted); font-size: 0.88rem; margin: 0 0 10px;">
+            {{ exam.start_time.strftime('%d %b %Y, %I:%M %p') }} &rarr; {{ exam.end_time.strftime('%d %b %Y, %I:%M %p') }}
+            &middot; {{ exam.questions|length }} question(s)
+            &middot;
+            {% if now < exam.start_time %}
+                <span class="status-badge status-upcoming">Upcoming</span>
+            {% elif now > exam.end_time %}
+                <span class="status-badge status-closed">Closed</span>
+            {% else %}
+                <span class="status-badge status-valid">Open Now</span>
+            {% endif %}
+        </p>
+        <a href="{{ url_for('exam_results', exam_id=exam.id) }}" class="btn btn-secondary btn-sm">View Results</a>
+    </div>
+    {% endfor %}
+{% endif %}
+{% endblock %}
