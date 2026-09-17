@@ -16,7 +16,7 @@ Five tables:
     Block     - the blockchain itself, one row per sealed Attempt
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -32,6 +32,7 @@ class User(db.Model):
     # For a teacher this is a chosen username. For a student this is
     # their roll number. Either way it must be unique so login can
     # find exactly one account.
+    username = db.Column(db.String(80), unique=True, nullable=True)
     identifier = db.Column(db.String(80), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
     role = db.Column(db.String(20), nullable=False)  # "teacher" or "student"

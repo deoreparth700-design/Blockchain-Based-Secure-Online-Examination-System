@@ -77,24 +77,34 @@ def index():
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
-    """Student self-registration. Teacher accounts are created via
-    init_db.py instead, so a student can't grant themselves teacher
-    access just by signing up."""
+    """Student self-registration."""
     if request.method == "POST":
         name = request.form.get("name", "").strip()
+        username = request.form.get("username", "").strip()
         roll_no = request.form.get("roll_no", "").strip()
         password = request.form.get("password", "")
 
-        if not name or not roll_no or not password:
+        if not name or not username or not roll_no or not password:
             flash("Please fill in all fields.", "error")
             return redirect(url_for("register"))
 
-        if database.get_user_by_identifier(roll_no):
-            flash("That roll number is already registered. Please log in instead.", "error")
-            return redirect(url_for("login"))
+        if database.get_user_by_login(username):
+            flash("That username is already taken. Please choose another.", "error")
+            return redirect(url_for("register"))
 
-        database.create_user(name=name, identifier=roll_no, password=password, role="student")
-        flash("Account created. Please log in.", "success")
+        if database.get_user_by_identifier(roll_no):
+            flash("That roll number is already registered.", "error")
+            return redirect(url_for("register"))
+
+        database.create_user(
+            name=name,
+            username=username,
+            identifier=roll_no,
+            password=password,
+            role="student",
+        )
+
+        flash("Account created. You can now log in with your username or roll number.", "success")
         return redirect(url_for("login"))
 
     return render_template("register.html")
@@ -106,7 +116,7 @@ def login():
         identifier = request.form.get("identifier", "").strip()
         password = request.form.get("password", "")
 
-        user = database.get_user_by_identifier(identifier)
+        user = database.get_user_by_login(identifier)
         if not user or not user.check_password(password):
             flash("Invalid username/roll number or password.", "error")
             return redirect(url_for("login"))
