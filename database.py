@@ -33,13 +33,24 @@ def init_app(app):
 def get_user_by_identifier(identifier):
     return User.query.filter_by(identifier=identifier).first()
 
+def get_user_by_login(login_value):
+    return User.query.filter(
+        (User.username == login_value) |
+        (User.identifier == login_value)
+    ).first()
+
 
 def get_user_by_id(user_id):
     return User.query.get(user_id)
 
 
-def create_user(name, identifier, password, role):
-    user = User(name=name, identifier=identifier, role=role)
+def create_user(name, identifier, password, role, username=None):
+    user = User(
+        name=name,
+        username=username,
+        identifier=identifier,
+        role=role,
+    )
     user.set_password(password)
     db.session.add(user)
     db.session.commit()

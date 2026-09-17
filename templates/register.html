@@ -1,19 +1,60 @@
 {% extends "base.html" %}
 {% block title %}Student Sign Up{% endblock %}
+
 {% block content %}
 <div class="card" style="max-width: 420px; margin: 20px auto;">
     <h2>Student Sign Up</h2>
+
     <form method="POST">
         <label>Full Name</label>
-        <input type="text" name="name" required autofocus>
+        <input
+            type="text"
+            name="name"
+            required
+            autofocus
+            placeholder="Enter your full name"
+        >
+
+        <label>Username</label>
+        <input
+            type="text"
+            name="username"
+            required
+            minlength="3"
+            maxlength="80"
+            placeholder="Choose a username"
+        >
+
         <label>Roll No / PRN</label>
-        <input type="text" name="roll_no" required>
+        <input
+            type="text"
+            name="roll_no"
+            required
+            maxlength="80"
+            placeholder="Enter your roll number"
+        >
+
         <label>Choose a Password</label>
-        <input type="password" name="password" required>
-        <button type="submit" class="btn" style="width:100%;">Create Account</button>
+        <input
+            type="password"
+            name="password"
+            required
+            minlength="6"
+            placeholder="Create a password"
+        >
+
+        <button type="submit" class="btn" style="width:100%;">
+            Create Account
+        </button>
     </form>
+
     <p style="color: var(--muted); font-size: 0.85rem; margin-top: 12px;">
-        Already have an account? <a href="{{ url_for('login') }}">Log in</a>.
+        You can log in later using either your username or roll number.
+    </p>
+
+    <p style="color: var(--muted); font-size: 0.85rem; margin-top: 8px;">
+        Already have an account?
+        <a href="{{ url_for('login') }}">Log in</a>.
     </p>
 </div>
 {% endblock %}
