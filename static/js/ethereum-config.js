@@ -1,6 +1,6 @@
 const ETHEREUM_CONFIG = {
     // Replace this with your actual deployed contract address on Sepolia
-    CONTRACT_ADDRESS: "0xcd47436506a9833397D93638F995F78d1eA02bA4",
+    CONTRACT_ADDRESS: "0x3eF059520E989c3E0b8481C7C5F875786F62ff91",
     
     // Sepolia Testnet Chain ID
     SEPOLIA_CHAIN_ID: "0xaa36a7", // 11155111 in hex
