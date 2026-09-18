@@ -102,6 +102,13 @@ class Attempt(db.Model):
     student = db.relationship("User")
     block = db.relationship("Block")
 
+    # Ethereum fields
+    ethereum_tx_hash = db.Column(db.String(66), nullable=True)
+    ethereum_contract_address = db.Column(db.String(42), nullable=True)
+    ethereum_result_hash = db.Column(db.String(66), nullable=True)
+    ethereum_wallet_address = db.Column(db.String(42), nullable=True)
+    ethereum_anchored_at = db.Column(db.DateTime, nullable=True)
+
     # One student can only have ONE attempt per exam -- enforced by the
     # database itself, not just by hiding a button in the UI.
     __table_args__ = (db.UniqueConstraint("exam_id", "student_id", name="one_attempt_per_student"),)
