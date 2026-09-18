@@ -97,6 +97,14 @@ def create_exam(title, created_by, start_time, end_time, duration_minutes, quest
 
 
 # ---------- Attempts ----------
+def get_attempt_by_id(attempt_id):
+    return Attempt.query.get(attempt_id)
+
+
+def get_attempt_by_block_id(block_id):
+    return Attempt.query.filter_by(block_id=block_id).first()
+
+
 def get_attempt(exam_id, student_id):
     return Attempt.query.filter_by(exam_id=exam_id, student_id=student_id).first()
 

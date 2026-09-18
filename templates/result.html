@@ -16,6 +16,44 @@
         {% endif %}
     </div>
 
+    <hr style="margin: 20px 0; border: none; border-top: 1px solid var(--border-color);">
+    <h3 style="margin-bottom: 10px;">Ethereum Anchor</h3>
+    <div style="margin-bottom: 16px; text-align: left; background: var(--bg-alt); padding: 15px; border-radius: 8px; border: 1px solid var(--border-color);">
+        {% if attempt and attempt.ethereum_tx_hash %}
+            <div style="text-align: center; margin-bottom: 10px;">
+                <span class="status-badge status-valid" style="background: rgba(33, 150, 243, 0.1); color: #2196f3; border-color: rgba(33, 150, 243, 0.2);">
+                    &#10003; Anchored on Ethereum
+                </span>
+            </div>
+            <p style="font-size: 0.85rem; margin-top: 10px; word-break: break-all; margin-bottom: 5px;">
+                <strong>Transaction:</strong> <a href="https://sepolia.etherscan.io/tx/{{ attempt.ethereum_tx_hash }}" target="_blank" style="color: #2196f3;">{{ attempt.ethereum_tx_hash[:20] }}...</a><br>
+                <strong>Contract:</strong> {{ attempt.ethereum_contract_address }}<br>
+                <strong>Wallet:</strong> {{ attempt.ethereum_wallet_address }}<br>
+                <strong>Network:</strong> Sepolia
+            </p>
+        {% else %}
+            <div style="text-align: center;">
+                <span class="status-badge status-invalid" style="background: rgba(158, 158, 158, 0.1); color: #757575; border-color: rgba(158, 158, 158, 0.2);">
+                    Not yet anchored
+                </span>
+            </div>
+        {% endif %}
+        
+        <div id="eth-status" style="margin-top: 16px; font-weight: bold; text-align: center; font-size: 0.9rem;"></div>
+        
+        <div style="text-align: center; margin-top: 15px;">
+            {% if session.get('role') == 'teacher' %}
+                {% if attempt and not attempt.ethereum_tx_hash %}
+                    <button class="btn btn-primary" style="background: #2196f3;" onclick="anchorResultOnEthereum({{ attempt.id }}, '{{ block.hash }}')">Anchor on Ethereum</button>
+                {% endif %}
+            {% endif %}
+
+            {% if attempt and attempt.ethereum_tx_hash %}
+                <button class="btn btn-secondary" onclick="verifyEthereumResult({{ attempt.id }}, '{{ block.hash }}')">Verify on Ethereum</button>
+            {% endif %}
+        </div>
+    </div>
+
     <label style="text-align:left;">This result's block hash</label>
     <div class="hash-box" style="text-align:left;">Block #{{ block.index }} — {{ block.hash }}</div>
 

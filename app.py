@@ -311,7 +311,8 @@ def show_result(block_index):
         flash("Result not found.", "error")
         return redirect(url_for("index"))
     chain_valid, _ = blockchain.is_chain_valid()
-    return render_template("result.html", block=block, chain_valid=chain_valid)
+    attempt = database.get_attempt_by_block_id(block_index)
+    return render_template("result.html", block=block, chain_valid=chain_valid, attempt=attempt)
 
 
 # ---------- blockchain (any logged-in user) ----------
@@ -338,6 +339,25 @@ def view_blockchain():
 def verify():
     valid, problems = blockchain.is_chain_valid()
     return {"valid": valid, "problems": problems}
+
+
+@app.route("/api/anchor_result/<int:attempt_id>", methods=["POST"])
+@login_required
+@role_required("teacher")
+def anchor_result(attempt_id):
+    attempt = database.get_attempt_by_id(attempt_id)
+    if not attempt:
+        return {"error": "Attempt not found"}, 404
+        
+    data = request.json
+    attempt.ethereum_tx_hash = data.get("tx_hash")
+    attempt.ethereum_contract_address = data.get("contract_address")
+    attempt.ethereum_result_hash = data.get("result_hash")
+    attempt.ethereum_wallet_address = data.get("wallet_address")
+    attempt.ethereum_anchored_at = datetime.now()
+    
+    database.db.session.commit()
+    return {"status": "success"}
 
 
 if __name__ == "__main__":
