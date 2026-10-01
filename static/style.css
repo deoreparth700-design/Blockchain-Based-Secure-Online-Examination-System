@@ -41,7 +41,7 @@ body {
 }
 .nav-links a:hover { color: var(--accent); }
 
-.container { max-width: 900px; margin: 0 auto; padding: 32px 20px 60px; }
+.container { max-width: 1000px; margin: 0 auto; padding: 32px 20px 60px; }
 
 footer {
     text-align: center;
@@ -181,25 +181,378 @@ th { color: var(--muted); font-weight: 600; }
 
 .score-big { font-size: 2.6rem; font-weight: 700; color: var(--accent-2); text-align: center; }
 
-/* Data -> Hash -> Block explanation diagram */
-.flow-diagram {
+#verify-result { margin-top: 14px; }
+
+/* ==========================================================================
+   Modern SaaS Landing Page Components
+   ========================================================================== */
+
+.home-section {
+    margin-bottom: 44px;
+}
+
+.section-header {
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.section-header h2 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--text);
+    margin: 0 0 6px 0;
+    letter-spacing: -0.02em;
+}
+
+.section-subtitle {
+    color: var(--muted);
+    font-size: 0.92rem;
+    max-width: 580px;
+    margin: 0 auto;
+    line-height: 1.5;
+}
+
+/* ---------------- 1. Security Flow Section ---------------- */
+.security-flow {
+    display: flex;
+    align-items: stretch;
+    justify-content: space-between;
+    gap: 10px;
+    position: relative;
+}
+
+.flow-step-card {
+    flex: 1;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 22px 16px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+                border-color 0.25s ease,
+                box-shadow 0.25s ease;
+    cursor: default;
+    position: relative;
+}
+
+.flow-step-card:hover {
+    transform: translateY(-4px);
+    border-color: #b8c8fd;
+    box-shadow: 0 10px 24px -6px rgba(59, 91, 253, 0.12),
+                0 4px 8px -2px rgba(0, 0, 0, 0.04);
+}
+
+.flow-step-card:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+}
+
+.flow-icon-wrap {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: rgba(59, 91, 253, 0.08);
+    color: var(--accent);
     display: flex;
     align-items: center;
     justify-content: center;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin: 20px 0;
+    margin-bottom: 14px;
+    transition: transform 0.25s ease, background 0.25s ease;
 }
-.flow-step {
-    background: #eef1fb;
+
+.flow-step-card:hover .flow-icon-wrap {
+    transform: scale(1.08);
+    background: rgba(59, 91, 253, 0.14);
+}
+
+.flow-step-icon {
+    width: 24px;
+    height: 24px;
+    stroke-width: 2;
+}
+
+.flow-step-card h3 {
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin: 0 0 8px 0;
+    color: var(--text);
+}
+
+.flow-step-card p {
+    font-size: 0.85rem;
+    color: var(--muted);
+    line-height: 1.45;
+    margin: 0;
+}
+
+.flow-connector {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #94a3b8;
+    padding: 0 2px;
+    user-select: none;
+    transition: color 0.25s ease, transform 0.25s ease;
+}
+
+.flow-connector svg {
+    width: 20px;
+    height: 20px;
+    stroke-width: 2.2;
+}
+
+/* ---------------- 2. Role Portals Section ---------------- */
+.portals-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 22px;
+}
+
+.portal-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 30px 26px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+                border-color 0.25s ease,
+                box-shadow 0.25s ease;
+    text-decoration: none;
+    color: inherit;
+    position: relative;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.portal-card:hover {
+    transform: translateY(-4px);
+    border-color: #b8c8fd;
+    box-shadow: 0 12px 28px -6px rgba(59, 91, 253, 0.12),
+                0 4px 10px -2px rgba(0, 0, 0, 0.04);
+}
+
+.portal-card-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 14px;
+}
+
+.portal-icon-wrap {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    background: #eef2ff;
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: transform 0.25s ease, background 0.25s ease;
+}
+
+.portal-card:hover .portal-icon-wrap {
+    transform: scale(1.08) rotate(-2deg);
+    background: #e0e7ff;
+}
+
+.portal-icon {
+    width: 26px;
+    height: 26px;
+    stroke-width: 2;
+}
+
+.portal-card h3 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin: 0;
+    color: var(--text);
+}
+
+.portal-card p {
+    font-size: 0.92rem;
+    color: var(--muted);
+    line-height: 1.55;
+    margin: 0 0 22px 0;
+}
+
+.portal-action {
+    margin-top: auto;
+}
+
+.portal-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 22px;
+    background: var(--accent);
+    color: #ffffff !important;
+    border-radius: var(--radius);
+    font-weight: 600;
+    font-size: 0.92rem;
+    text-decoration: none;
+    transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 2px 6px rgba(59, 91, 253, 0.2);
+}
+
+.portal-btn:hover {
+    background: #2b4be6;
+    transform: translateX(2px);
+    box-shadow: 0 4px 12px rgba(59, 91, 253, 0.3);
+}
+
+.portal-btn:active {
+    transform: scale(0.98);
+}
+
+.portal-btn:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+}
+
+.portal-secondary-link {
+    display: block;
+    margin-top: 10px;
+    font-size: 0.85rem;
+    color: var(--muted);
+}
+
+.portal-secondary-link a {
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.portal-secondary-link a:hover {
+    text-decoration: underline;
+}
+
+/* ---------------- 3. Security Highlights Section ---------------- */
+.security-highlights-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+}
+
+.highlight-card {
+    background: var(--card);
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    padding: 12px 16px;
-    text-align: center;
-    font-size: 0.85rem;
-    min-width: 110px;
+    padding: 18px 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+                border-color 0.25s ease,
+                box-shadow 0.25s ease;
+    cursor: default;
 }
-.flow-step strong { display: block; color: var(--accent); font-size: 0.95rem; margin-bottom: 2px; }
-.flow-arrow { color: var(--muted); font-size: 1.2rem; }
 
-#verify-result { margin-top: 14px; }
+.highlight-card:hover {
+    transform: translateY(-3px);
+    border-color: #cbd5e1;
+    box-shadow: 0 6px 16px -4px rgba(0, 0, 0, 0.06);
+}
+
+.highlight-card:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+}
+
+.highlight-icon-wrap {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: #f1f5f9;
+    color: #475569;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 12px;
+    transition: transform 0.2s ease, background 0.2s ease, color 0.2s ease;
+}
+
+.highlight-card:hover .highlight-icon-wrap {
+    transform: scale(1.05);
+    background: rgba(59, 91, 253, 0.1);
+    color: var(--accent);
+}
+
+.highlight-icon {
+    width: 18px;
+    height: 18px;
+    stroke-width: 2;
+}
+
+.highlight-card h4 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin: 0 0 4px 0;
+    color: var(--text);
+}
+
+.highlight-card p {
+    font-size: 0.82rem;
+    color: var(--muted);
+    line-height: 1.4;
+    margin: 0;
+}
+
+/* ---------------- Responsive Adaptations ---------------- */
+@media (max-width: 860px) {
+    .security-flow {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .flow-connector {
+        transform: rotate(90deg);
+        padding: 4px 0;
+    }
+
+    .portals-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .security-highlights-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+}
+
+@media (max-width: 540px) {
+    .security-highlights-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .section-header h2 {
+        font-size: 1.35rem;
+    }
+
+    .hero h1 {
+        font-size: 1.55rem;
+    }
+
+    .portal-card {
+        padding: 24px 20px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .flow-step-card,
+    .flow-icon-wrap,
+    .portal-card,
+    .portal-icon-wrap,
+    .portal-btn,
+    .highlight-card,
+    .highlight-icon-wrap,
+    .flow-connector {
+        transition: none !important;
+        transform: none !important;
+    }
+}
