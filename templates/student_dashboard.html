@@ -1,32 +1,77 @@
 {% extends "base.html" %}
-{% block title %}My Exams{% endblock %}
+{% block title %}Student Dashboard - ExamChain{% endblock %}
+
 {% block content %}
-<h2>Available Exams</h2>
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 10px;">
+    <div>
+        <h2 style="margin: 0;">Student Portal</h2>
+        <p style="color: var(--muted); margin: 4px 0 0; font-size: 0.95rem;">
+            Logged in as <strong>{{ session.get('name') }}</strong> &middot; Roll No: <strong>{{ session.get('identifier') }}</strong>
+        </p>
+    </div>
+    <div>
+        <a href="{{ url_for('view_blockchain') }}" class="btn btn-secondary btn-sm">Explore Blockchain Ledger</a>
+    </div>
+</div>
+
+<h3 style="margin-bottom: 16px;">Assigned Examinations</h3>
 
 {% if not exam_rows %}
-    <div class="card">
-        <p style="color: var(--muted);">No exams have been created yet.</p>
+    <div class="card" style="text-align: center; padding: 40px 20px;">
+        <div style="font-size: 2.2rem; color: var(--muted); margin-bottom: 8px;">&#128221;</div>
+        <h4 style="margin: 0 0 6px;">No Examinations Scheduled Yet</h4>
+        <p style="color: var(--muted); margin: 0; font-size: 0.9rem;">
+            Your instructor has not scheduled any examinations yet. Check back soon.
+        </p>
     </div>
 {% else %}
     {% for row in exam_rows %}
-    <div class="card">
-        <h3 style="margin:0 0 6px;">{{ row.exam.title }}</h3>
-        <p style="color: var(--muted); font-size: 0.88rem; margin: 0 0 10px;">
-            {{ row.exam.start_time.strftime('%d %b %Y, %I:%M %p') }} &rarr; {{ row.exam.end_time.strftime('%d %b %Y, %I:%M %p') }}
-            &middot; {{ row.exam.questions|length }} question(s)
-        </p>
+    <div class="card" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; margin-bottom: 16px;">
+        <div style="flex: 1; min-width: 260px;">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
+                <h3 style="margin: 0; font-size: 1.15rem;">{{ row.exam.title }}</h3>
+                {% if row.status == "attempted" %}
+                    <span class="status-badge status-valid">&#10003; Submitted</span>
+                {% elif row.status == "open" %}
+                    <span class="status-badge status-valid">&#9679; Open Now</span>
+                {% elif row.status == "upcoming" %}
+                    <span class="status-badge status-upcoming">&#9200; Upcoming</span>
+                {% else %}
+                    <span class="status-badge status-closed">&#10005; Closed</span>
+                {% endif %}
+            </div>
 
-        {% if row.status == "attempted" %}
-            <span class="status-badge status-valid">Submitted — Score {{ row.attempt.score }}/{{ row.attempt.total }}</span>
-            <a href="{{ url_for('show_result', block_index=row.attempt.block_id) }}" class="btn btn-secondary btn-sm" style="margin-left:8px;">View Result</a>
-        {% elif row.status == "upcoming" %}
-            <span class="status-badge status-upcoming">Opens {{ row.exam.start_time.strftime('%d %b, %I:%M %p') }}</span>
-        {% elif row.status == "closed" %}
-            <span class="status-badge status-closed">Closed — you did not attempt this</span>
-        {% else %}
-            <span class="status-badge status-valid">Open Now</span>
-            <a href="{{ url_for('take_exam', exam_id=row.exam.id) }}" class="btn btn-sm" style="margin-left:8px;">Take Exam</a>
-        {% endif %}
+            <p style="color: var(--muted); font-size: 0.88rem; margin: 0;">
+                Window: {{ row.exam.start_time.strftime('%d %b %Y, %I:%M %p') }} &rarr; {{ row.exam.end_time.strftime('%d %b %Y, %I:%M %p') }}
+                &middot; {{ row.exam.questions|length }} question(s)
+                &middot; {{ row.exam.duration_minutes }} min suggested
+            </p>
+        </div>
+
+        <div>
+            {% if row.status == "attempted" %}
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <span style="font-size: 1.05rem; font-weight: 700; color: var(--accent-2);">
+                        Score: {{ row.attempt.score }}/{{ row.attempt.total }}
+                    </span>
+                    <a href="{{ url_for('show_result', block_index=row.attempt.block_id) }}" class="btn btn-secondary btn-sm">
+                        View Sealed Result
+                    </a>
+                </div>
+            {% elif row.status == "open" %}
+                <a href="{{ url_for('take_exam', exam_id=row.exam.id) }}" class="btn btn-sm" style="font-weight: 600;">
+                    Take Exam &rarr;
+                </a>
+            {% elif row.status == "upcoming" %}
+                <span style="color: var(--muted); font-size: 0.85rem;">
+                    Opens {{ row.exam.start_time.strftime('%d %b at %I:%M %p') }}
+                </span>
+            {% else %}
+                <span style="color: var(--muted); font-size: 0.85rem;">
+                    Window closed
+                </span>
+            {% endif %}
+        </div>
     </div>
     {% endfor %}
 {% endif %}

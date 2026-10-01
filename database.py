@@ -14,41 +14,75 @@ from datetime import datetime
 
 from models import db, User, Exam, Question, Attempt, Block
 
-# Use an absolute path for the database file, anchored to this file's
-# own folder -- this avoids any ambiguity about "relative to what?"
-# that can otherwise depend on the current working directory the app
-# happens to be started from.
+# Fallback SQLite path for local development when DATABASE_URL is not set.
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_PATH = os.path.join(BASE_DIR, "exam_system.db")
+SQLITE_PATH = os.path.join(BASE_DIR, "exam_system.db")
 
 
 def init_app(app):
     """Wire SQLAlchemy up to this Flask app. Called once from app.py."""
-    app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{DB_PATH}"
+    database_url = os.environ.get("DATABASE_URL")
+
+    if not database_url:
+        # Fall back to local SQLite for development without a .env file
+        database_url = f"sqlite:///{SQLITE_PATH}"
+
+    # Some providers give "postgres://" which SQLAlchemy 1.4+ requires
+    # as "postgresql://".
+    if database_url.startswith("postgres://"):
+        database_url = database_url.replace("postgres://", "postgresql://", 1)
+
+    app.config["SQLALCHEMY_DATABASE_URI"] = database_url
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+    # Serverless-friendly connection options for PostgreSQL/Neon
+    if not database_url.startswith("sqlite"):
+        app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
+            "pool_pre_ping": True,
+            "pool_recycle": 300,
+        }
     db.init_app(app)
 
 
 # ---------- Users ----------
 def get_user_by_identifier(identifier):
+    if not identifier:
+        return None
     return User.query.filter_by(identifier=identifier).first()
 
+
+def get_user_by_username(username):
+    if not username:
+        return None
+    return User.query.filter_by(username=username).first()
+
+
+def get_user_by_email(email):
+    if not email:
+        return None
+    return User.query.filter(User.email.ilike(email.strip())).first()
+
+
 def get_user_by_login(login_value):
+    if not login_value:
+        return None
+    val = login_value.strip()
     return User.query.filter(
-        (User.username == login_value) |
-        (User.identifier == login_value)
+        (User.username == val) |
+        (User.identifier == val) |
+        (User.email.ilike(val))
     ).first()
 
 
 def get_user_by_id(user_id):
-    return User.query.get(user_id)
+    return db.session.get(User, user_id)
 
 
-def create_user(name, identifier, password, role, username=None):
+def create_user(name, identifier, password, role, username=None, email=None):
     user = User(
         name=name,
         username=username,
         identifier=identifier,
+        email=email.strip().lower() if email else None,
         role=role,
     )
     user.set_password(password)
@@ -59,7 +93,7 @@ def create_user(name, identifier, password, role, username=None):
 
 # ---------- Exams ----------
 def get_exam(exam_id):
-    return Exam.query.get(exam_id)
+    return db.session.get(Exam, exam_id)
 
 
 def get_exams_by_teacher(teacher_id):
@@ -98,7 +132,7 @@ def create_exam(title, created_by, start_time, end_time, duration_minutes, quest
 
 # ---------- Attempts ----------
 def get_attempt_by_id(attempt_id):
-    return Attempt.query.get(attempt_id)
+    return db.session.get(Attempt, attempt_id)
 
 
 def get_attempt_by_block_id(block_id):

@@ -1,79 +1,135 @@
 {% extends "base.html" %}
-{% block title %}Result{% endblock %}
+{% block title %}Result - {{ block.data.exam_title }} - ExamChain{% endblock %}
+
 {% block content %}
-<div class="card" style="max-width: 560px; margin: 0 auto; text-align:center;">
-    <h2>{{ block.data.exam_title }}</h2>
-    <p style="color: var(--muted);">{{ block.data.student_name }} ({{ block.data.roll_no }})</p>
+<div class="card" style="max-width: 650px; margin: 0 auto; text-align: center;">
+    <h2 style="margin-bottom: 4px;">{{ block.data.exam_title }}</h2>
+    <p style="color: var(--muted); margin: 0 0 16px; font-size: 0.95rem;">
+        Candidate: <strong>{{ block.data.student_name }}</strong> (Roll No: <strong>{{ block.data.roll_no }}</strong>)
+    </p>
 
     <div class="score-big">{{ block.data.score }} / {{ block.data.total }}</div>
-    <p style="color: var(--muted); margin-top: 4px;">Submitted {{ block.data.submitted_at }}</p>
+    <div style="font-size: 1.1rem; font-weight: 600; color: var(--muted); margin-top: 4px;">
+        {{ "%.1f"|format((block.data.score / block.data.total) * 100) }}% Score
+    </div>
+    <p style="color: var(--muted); font-size: 0.85rem; margin-top: 6px;">Submitted at: {{ block.data.submitted_at }}</p>
 
-    <div style="margin: 16px 0;">
-        {% if chain_valid %}
-            <span class="status-badge status-valid">Sealed on a VALID chain</span>
+    <div style="margin: 18px 0;">
+        {% if is_block_tampered %}
+            <div class="status-badge status-invalid" style="font-size: 0.95rem; padding: 8px 18px;">
+                &#9888; TAMPERING DETECTED ON THIS BLOCK
+            </div>
+            <p style="color: var(--danger); font-size: 0.88rem; margin-top: 8px;">
+                Unauthorized modification detected: The current stored data does not match its cryptographic SHA-256 hash!
+            </p>
+        {% elif chain_valid %}
+            <span class="status-badge status-valid" style="font-size: 0.95rem; padding: 8px 18px;">
+                &#10003; Sealed on a VALID Chain &mdash; Cryptographic Integrity Verified
+            </span>
         {% else %}
-            <span class="status-badge status-invalid">Chain currently shows tampering</span>
+            <span class="status-badge status-invalid" style="font-size: 0.95rem; padding: 8px 18px;">
+                &#9888; Chain Link Mismatch &mdash; Discrepancy Found in Prior Blocks
+            </span>
         {% endif %}
     </div>
 
-    <hr style="margin: 20px 0; border: none; border-top: 1px solid var(--border-color);">
-    <h3 style="margin-bottom: 10px;">Ethereum Anchor</h3>
-    <div style="margin-bottom: 16px; text-align: left; background: var(--bg-alt); padding: 15px; border-radius: 8px; border: 1px solid var(--border-color);">
+    <!-- Educational Concept Box -->
+    <div style="background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin: 16px 0; text-align: left; font-size: 0.82rem; color: var(--muted);">
+        <strong style="color: var(--text); display: block; margin-bottom: 4px;">&#128274; Tamper-Evident Architecture:</strong>
+        Result data is permanently converted into a cryptographic SHA-256 hash and bound to the previous block's hash. Unauthorized modification can be detected immediately because any change to scores or answers produces a completely different hash that fails recomputation verification.
+    </div>
+
+    <div style="margin: 16px 0; text-align: left;">
+        <label style="font-weight: 600; color: var(--text); margin-bottom: 4px;">Cryptographic Block Hash (SHA-256)</label>
+        <div class="hash-box">
+            Block #{{ block.index }} &mdash; {{ block.hash }}
+        </div>
+    </div>
+
+    <!-- Ethereum Anchoring Section -->
+    <hr style="margin: 20px 0; border: none; border-top: 1px solid var(--border);">
+    <h3 style="margin-bottom: 10px;">Public Ethereum Sepolia Anchor</h3>
+
+    <div style="text-align: left; background: var(--bg); padding: 16px; border-radius: 8px; border: 1px solid var(--border);">
         {% if attempt and attempt.ethereum_tx_hash %}
-            <div style="text-align: center; margin-bottom: 10px;">
-                <span class="status-badge status-valid" style="background: rgba(33, 150, 243, 0.1); color: #2196f3; border-color: rgba(33, 150, 243, 0.2);">
-                    &#10003; Anchored on Ethereum
+            <div style="text-align: center; margin-bottom: 12px;">
+                <span class="status-badge status-valid" style="background: rgba(33, 150, 243, 0.12); color: #0284c7; border: 1px solid rgba(2, 132, 199, 0.3);">
+                    &#10003; Permanently Anchored on Ethereum Sepolia
                 </span>
             </div>
-            <p style="font-size: 0.85rem; margin-top: 10px; word-break: break-all; margin-bottom: 5px;">
-                <strong>Transaction:</strong> <a href="https://sepolia.etherscan.io/tx/{{ attempt.ethereum_tx_hash }}" target="_blank" style="color: #2196f3;">{{ attempt.ethereum_tx_hash[:20] }}...</a><br>
-                <strong>Contract:</strong> {{ attempt.ethereum_contract_address }}<br>
-                <strong>Wallet:</strong> {{ attempt.ethereum_wallet_address }}<br>
-                <strong>Network:</strong> Sepolia
+            <p style="font-size: 0.85rem; margin: 6px 0; word-break: break-all; line-height: 1.6;">
+                <strong>Transaction Hash:</strong>
+                <a href="https://sepolia.etherscan.io/tx/{{ attempt.ethereum_tx_hash }}" target="_blank" rel="noopener noreferrer" style="color: #0284c7; font-weight: 600;">
+                    {{ attempt.ethereum_tx_hash }} &UpperRightArrow;
+                </a><br>
+                <strong>Smart Contract:</strong> <code style="font-size:0.8rem;">{{ attempt.ethereum_contract_address }}</code><br>
+                <strong>Anchored By Wallet:</strong> <code style="font-size:0.8rem;">{{ attempt.ethereum_wallet_address }}</code><br>
+                <strong>Network:</strong> Ethereum Sepolia Testnet (Chain ID 11155111)
             </p>
         {% else %}
-            <div style="text-align: center;">
-                <span class="status-badge status-invalid" style="background: rgba(158, 158, 158, 0.1); color: #757575; border-color: rgba(158, 158, 158, 0.2);">
-                    Not yet anchored
+            <div style="text-align: center; padding: 6px 0;">
+                <span class="status-badge status-closed">
+                    Private Blockchain Only &middot; Not Yet Anchored to Public Ethereum
                 </span>
+                <p style="font-size: 0.82rem; color: var(--muted); margin: 8px 0 0;">
+                    The course instructor can anchor this result hash onto the Ethereum Sepolia smart contract for global, immutable verification.
+                </p>
             </div>
         {% endif %}
-        
-        <div id="eth-status" style="margin-top: 16px; font-weight: bold; text-align: center; font-size: 0.9rem;"></div>
-        
-        <div style="text-align: center; margin-top: 15px;">
-            {% if session.get('role') == 'teacher' %}
-                {% if attempt and not attempt.ethereum_tx_hash %}
-                    <button class="btn btn-primary" style="background: #2196f3;" onclick="anchorResultOnEthereum({{ attempt.id }}, '{{ block.hash }}')">Anchor on Ethereum</button>
-                {% endif %}
+
+        <div id="eth-status" style="margin-top: 14px; font-weight: 600; text-align: center; font-size: 0.9rem;"></div>
+
+        <div style="text-align: center; margin-top: 14px;">
+            {% if session.get('role') == 'teacher' and attempt and not attempt.ethereum_tx_hash %}
+                <button class="btn btn-primary" style="background: #0284c7;" onclick="anchorResultOnEthereum({{ attempt.id }}, '{{ block.hash }}')">
+                    &#9878; Anchor on Ethereum Sepolia
+                </button>
             {% endif %}
 
             {% if attempt and attempt.ethereum_tx_hash %}
-                <button class="btn btn-secondary" onclick="verifyEthereumResult({{ attempt.id }}, '{{ block.hash }}')">Verify on Ethereum</button>
+                <button class="btn btn-secondary btn-sm" onclick="verifyEthereumResult({{ attempt.id }}, '{{ block.hash }}')">
+                    &#128269; Verify on Ethereum Contract
+                </button>
             {% endif %}
         </div>
     </div>
 
-    <label style="text-align:left;">This result's block hash</label>
-    <div class="hash-box" style="text-align:left;">Block #{{ block.index }} — {{ block.hash }}</div>
-
-    <div style="margin-top: 18px;">
-        <a href="{{ url_for('view_blockchain') }}" class="btn btn-secondary">View Blockchain</a>
-        <a href="{{ url_for('index') }}" class="btn">Back to Home</a>
+    <div style="margin-top: 24px; display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
+        <a href="{{ url_for('view_blockchain') }}" class="btn btn-secondary">Explore Blockchain Ledger</a>
+        <a href="{{ url_for('index') }}" class="btn">Return to Home</a>
     </div>
 </div>
 
-<div class="card">
-    <h4>Answer Breakdown</h4>
+<div class="card" style="max-width: 650px; margin: 24px auto;">
+    <h3 style="margin-top: 0;">Detailed Answer Breakdown</h3>
     <table>
-        <tr><th>#</th><th>Question</th><th>Correct?</th></tr>
-        {% for a in block.data.answers %}
-        <tr>
-            <td>{{ loop.index }}</td>
-            <td>{{ a.question }}</td>
-            <td>{% if a.is_correct %}Yes{% else %}No{% endif %}</td>
-        </tr>
-        {% endfor %}
+        <thead>
+            <tr>
+                <th style="width: 40px;">#</th>
+                <th>Question</th>
+                <th style="width: 100px; text-align: center;">Evaluation</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for a in block.data.answers %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td>
+                    <div style="font-weight: 500;">{{ a.question }}</div>
+                    <div style="font-size: 0.82rem; color: var(--muted); margin-top: 3px;">
+                        Selected Option: {% if a.selected_index >= 0 %}{{ ['A', 'B', 'C', 'D'][a.selected_index] }}{% else %}Unanswered{% endif %}
+                    </div>
+                </td>
+                <td style="text-align: center;">
+                    {% if a.is_correct %}
+                        <span class="status-badge status-valid">&#10003; Correct</span>
+                    {% else %}
+                        <span class="status-badge status-invalid">&#10007; Incorrect</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
     </table>
 </div>
 {% endblock %}

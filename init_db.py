@@ -32,5 +32,5 @@ with app.app_context():
     if database.get_user_by_identifier(username):
         print(f"\nA user with username '{username}' already exists. Skipping creation.")
     else:
-        database.create_user(name=name, identifier=username, password=password, role="teacher")
+        database.create_user(name=name, identifier=username, username=username, password=password, role="teacher")
         print(f"\nTeacher account created. Log in at /login with username '{username}'.")

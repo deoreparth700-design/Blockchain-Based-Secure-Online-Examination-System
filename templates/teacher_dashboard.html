@@ -1,30 +1,59 @@
 {% extends "base.html" %}
-{% block title %}My Exams{% endblock %}
+{% block title %}Teacher Dashboard - ExamChain{% endblock %}
+
 {% block content %}
-<h2>My Exams</h2>
-<a href="{{ url_for('create_exam') }}" class="btn">+ Create New Exam</a>
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 12px;">
+    <div>
+        <h2 style="margin: 0;">Teacher Dashboard</h2>
+        <p style="color: var(--muted); margin: 4px 0 0; font-size: 0.95rem;">
+            Logged in as <strong>{{ session.get('name') }}</strong> (Instructor)
+        </p>
+    </div>
+    <div style="display: flex; gap: 10px;">
+        <a href="{{ url_for('view_blockchain') }}" class="btn btn-secondary btn-sm">View Blockchain</a>
+        <a href="{{ url_for('create_exam') }}" class="btn btn-sm">+ Create New Exam</a>
+    </div>
+</div>
+
+<h3 style="margin-bottom: 16px;">My Managed Examinations</h3>
 
 {% if not exams %}
-    <div class="card" style="margin-top:16px;">
-        <p style="color: var(--muted);">You haven't created any exams yet.</p>
+    <div class="card" style="text-align: center; padding: 40px 20px;">
+        <div style="font-size: 2.2rem; color: var(--muted); margin-bottom: 8px;">&#128221;</div>
+        <h4 style="margin: 0 0 6px;">No Examinations Created Yet</h4>
+        <p style="color: var(--muted); margin: 0 0 16px; font-size: 0.9rem;">
+            Create your first examination with multiple-choice questions and a scheduled time window.
+        </p>
+        <a href="{{ url_for('create_exam') }}" class="btn">+ Create Exam Now</a>
     </div>
 {% else %}
     {% for exam in exams %}
-    <div class="card" style="margin-top:16px;">
-        <h3 style="margin:0 0 6px;">{{ exam.title }}</h3>
-        <p style="color: var(--muted); font-size: 0.88rem; margin: 0 0 10px;">
-            {{ exam.start_time.strftime('%d %b %Y, %I:%M %p') }} &rarr; {{ exam.end_time.strftime('%d %b %Y, %I:%M %p') }}
-            &middot; {{ exam.questions|length }} question(s)
-            &middot;
-            {% if now < exam.start_time %}
-                <span class="status-badge status-upcoming">Upcoming</span>
-            {% elif now > exam.end_time %}
-                <span class="status-badge status-closed">Closed</span>
-            {% else %}
-                <span class="status-badge status-valid">Open Now</span>
-            {% endif %}
-        </p>
-        <a href="{{ url_for('exam_results', exam_id=exam.id) }}" class="btn btn-secondary btn-sm">View Results</a>
+    <div class="card" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; margin-bottom: 16px;">
+        <div style="flex: 1; min-width: 280px;">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
+                <h3 style="margin: 0; font-size: 1.15rem;">{{ exam.title }}</h3>
+                {% if now < exam.start_time %}
+                    <span class="status-badge status-upcoming">&#9200; Upcoming</span>
+                {% elif now > exam.end_time %}
+                    <span class="status-badge status-closed">&#10005; Closed</span>
+                {% else %}
+                    <span class="status-badge status-valid">&#9679; Open Now</span>
+                {% endif %}
+            </div>
+
+            <p style="color: var(--muted); font-size: 0.88rem; margin: 0;">
+                Window: {{ exam.start_time.strftime('%d %b %Y, %I:%M %p') }} &rarr; {{ exam.end_time.strftime('%d %b %Y, %I:%M %p') }}
+                &middot; {{ exam.questions|length }} question(s)
+                &middot; {{ exam.duration_minutes }} min suggested
+                &middot; {{ exam.attempts|length }} submission(s)
+            </p>
+        </div>
+
+        <div>
+            <a href="{{ url_for('exam_results', exam_id=exam.id) }}" class="btn btn-secondary btn-sm">
+                View Results &amp; Analytics ({{ exam.attempts|length }})
+            </a>
+        </div>
     </div>
     {% endfor %}
 {% endif %}

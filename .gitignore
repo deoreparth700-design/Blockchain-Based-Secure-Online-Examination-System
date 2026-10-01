@@ -12,3 +12,6 @@ exam_system.db
 
 # Old JSON storage, no longer used
 data/
+
+# Environment variables (contains secrets -- never commit)
+.env
