@@ -4,37 +4,202 @@
 <div class="hero">
     <h1>Blockchain-Based Secure Online Examination System</h1>
     <p>Every submitted result is sealed into a tamper-evident, hash-linked block.</p>
-    <div style="margin-top: 16px;">
+    <div style="margin-top: 18px;">
         <a href="{{ url_for('login') }}" class="btn">Login</a>
         <a href="{{ url_for('register') }}" class="btn btn-secondary">Student Sign Up</a>
     </div>
 </div>
 
-<div class="card">
-    <h3>How a result becomes tamper-evident</h3>
-    <div class="flow-diagram">
-        <div class="flow-step"><strong>Data</strong>name, answers, score</div>
-        <div class="flow-arrow">&#8594;</div>
-        <div class="flow-step"><strong>Hash</strong>SHA-256 fingerprint</div>
-        <div class="flow-arrow">&#8594;</div>
-        <div class="flow-step"><strong>Block</strong>index + data + hash</div>
-        <div class="flow-arrow">&#8594;</div>
-        <div class="flow-step"><strong>Previous Hash</strong>links to prior block</div>
-        <div class="flow-arrow">&#8594;</div>
-        <div class="flow-step"><strong>Next Block</strong>chain continues</div>
+<!-- SECTION 1: INTERACTIVE SECURITY FLOW -->
+<section class="home-section" aria-labelledby="flow-heading">
+    <div class="section-header">
+        <h2 id="flow-heading">Secure Exam. Verified Results.</h2>
+        <p class="section-subtitle">From submission to verification, every result is protected by multiple layers of integrity.</p>
     </div>
-    <p style="color: var(--muted); font-size: 0.88rem;">
-        Because each block's hash depends on the block before it, changing any old
-        block's data changes its hash — breaking the chain of links to every block
-        after it. Log in to see it for yourself on the View Blockchain page.
-    </p>
-</div>
 
-<div class="card">
-    <h3>Who uses this system</h3>
-    <p><strong>Teachers</strong> log in with the account created for them, create exams with a
-    start/end time window, and view results once students submit.</p>
-    <p><strong>Students</strong> sign up with their name, roll number and a password, then log in
-    to take any exam that is currently open.</p>
-</div>
+    <div class="security-flow">
+        <!-- CARD 1 -->
+        <div class="flow-step-card" tabindex="0">
+            <div class="flow-icon-wrap" aria-hidden="true">
+                <svg class="flow-step-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+                    <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
+                    <path d="m9 14 2 2 4-4"/>
+                </svg>
+            </div>
+            <h3>Take Exam</h3>
+            <p>Students complete scheduled examinations within the allowed time.</p>
+        </div>
+
+        <div class="flow-connector" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+        </div>
+
+        <!-- CARD 2 -->
+        <div class="flow-step-card" tabindex="0">
+            <div class="flow-icon-wrap" aria-hidden="true">
+                <svg class="flow-step-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m22 2-7 20-4-9-9-4Z"/>
+                    <path d="M22 2 11 13"/>
+                </svg>
+            </div>
+            <h3>Submit &amp; Evaluate</h3>
+            <p>Answers are automatically evaluated and the score is recorded.</p>
+        </div>
+
+        <div class="flow-connector" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+        </div>
+
+        <!-- CARD 3 -->
+        <div class="flow-step-card" tabindex="0">
+            <div class="flow-icon-wrap" aria-hidden="true">
+                <svg class="flow-step-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                    <path d="m9 12 2 2 4-4"/>
+                </svg>
+            </div>
+            <h3>Secure Result</h3>
+            <p>SHA-256 hashing and blockchain linking make unauthorized changes detectable.</p>
+        </div>
+
+        <div class="flow-connector" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+        </div>
+
+        <!-- CARD 4 -->
+        <div class="flow-step-card" tabindex="0">
+            <div class="flow-icon-wrap" aria-hidden="true">
+                <svg class="flow-step-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"/>
+                    <path d="m9 12 2 2 4-4"/>
+                </svg>
+            </div>
+            <h3>Verify</h3>
+            <p>Results can be verified against their stored blockchain fingerprint.</p>
+        </div>
+    </div>
+</section>
+
+<!-- SECTION 2: ROLE SELECTION -->
+<section class="home-section" aria-labelledby="portals-heading">
+    <div class="section-header">
+        <h2 id="portals-heading">Choose your portal</h2>
+        <p class="section-subtitle">Access the examination system based on your role.</p>
+    </div>
+
+    <div class="portals-grid">
+        <!-- TEACHER PORTAL CARD -->
+        <div class="portal-card">
+            <div>
+                <div class="portal-card-header">
+                    <div class="portal-icon-wrap" aria-hidden="true">
+                        <svg class="portal-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+                            <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+                        </svg>
+                    </div>
+                    <h3>Teacher Portal</h3>
+                </div>
+                <p>Create exams, manage questions, monitor submissions and verify student results.</p>
+            </div>
+            <div class="portal-action">
+                <a href="{{ url_for('login') }}" class="portal-btn">
+                    <span>Teacher Login &rarr;</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- STUDENT PORTAL CARD -->
+        <div class="portal-card">
+            <div>
+                <div class="portal-card-header">
+                    <div class="portal-icon-wrap" aria-hidden="true">
+                        <svg class="portal-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/>
+                            <path d="M6 6h10"/>
+                            <path d="M6 10h10"/>
+                            <path d="M6 14h6"/>
+                        </svg>
+                    </div>
+                    <h3>Student Portal</h3>
+                </div>
+                <p>Register, join available examinations, submit answers and view your results.</p>
+            </div>
+            <div class="portal-action">
+                <a href="{{ url_for('login') }}" class="portal-btn">
+                    <span>Student Login &rarr;</span>
+                </a>
+                <div class="portal-secondary-link">
+                    New student? <a href="{{ url_for('register') }}">Sign up here &rarr;</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- SECTION 3: SECURITY HIGHLIGHTS -->
+<section class="home-section" aria-label="Security Architecture Highlights">
+    <div class="security-highlights-grid">
+        <!-- 1. SHA-256 -->
+        <div class="highlight-card" tabindex="0">
+            <div class="highlight-icon-wrap" aria-hidden="true">
+                <svg class="highlight-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="4" y1="9" x2="20" y2="9"/>
+                    <line x1="4" y1="15" x2="20" y2="15"/>
+                    <line x1="10" y1="3" x2="8" y2="21"/>
+                    <line x1="16" y1="3" x2="14" y2="21"/>
+                </svg>
+            </div>
+            <h4>SHA-256</h4>
+            <p>Unique fingerprint for result integrity</p>
+        </div>
+
+        <!-- 2. Private Blockchain -->
+        <div class="highlight-card" tabindex="0">
+            <div class="highlight-icon-wrap" aria-hidden="true">
+                <svg class="highlight-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="2" y="7" width="8" height="8" rx="2"/>
+                    <rect x="14" y="9" width="8" height="8" rx="2"/>
+                    <path d="M10 11h4"/>
+                </svg>
+            </div>
+            <h4>Private Blockchain</h4>
+            <p>Linked blocks help detect modifications</p>
+        </div>
+
+        <!-- 3. Ethereum Anchoring -->
+        <div class="highlight-card" tabindex="0">
+            <div class="highlight-icon-wrap" aria-hidden="true">
+                <svg class="highlight-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M12 3v6"/>
+                    <path d="M12 15v6"/>
+                    <path d="M3 12h6"/>
+                    <path d="M15 12h6"/>
+                </svg>
+            </div>
+            <h4>Ethereum Anchoring</h4>
+            <p>Public blockchain integrity anchor</p>
+        </div>
+
+        <!-- 4. Result Verification -->
+        <div class="highlight-card" tabindex="0">
+            <div class="highlight-icon-wrap" aria-hidden="true">
+                <svg class="highlight-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                    <path d="m9 12 2 2 4-4"/>
+                </svg>
+            </div>
+            <h4>Result Verification</h4>
+            <p>Compare the result with its anchored hash</p>
+        </div>
+    </div>
+</section>
 {% endblock %}
