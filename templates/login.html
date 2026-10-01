@@ -1,40 +1,49 @@
 {% extends "base.html" %}
-{% block title %}Login{% endblock %}
+{% block title %}Login - ExamChain{% endblock %}
 
 {% block content %}
-<div class="card" style="max-width: 420px; margin: 20px auto;">
-    <h2>Login</h2>
+<div class="card" style="max-width: 420px; margin: 30px auto;">
+    <h2>Sign In</h2>
+    <p style="color: var(--muted); font-size: 0.9rem; margin-bottom: 20px;">
+        Sign in to access exams or your teacher dashboard.
+    </p>
 
-    <form method="POST">
-        <label>Username or Roll No</label>
-        <input
-            type="text"
-            name="identifier"
-            required
-            autofocus
-            placeholder="Enter username or roll number"
-        >
+    <form method="POST" id="login-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
 
-        <label>Password</label>
-        <input
-            type="password"
-            name="password"
-            required
-            placeholder="Enter your password"
-        >
+        <div class="form-group">
+            <label for="identifier">Username, Roll No, or Email</label>
+            <input
+                type="text"
+                id="identifier"
+                name="identifier"
+                value="{{ form_data.get('identifier', '') }}"
+                required
+                autofocus
+                placeholder="Enter username, roll number, or email"
+                class="form-control"
+            >
+        </div>
 
-        <button type="submit" class="btn" style="width:100%;">
-            Login
+        <div class="form-group">
+            <label for="password">Password</label>
+            <input
+                type="password"
+                id="password"
+                name="password"
+                required
+                placeholder="Enter your password"
+                class="form-control"
+            >
+        </div>
+
+        <button type="submit" class="btn" style="width:100%; margin-top: 10px;">
+            Sign In
         </button>
     </form>
 
-    <p style="color: var(--muted); font-size: 0.85rem; margin-top: 12px;">
-        Students can log in using either their username or roll number.
-    </p>
-
-    <p style="color: var(--muted); font-size: 0.85rem; margin-top: 8px;">
-        Not registered yet?
-        <a href="{{ url_for('register') }}">Sign up as a student</a>.
-    </p>
+    <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--border); font-size: 0.85rem; color: var(--muted); text-align: center;">
+        <p>Students: Not registered yet? <a href="{{ url_for('register') }}" style="color: var(--accent); font-weight: 600;">Sign up as a student</a></p>
+    </div>
 </div>
 {% endblock %}

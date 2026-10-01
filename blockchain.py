@@ -121,7 +121,7 @@ class Blockchain:
         recalculating its hash, exactly like an attacker editing a
         database row by hand.
         """
-        row = BlockModel.query.get(index)
+        row = db.session.get(BlockModel, index)
         if row is None:
             return False
         row.data_json = json.dumps(new_data, sort_keys=True)
@@ -130,7 +130,7 @@ class Blockchain:
         return True
 
     def get_block(self, index):
-        row = BlockModel.query.get(index)
+        row = db.session.get(BlockModel, index)
         return BlockView(row) if row else None
 
     def all_blocks(self):

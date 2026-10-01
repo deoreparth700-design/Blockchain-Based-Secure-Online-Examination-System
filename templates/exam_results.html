@@ -1,33 +1,98 @@
 {% extends "base.html" %}
-{% block title %}Results - {{ exam.title }}{% endblock %}
-{% block content %}
-<h2>Results: {{ exam.title }}</h2>
-<p style="color: var(--muted);">
-    {{ exam.start_time.strftime('%d %b %Y, %I:%M %p') }} &rarr; {{ exam.end_time.strftime('%d %b %Y, %I:%M %p') }}
-</p>
+{% block title %}Results: {{ exam.title }} - ExamChain{% endblock %}
 
-<div class="card">
-    {% if not attempts %}
-        <p style="color: var(--muted);">No submissions yet.</p>
-    {% else %}
-        <table>
-            <tr><th>Student</th><th>Roll No</th><th>Score</th><th>Submitted At</th><th>Block</th></tr>
-            {% for a in attempts %}
-            <tr>
-                <td>{{ a.student.name }}</td>
-                <td>{{ a.student.identifier }}</td>
-                <td>{{ a.score }} / {{ a.total }}</td>
-                <td>{{ a.submitted_at.strftime('%d %b %Y, %I:%M %p') }}</td>
-                <td><a href="{{ url_for('show_result', block_index=a.block_id) }}">#{{ a.block_id }}</a></td>
-            </tr>
-            {% endfor %}
-        </table>
-        <p style="color: var(--muted); font-size: 0.85rem;">
-            Class average: {{ "%.1f"|format((attempts|sum(attribute='score')) / (attempts|length)) }}
-            / {{ attempts[0].total }}
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+    <div>
+        <h2 style="margin: 0;">{{ exam.title }} &mdash; Submissions</h2>
+        <p style="color: var(--muted); margin: 4px 0 0; font-size: 0.9rem;">
+            Window: {{ exam.start_time.strftime('%d %b %Y, %I:%M %p') }} &rarr; {{ exam.end_time.strftime('%d %b %Y, %I:%M %p') }}
+            &middot; Total Questions: {{ exam.questions|length }}
         </p>
-    {% endif %}
+    </div>
+    <div>
+        <a href="{{ url_for('teacher_dashboard') }}" class="btn btn-secondary btn-sm">&larr; Back to Dashboard</a>
+    </div>
 </div>
 
-<a href="{{ url_for('view_blockchain') }}" class="btn btn-secondary">View Blockchain</a>
+{% if not attempts %}
+    <div class="card" style="text-align: center; padding: 40px 20px;">
+        <h4 style="margin: 0 0 6px;">No Submissions Recorded Yet</h4>
+        <p style="color: var(--muted); margin: 0; font-size: 0.9rem;">
+            When students complete and submit this exam, their cryptographically sealed results will appear here automatically.
+        </p>
+    </div>
+{% else %}
+    <!-- Statistics Cards -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 20px;">
+        <div class="card" style="text-align: center; padding: 18px 12px; margin-bottom: 0;">
+            <div style="color: var(--muted); font-size: 0.85rem; font-weight: 600;">SUBMISSIONS</div>
+            <div style="font-size: 1.8rem; font-weight: 700; color: var(--accent); margin-top: 4px;">{{ attempts|length }}</div>
+        </div>
+        <div class="card" style="text-align: center; padding: 18px 12px; margin-bottom: 0;">
+            <div style="color: var(--muted); font-size: 0.85rem; font-weight: 600;">CLASS AVERAGE</div>
+            <div style="font-size: 1.8rem; font-weight: 700; color: var(--accent-2); margin-top: 4px;">
+                {{ "%.1f"|format((attempts|sum(attribute='score')) / (attempts|length)) }} / {{ attempts[0].total }}
+            </div>
+        </div>
+        <div class="card" style="text-align: center; padding: 18px 12px; margin-bottom: 0;">
+            <div style="color: var(--muted); font-size: 0.85rem; font-weight: 600;">HIGHEST SCORE</div>
+            <div style="font-size: 1.8rem; font-weight: 700; color: var(--accent-2); margin-top: 4px;">
+                {{ attempts|map(attribute='score')|max }} / {{ attempts[0].total }}
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>Candidate Submissions</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Student Name</th>
+                    <th>Roll No / PRN</th>
+                    <th>Score</th>
+                    <th>Percentage</th>
+                    <th>Submission Time</th>
+                    <th>Sealed Block</th>
+                    <th>Ethereum Anchor</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for a in attempts %}
+                <tr>
+                    <td><strong>{{ a.student.name }}</strong></td>
+                    <td><code>{{ a.student.identifier }}</code></td>
+                    <td><strong>{{ a.score }} / {{ a.total }}</strong></td>
+                    <td>{{ "%.1f"|format((a.score / a.total) * 100) }}%</td>
+                    <td style="font-size: 0.85rem; color: var(--muted);">{{ a.submitted_at.strftime('%d %b %Y, %I:%M %p') }}</td>
+                    <td>
+                        <a href="{{ url_for('show_result', block_index=a.block_id) }}" style="font-weight: 600; color: var(--accent);">
+                            Block #{{ a.block_id }}
+                        </a>
+                    </td>
+                    <td>
+                        {% if a.ethereum_tx_hash %}
+                            <a href="https://sepolia.etherscan.io/tx/{{ a.ethereum_tx_hash }}" target="_blank" rel="noopener noreferrer" class="status-badge status-valid" style="font-size: 0.75rem; text-decoration: none;">
+                                &#10003; Anchored
+                            </a>
+                        {% else %}
+                            <span class="status-badge status-closed" style="font-size: 0.75rem;">Unanchored</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{{ url_for('show_result', block_index=a.block_id) }}" class="btn btn-secondary btn-sm" style="padding: 4px 10px; font-size: 0.8rem;">
+                            View
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endif %}
+
+<div style="margin-top: 20px;">
+    <a href="{{ url_for('view_blockchain') }}" class="btn btn-secondary">Explore Blockchain Ledger</a>
+</div>
 {% endblock %}

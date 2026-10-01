@@ -1,44 +1,109 @@
 {% extends "base.html" %}
-{% block title %}View Blockchain{% endblock %}
-{% block content %}
-<h2>View Blockchain</h2>
+{% block title %}Blockchain Ledger - ExamChain{% endblock %}
 
-<div class="card" style="text-align:center;">
-    <h3>Chain Status</h3>
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+    <div>
+        <h2 style="margin: 0;">Immutable Blockchain Ledger</h2>
+        <p style="color: var(--muted); margin: 4px 0 0; font-size: 0.9rem;">
+            Every examination submission sealed cryptographically with SHA-256 and backward-linked hash pointers.
+        </p>
+    </div>
+    <div>
+        <button id="verify-btn" class="btn" style="font-weight: 600;">&#128269; Verify Blockchain Integrity</button>
+    </div>
+</div>
+
+<div class="card" style="text-align: center; margin-bottom: 24px;">
+    <h3 style="margin-top: 0;">Chain Integrity Status</h3>
     <div id="verify-result">
         {% if chain_valid %}
-            <div class="status-badge status-valid" style="font-size:1rem; padding:8px 18px;">VALID - No tampering detected</div>
+            <div class="status-badge status-valid" style="font-size: 1rem; padding: 8px 20px;">
+                &#10003; VALID &mdash; No Tampering Detected
+            </div>
+            <p style="color: var(--muted); margin-top: 8px; font-size: 0.9rem;">
+                Every block's stored SHA-256 hash matches its recomputed hash, and all cryptographic hash links are intact.
+            </p>
         {% else %}
-            <div class="status-badge status-invalid" style="font-size:1rem; padding:8px 18px;">TAMPERING DETECTED</div>
-            <ul style="color: var(--danger); margin-top:10px; text-align:left; display:inline-block;">
+            <div class="status-badge status-invalid" style="font-size: 1rem; padding: 8px 20px;">
+                &#9888; TAMPERING DETECTED IN BLOCKCHAIN
+            </div>
+            <p style="color: var(--danger); font-size: 0.9rem; margin-top: 8px;">
+                Unauthorized modification detected: The cryptographic hash of one or more blocks does not match the stored value.
+            </p>
+            <ul style="color: var(--danger); margin-top: 10px; text-align: left; display: inline-block;">
                 {% for p in problems %}<li>{{ p }}</li>{% endfor %}
             </ul>
         {% endif %}
     </div>
-    <button id="verify-btn" class="btn" style="margin-top:14px;">Verify Blockchain</button>
 </div>
+
+<!-- Architecture Explanation -->
+<div class="card" style="margin-bottom: 24px; background: #fafcff;">
+    <h4 style="margin: 0 0 8px; color: var(--accent);">How Cryptographic Tamper-Detection Works:</h4>
+    <p style="margin: 0; font-size: 0.88rem; color: var(--muted); line-height: 1.6;">
+        Each block seals the candidate's name, roll number, and exam score together with the <strong>Previous Block's Hash</strong> into a unique 256-bit SHA-256 fingerprint. If any adversary modifies a student's score in the database, recomputing the hash immediately produces a completely different value, catching the unauthorized change instantly.
+    </p>
+</div>
+
+<!-- Blocks Sequence -->
+<h3 style="margin-bottom: 16px;">Ledger Blocks ({{ blocks|length }})</h3>
 
 {% for b in blocks %}
 <div class="block-card {{ 'mismatch' if b.mismatch else '' }}">
-    <strong>Block #{{ b.index }}</strong>
-    {% if b.mismatch %}<span class="status-badge status-invalid">MISMATCH</span>{% else %}<span class="status-badge status-valid">OK</span>{% endif %}
-    <p style="color: var(--muted); font-size: 0.85rem;">{{ b.time_str }}</p>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
+        <div>
+            <strong style="font-size: 1.1rem; color: var(--text);">Block #{{ b.index }}</strong>
+            <span style="color: var(--muted); font-size: 0.85rem; margin-left: 10px;">{{ b.time_str }}</span>
+        </div>
+        <div>
+            {% if b.mismatch %}
+                <span class="status-badge status-invalid">&#9888; MISMATCH DETECTED</span>
+            {% else %}
+                <span class="status-badge status-valid">&#10003; HASH OK</span>
+            {% endif %}
+        </div>
+    </div>
 
     {% if b.data.type == "exam_result" %}
-        <p>{{ b.data.student_name }} ({{ b.data.roll_no }}) — {{ b.data.exam_title }} — Score: {{ b.data.score }}/{{ b.data.total }}</p>
+        <div style="background: var(--bg); padding: 12px 14px; border-radius: 6px; margin-bottom: 12px; border: 1px solid var(--border);">
+            <div style="font-weight: 600; font-size: 1rem; color: var(--text);">{{ b.data.exam_title }}</div>
+            <div style="color: var(--muted); font-size: 0.9rem; margin-top: 2px;">
+                Student: <strong>{{ b.data.student_name }}</strong> (Roll No: <code>{{ b.data.roll_no }}</code>) &middot;
+                Score: <strong style="color: var(--accent-2);">{{ b.data.score }} / {{ b.data.total }}</strong>
+                ({{ "%.1f"|format((b.data.score / b.data.total) * 100) }}%)
+            </div>
+        </div>
     {% else %}
-        <p style="color: var(--muted);">{{ b.data.info }}</p>
+        <div style="background: var(--bg); padding: 12px 14px; border-radius: 6px; margin-bottom: 12px; border: 1px solid var(--border);">
+            <p style="margin: 0; color: var(--muted); font-size: 0.9rem;">
+                <strong>System Notice:</strong> {{ b.data.info }}
+            </p>
+        </div>
     {% endif %}
 
-    <label style="margin-top:10px;">Previous Hash</label>
-    <div class="hash-box">{{ b.previous_hash }}</div>
+    <div style="display: grid; gap: 8px;">
+        <div>
+            <label style="margin-bottom: 2px; font-weight: 600; font-size: 0.8rem;">Previous Block Hash (Link)</label>
+            <div class="hash-box">{{ b.previous_hash }}</div>
+        </div>
 
-    <label style="margin-top:10px;">Stored Hash</label>
-    <div class="hash-box">{{ b.hash }}</div>
+        <div>
+            <label style="margin-bottom: 2px; font-weight: 600; font-size: 0.8rem;">Stored Block Hash</label>
+            <div class="hash-box">{{ b.hash }}</div>
+        </div>
 
-    <label style="margin-top:10px;">Recomputed Hash (right now)</label>
-    <div class="hash-box" style="{{ 'color: var(--danger); border-color: var(--danger);' if b.mismatch else '' }}">{{ b.recomputed_hash }}</div>
+        <div>
+            <label style="margin-bottom: 2px; font-weight: 600; font-size: 0.8rem;">Recomputed Hash (Evaluated Right Now)</label>
+            <div class="hash-box" style="{{ 'color: var(--danger); font-weight: bold; border-color: var(--danger); background: #fef2f2;' if b.mismatch else '' }}">
+                {{ b.recomputed_hash }}
+            </div>
+        </div>
+    </div>
 </div>
-{% if not loop.last %}<div class="chain-link">&#8595;</div>{% endif %}
+
+{% if not loop.last %}
+<div class="chain-link">&#8595;</div>
+{% endif %}
 {% endfor %}
 {% endblock %}

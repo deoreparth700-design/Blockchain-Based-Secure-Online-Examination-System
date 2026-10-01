@@ -105,15 +105,43 @@ h1, h2, h3 { color: var(--text); }
 .flash-error { background: rgba(220,38,38,0.1); color: var(--danger); border: 1px solid rgba(220,38,38,0.25); }
 
 label { display: block; margin-bottom: 6px; font-size: 0.88rem; color: var(--muted); }
-input[type="text"], input[type="number"], select {
+.form-group { margin-bottom: 16px; }
+input[type="text"], input[type="number"], input[type="email"], input[type="password"], input[type="datetime-local"], select, .form-control {
     width: 100%;
     padding: 10px 12px;
     background: #fbfcfe;
     border: 1px solid var(--border);
     border-radius: var(--radius);
     color: var(--text);
-    margin-bottom: 16px;
+    margin-bottom: 4px;
     font-size: 0.95rem;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+input:focus, select:focus, .form-control:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(59, 91, 253, 0.15);
+}
+.input-valid {
+    border-color: var(--accent-2) !important;
+}
+.input-error {
+    border-color: var(--danger) !important;
+    background: #fffafa !important;
+}
+.field-feedback {
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-top: 2px;
+    display: block;
+}
+.feedback-valid {
+    color: var(--accent-2);
+    font-weight: 500;
+}
+.feedback-error {
+    color: var(--danger);
+    font-weight: 500;
 }
 
 .question-block {

@@ -1,43 +1,76 @@
 """
 app.py
 ------
-Flask routes for the real (small-deployment) version of the system.
+Flask application for the Blockchain-Based Secure Online Examination System.
 
-New compared to the demo:
-    - Login required for everything except the public landing page,
-      login, and registration.
-    - Two roles: "teacher" (creates exams, views results) and
-      "student" (takes exams).
-    - Exam time windows are enforced on the SERVER (Exam.is_open()),
-      not just hidden in the UI -- a student can't take an exam
-      before start_time or after end_time no matter what they do in
-      their browser.
-    - One attempt per student per exam, enforced by a database
-      uniqueness constraint (see Attempt.__table_args__ in models.py),
-      not just a disabled button.
-
-Deliberately NOT included (by design, for this scope):
-    - No public "tamper" button. See demo_tamper.py for how to run
-      that demonstration separately, outside the live app.
-    - No anti-cheating (tab-switch detection, fullscreen lock, etc).
+Features:
+- Dual-role authentication: Teacher and Student.
+- Strict server-side and client-side form validation.
+- Server-enforced exam time windows (start_time to end_time).
+- Database-enforced single attempt per student per exam.
+- SHA-256 private blockchain for tamper-evident result sealing.
+- Ethereum Sepolia smart contract anchoring via MetaMask & ethers.js.
+- CSRF protection and secure session management.
+- Zero-configuration Vercel deployment compatibility.
+- Neon PostgreSQL cloud database with local SQLite fallback.
 """
 
+import os
+import secrets
 from datetime import datetime
 from functools import wraps
 
-from flask import Flask, render_template, request, redirect, url_for, session, flash
+from dotenv import load_dotenv
+from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
+from sqlalchemy.exc import IntegrityError
 
 import database
+import validators
 from blockchain import Blockchain
 
-app = Flask(__name__)
-app.secret_key = "change-this-secret-key-before-real-deployment"
-database.init_app(app)
+load_dotenv()
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+app = Flask(
+    __name__,
+    template_folder=os.path.join(BASE_DIR, "templates"),
+    static_folder=os.path.join(BASE_DIR, "static"),
+)
+
+# Secret key from environment with fallback for local dev
+app.secret_key = os.environ.get("SECRET_KEY", "dev-fallback-not-for-production")
+
+# Security headers and cookie configurations
+app.config["SESSION_COOKIE_HTTPONLY"] = True
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+
+database.init_app(app)
 blockchain = Blockchain()
 
 
-# ---------- auth helpers ----------
+# ---------- CSRF Protection ----------
+@app.before_request
+def handle_csrf():
+    if "csrf_token" not in session:
+        session["csrf_token"] = secrets.token_hex(16)
+
+    if request.method == "POST":
+        # Exempt JSON API endpoints and public verify check
+        if request.path.startswith("/api/") or request.path == "/verify":
+            return
+        token = request.form.get("csrf_token")
+        if not token or token != session.get("csrf_token"):
+            flash("Session expired or invalid security token. Please try again.", "error")
+            return redirect(request.referrer or url_for("index"))
+
+
+@app.context_processor
+def inject_csrf():
+    return {"csrf_token": session.get("csrf_token", "")}
+
+
+# ---------- Auth Helpers ----------
 def login_required(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
@@ -65,7 +98,7 @@ def current_user():
     return database.get_user_by_id(user_id) if user_id else None
 
 
-# ---------- public ----------
+# ---------- Public Routes ----------
 @app.route("/")
 def index():
     if session.get("role") == "teacher":
@@ -77,65 +110,115 @@ def index():
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
-    """Student self-registration."""
+    """Student self-registration with complete backend validation."""
+    if session.get("user_id"):
+        return redirect(url_for("index"))
+
+    form_data = {}
+    field_errors = {}
+
     if request.method == "POST":
-        name = request.form.get("name", "").strip()
-        username = request.form.get("username", "").strip()
-        roll_no = request.form.get("roll_no", "").strip()
+        name = request.form.get("name", "")
+        username = request.form.get("username", "")
+        email = request.form.get("email", "")
+        roll_no = request.form.get("roll_no", "")
         password = request.form.get("password", "")
+        confirm_password = request.form.get("confirm_password", "")
 
-        if not name or not username or not roll_no or not password:
-            flash("Please fill in all fields.", "error")
-            return redirect(url_for("register"))
+        form_data = {
+            "name": name,
+            "username": username,
+            "email": email,
+            "roll_no": roll_no,
+        }
 
-        if database.get_user_by_login(username):
-            flash("That username is already taken. Please choose another.", "error")
-            return redirect(url_for("register"))
-
-        if database.get_user_by_identifier(roll_no):
-            flash("That roll number is already registered.", "error")
-            return redirect(url_for("register"))
-
-        database.create_user(
+        is_valid, errors, cleaned = validators.validate_student_registration(
             name=name,
             username=username,
-            identifier=roll_no,
+            email=email,
+            roll_no=roll_no,
+            password=password,
+            confirm_password=confirm_password,
+        )
+
+        if not is_valid:
+            for field, err in errors.items():
+                flash(err, "error")
+            return render_template("register.html", form_data=form_data, field_errors=errors)
+
+        # Database uniqueness checks
+        if database.get_user_by_username(cleaned["username"]):
+            flash("That username is already taken. Please choose another.", "error")
+            field_errors["username"] = "Username is already taken."
+            return render_template("register.html", form_data=form_data, field_errors=field_errors)
+
+        if database.get_user_by_identifier(cleaned["roll_no"]):
+            flash("That roll number / PRN is already registered.", "error")
+            field_errors["roll_no"] = "Roll number is already registered."
+            return render_template("register.html", form_data=form_data, field_errors=field_errors)
+
+        if database.get_user_by_email(cleaned["email"]):
+            flash("An account with that email address already exists.", "error")
+            field_errors["email"] = "Email address is already registered."
+            return render_template("register.html", form_data=form_data, field_errors=field_errors)
+
+        database.create_user(
+            name=cleaned["name"],
+            username=cleaned["username"],
+            identifier=cleaned["roll_no"],
+            email=cleaned["email"],
             password=password,
             role="student",
         )
 
-        flash("Account created. You can now log in with your username or roll number.", "success")
+        flash("Account created successfully! You can now log in.", "success")
         return redirect(url_for("login"))
 
-    return render_template("register.html")
+    return render_template("register.html", form_data=form_data, field_errors=field_errors)
 
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
+    if session.get("user_id"):
+        return redirect(url_for("index"))
+
+    form_data = {}
     if request.method == "POST":
-        identifier = request.form.get("identifier", "").strip()
+        identifier = request.form.get("identifier", "")
         password = request.form.get("password", "")
+        form_data["identifier"] = identifier
 
-        user = database.get_user_by_login(identifier)
+        is_valid, err_msg, clean_ident = validators.validate_login_input(identifier, password)
+        if not is_valid:
+            flash(err_msg, "error")
+            return render_template("login.html", form_data=form_data)
+
+        user = database.get_user_by_login(clean_ident)
         if not user or not user.check_password(password):
-            flash("Invalid username/roll number or password.", "error")
-            return redirect(url_for("login"))
+            # Generic error to prevent account enumeration
+            flash("Invalid username, roll number, or password.", "error")
+            return render_template("login.html", form_data=form_data)
 
+        # Regenerate session to protect against session fixation
+        session.clear()
         session["user_id"] = user.id
         session["role"] = user.role
         session["name"] = user.name
+        session["identifier"] = user.identifier
+        session["csrf_token"] = secrets.token_hex(16)
         return redirect(url_for("index"))
 
-    return render_template("login.html")
+    return render_template("login.html", form_data=form_data)
 
 
 @app.route("/logout")
 def logout():
     session.clear()
+    flash("You have been logged out.", "success")
     return redirect(url_for("index"))
 
 
-# ---------- teacher ----------
+# ---------- Teacher Routes ----------
 @app.route("/teacher")
 @login_required
 @role_required("teacher")
@@ -150,49 +233,49 @@ def teacher_dashboard():
 @role_required("teacher")
 def create_exam():
     if request.method == "POST":
-        title = request.form.get("title", "").strip()
+        title = request.form.get("title", "")
         start_raw = request.form.get("start_time", "")
         end_raw = request.form.get("end_time", "")
-        duration = int(request.form.get("duration", "30") or 30)
-
-        try:
-            start_time = datetime.strptime(start_raw, "%Y-%m-%dT%H:%M")
-            end_time = datetime.strptime(end_raw, "%Y-%m-%dT%H:%M")
-        except ValueError:
-            flash("Please provide valid start and end times.", "error")
-            return redirect(url_for("create_exam"))
-
-        if end_time <= start_time:
-            flash("End time must be after start time.", "error")
-            return redirect(url_for("create_exam"))
+        duration_raw = request.form.get("duration", "30")
 
         q_texts = request.form.getlist("question_text")
-        questions = []
+        questions_raw = []
         for i, qtext in enumerate(q_texts):
-            if not qtext.strip():
-                continue
             options = [
                 request.form.get(f"option_{i}_0", ""),
                 request.form.get(f"option_{i}_1", ""),
                 request.form.get(f"option_{i}_2", ""),
                 request.form.get(f"option_{i}_3", ""),
             ]
-            correct_index = int(request.form.get(f"correct_{i}", 0))
-            questions.append({"question": qtext.strip(), "options": options, "correct_index": correct_index})
+            correct_idx = request.form.get(f"correct_{i}", "0")
+            questions_raw.append({
+                "question": qtext,
+                "options": options,
+                "correct_index": correct_idx,
+            })
 
-        if not title or not questions:
-            flash("Please provide a title and at least one complete question.", "error")
-            return redirect(url_for("create_exam"))
+        is_valid, errors, cleaned = validators.validate_exam_creation(
+            title=title,
+            start_raw=start_raw,
+            end_raw=end_raw,
+            duration_raw=duration_raw,
+            questions_raw=questions_raw,
+        )
+
+        if not is_valid:
+            for err in errors:
+                flash(err, "error")
+            return render_template("create_exam.html")
 
         database.create_exam(
-            title=title,
+            title=cleaned["title"],
             created_by=session["user_id"],
-            start_time=start_time,
-            end_time=end_time,
-            duration_minutes=duration,
-            questions=questions,
+            start_time=cleaned["start_time"],
+            end_time=cleaned["end_time"],
+            duration_minutes=cleaned["duration"],
+            questions=cleaned["questions"],
         )
-        flash(f"Exam '{title}' created with {len(questions)} question(s).", "success")
+        flash(f"Exam '{cleaned['title']}' created successfully with {len(cleaned['questions'])} question(s).", "success")
         return redirect(url_for("teacher_dashboard"))
 
     return render_template("create_exam.html")
@@ -204,14 +287,14 @@ def create_exam():
 def exam_results(exam_id):
     exam = database.get_exam(exam_id)
     if not exam or exam.created_by != session["user_id"]:
-        flash("Exam not found.", "error")
+        flash("Exam not found or unauthorized.", "error")
         return redirect(url_for("teacher_dashboard"))
 
     attempts = database.get_attempts_for_exam(exam_id)
     return render_template("exam_results.html", exam=exam, attempts=attempts)
 
 
-# ---------- student ----------
+# ---------- Student Routes ----------
 @app.route("/student")
 @login_required
 @role_required("student")
@@ -246,38 +329,37 @@ def take_exam(exam_id):
         return redirect(url_for("student_dashboard"))
 
     student_id = session["user_id"]
+    now = datetime.now()
 
-    # Server-side enforcement -- checked again on POST, never trusting
-    # that the student only reached this page through the "proper" flow.
+    # Server-side enforcement -- checked on both GET and POST
     existing = database.get_attempt(exam_id, student_id)
     if existing:
-        flash("You have already attempted this exam.", "error")
+        flash("You have already submitted this exam.", "error")
         return redirect(url_for("student_dashboard"))
 
-    if not exam.is_open():
-        flash("This exam is not currently open.", "error")
+    if now < exam.start_time:
+        flash(f"This exam is not open yet. It will open on {exam.start_time.strftime('%d %b %Y, %I:%M %p')}.", "error")
+        return redirect(url_for("student_dashboard"))
+
+    if now > exam.end_time:
+        flash("The exam window has closed.", "error")
         return redirect(url_for("student_dashboard"))
 
     if request.method == "POST":
-        # Re-check both conditions again at submit time, in case the
-        # window closed or a second tab already submitted while this
-        # student was answering.
-        if database.get_attempt(exam_id, student_id):
-            flash("You have already submitted this exam.", "error")
-            return redirect(url_for("student_dashboard"))
-        if not exam.is_open():
-            flash("The exam window has closed.", "error")
-            return redirect(url_for("student_dashboard"))
-
         student = current_user()
         answers = []
         score = 0
         for i, q in enumerate(exam.questions):
             selected = request.form.get(f"answer_{i}")
-            selected_index = int(selected) if selected is not None else -1
-            is_correct = selected_index == q.correct_index
+            try:
+                selected_index = int(selected) if selected is not None else -1
+            except (ValueError, TypeError):
+                selected_index = -1
+
+            is_correct = (selected_index == q.correct_index)
             if is_correct:
                 score += 1
+
             answers.append({
                 "question": q.question_text,
                 "selected_index": selected_index,
@@ -295,8 +377,14 @@ def take_exam(exam_id):
             "total": len(exam.questions),
             "submitted_at": datetime.now().strftime("%d %b %Y, %I:%M:%S %p"),
         }
-        new_block = blockchain.add_block(result_data)
-        database.create_attempt(exam_id, student_id, score, len(exam.questions), new_block.index)
+
+        try:
+            new_block = blockchain.add_block(result_data)
+            database.create_attempt(exam_id, student_id, score, len(exam.questions), new_block.index)
+        except IntegrityError:
+            database.db.session.rollback()
+            flash("You have already submitted this exam.", "error")
+            return redirect(url_for("student_dashboard"))
 
         return redirect(url_for("show_result", block_index=new_block.index))
 
@@ -310,12 +398,38 @@ def show_result(block_index):
     if not block or "score" not in block.data:
         flash("Result not found.", "error")
         return redirect(url_for("index"))
-    chain_valid, _ = blockchain.is_chain_valid()
+
     attempt = database.get_attempt_by_block_id(block_index)
-    return render_template("result.html", block=block, chain_valid=chain_valid, attempt=attempt)
+    if not attempt:
+        flash("Attempt record not found.", "error")
+        return redirect(url_for("index"))
+
+    # Role-based authorization:
+    # Students can only view their own result.
+    # Teachers can only view results for exams they created.
+    if session.get("role") == "student":
+        if attempt.student_id != session.get("user_id"):
+            flash("You do not have permission to view another student's result.", "error")
+            return redirect(url_for("student_dashboard"))
+    elif session.get("role") == "teacher":
+        exam = database.get_exam(attempt.exam_id)
+        if not exam or exam.created_by != session.get("user_id"):
+            flash("You do not have permission to view results for this exam.", "error")
+            return redirect(url_for("teacher_dashboard"))
+
+    chain_valid, _ = blockchain.is_chain_valid()
+    is_block_tampered = (block.hash != block.recompute_hash())
+
+    return render_template(
+        "result.html",
+        block=block,
+        chain_valid=chain_valid,
+        is_block_tampered=is_block_tampered,
+        attempt=attempt,
+    )
 
 
-# ---------- blockchain (any logged-in user) ----------
+# ---------- Blockchain (Any Logged-in User) ----------
 @app.route("/blockchain")
 @login_required
 def view_blockchain():
@@ -338,27 +452,41 @@ def view_blockchain():
 @login_required
 def verify():
     valid, problems = blockchain.is_chain_valid()
-    return {"valid": valid, "problems": problems}
+    return jsonify({"valid": valid, "problems": problems})
 
 
+# ---------- Ethereum Smart Contract Anchoring ----------
 @app.route("/api/anchor_result/<int:attempt_id>", methods=["POST"])
 @login_required
 @role_required("teacher")
 def anchor_result(attempt_id):
     attempt = database.get_attempt_by_id(attempt_id)
     if not attempt:
-        return {"error": "Attempt not found"}, 404
-        
-    data = request.json
-    attempt.ethereum_tx_hash = data.get("tx_hash")
-    attempt.ethereum_contract_address = data.get("contract_address")
-    attempt.ethereum_result_hash = data.get("result_hash")
-    attempt.ethereum_wallet_address = data.get("wallet_address")
+        return jsonify({"error": "Attempt not found"}), 404
+
+    exam = database.get_exam(attempt.exam_id)
+    if not exam or exam.created_by != session["user_id"]:
+        return jsonify({"error": "Unauthorized: You can only anchor results for exams you created."}), 403
+
+    data = request.get_json(silent=True) or {}
+    tx_hash = data.get("tx_hash")
+    contract_address = data.get("contract_address")
+    result_hash = data.get("result_hash")
+    wallet_address = data.get("wallet_address")
+
+    if not tx_hash or not contract_address or not result_hash or not wallet_address:
+        return jsonify({"error": "Missing required Ethereum transaction details."}), 400
+
+    attempt.ethereum_tx_hash = tx_hash
+    attempt.ethereum_contract_address = contract_address
+    attempt.ethereum_result_hash = result_hash
+    attempt.ethereum_wallet_address = wallet_address
     attempt.ethereum_anchored_at = datetime.now()
-    
+
     database.db.session.commit()
-    return {"status": "success"}
+    return jsonify({"status": "success"})
 
 
 if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=5000)
+    debug_mode = os.environ.get("FLASK_DEBUG", "False").lower() in ("true", "1", "yes")
+    app.run(debug=debug_mode, host="0.0.0.0", port=5000)
