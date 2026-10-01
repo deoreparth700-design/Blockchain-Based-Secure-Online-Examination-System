@@ -26,6 +26,8 @@ def init_app(app):
     if not database_url:
         # Fall back to local SQLite for development without a .env file
         database_url = f"sqlite:///{SQLITE_PATH}"
+    else:
+        database_url = database_url.strip().strip("'\"")
 
     # Some providers give "postgres://" which SQLAlchemy 1.4+ requires
     # as "postgresql://".
