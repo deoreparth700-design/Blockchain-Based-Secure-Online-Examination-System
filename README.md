@@ -1,84 +1,190 @@
 # Blockchain-Based Secure Online Examination System
 
-## Project Overview
+A web-based examination platform designed to conduct scheduled MCQ exams and protect result integrity using **SHA-256 hash chaining** and **Ethereum Sepolia** anchoring.
 
-This is an online examination system that implements two blockchain integrity layers to secure examination results against tampering. The system allows teachers to create and schedule exams, students to register and take exams, and provides a dual-blockchain verification process.
+[![Live Demo](https://img.shields.io/badge/Live-Demo-success)](https://blockchain-based-secure-online-exam.vercel.app/)
+[![Python](https://img.shields.io/badge/Python-3.x-blue?logo=python)](https://www.python.org/)
+[![Flask](https://img.shields.io/badge/Flask-Web_Framework-black?logo=flask)](https://flask.palletsprojects.com/)
+[![Ethereum](https://img.shields.io/badge/Ethereum-Sepolia-purple?logo=ethereum)](https://ethereum.org/)
 
-## Features
+## Overview
 
-- **Teacher Portal**: Create exams with specific time windows, view student submissions, and anchor results to Ethereum.
-- **Student Portal**: Register, login (via username or roll number), take active exams, and view verified results.
-- **Dual-Blockchain Integrity**:
-  1. **Private Blockchain**: A local, Python-based SHA-256 hash-chain storing results in SQLite.
-  2. **Public Ethereum Layer**: An external integrity anchor on the Ethereum Sepolia Testnet using a Solidity smart contract.
-- **Tamper Detection Demonstration**: Verify the Private Blockchain to catch unauthorized database edits.
+The **Blockchain-Based Secure Online Examination System** is a Flask-based online examination platform with two roles:
+
+- **Teacher** — create and schedule exams, manage questions, view submissions, and anchor results to Ethereum.
+- **Student** — register, log in, take scheduled exams, submit answers, and view results.
+
+After an exam is submitted, the system automatically evaluates the answers and records the result. The result is then sealed into a private SHA-256 hash chain. Teachers can optionally anchor that result hash to an Ethereum smart contract on the **Sepolia testnet** for an additional, publicly verifiable integrity layer.
+
+> The system does not store student answers or personal information on Ethereum. Only the cryptographic result hash is anchored on-chain.
+
+## Live Demo
+
+**Application:** https://blockchain-based-secure-online-exam.vercel.app/
+
+The application is deployed on Vercel and uses Neon PostgreSQL for cloud database storage.
+
+## Key Features
+
+### Examination
+
+- Teacher-created MCQ examinations
+- Configurable exam start and end times
+- Configurable examination duration
+- Server-side exam time enforcement
+- Automatic answer evaluation
+- One attempt per student per exam
+- Student result viewing
+
+### Authentication & Validation
+
+- Separate teacher and student roles
+- Student self-registration
+- Login using username, roll number, or email
+- Password hashing
+- Server-side input validation
+- CSRF protection
+- Secure session configuration
+
+### Blockchain Integrity
+
+- SHA-256 based result hashing
+- Private hash-linked blockchain
+- Previous-hash chaining between blocks
+- Blockchain validation for tamper detection
+- Demonstration script for simulating database tampering
+
+### Ethereum Integration
+
+- Solidity smart contract
+- Ethereum Sepolia testnet
+- MetaMask wallet integration
+- Teacher-controlled result anchoring
+- On-chain result verification
+- Transaction and wallet information stored with anchored results
+- Ethers.js integration in the frontend
+
+## How It Works
+
+```text
+Student
+   │
+   ▼
+Take Scheduled Exam
+   │
+   ▼
+Submit Answers
+   │
+   ▼
+Flask Evaluates Result
+   │
+   ▼
+Database Stores Attempt
+   │
+   ▼
+SHA-256 Hash Generated
+   │
+   ▼
+Private Blockchain Block Created
+   │
+   ▼
+Teacher Can Anchor Result Hash
+   │
+   ▼
+Ethereum Sepolia Smart Contract
+   │
+   ▼
+Result Hash Can Be Verified
+```
+
+### Integrity Layers
+
+**Layer 1 — Application Database**
+
+Exam data, users, questions, attempts, and blockchain records are stored using SQLAlchemy.
+
+**Layer 2 — Private Blockchain**
+
+Each result block contains data, a timestamp, its hash, and the previous block's hash. Modifying stored block data causes the recalculated hash to differ, allowing the system to detect unauthorized changes.
+
+**Layer 3 — Ethereum**
+
+The teacher can submit the result hash to the deployed `ExamResultRegistry` smart contract. The contract records the hash together with the wallet address and timestamp.
+
+During verification, the application compares the current result hash with the hash stored on Ethereum.
 
 ## Architecture
 
 ```text
-                 ONLINE EXAM SYSTEM
-                        │
-                        ▼
-                Student submits exam
-                        │
-                        ▼
-                 Flask calculates score
-                        │
-                        ▼
-                 SQLite stores result
-                        │
-                        ▼
-             Private Python Blockchain
-                        │
-                        │
-                SHA-256 result hash
-                        │
-                        ▼
-          ┌───────────────────────────┐
-          │ Ethereum Smart Contract   │
-          │           │               │
-          │           ▼               │
-          │ Result hash stored on     │
-          │ Ethereum Sepolia          │
-          └───────────────────────────┘
-                        ▲
-                        │
-                   MetaMask
-                        ▲
-                        │
-                 Teacher/Admin
+                         ┌──────────────────┐
+                         │     Student      │
+                         └────────┬─────────┘
+                                  │
+                                  ▼
+                         ┌──────────────────┐
+                         │      Vercel      │
+                         │   Flask App      │
+                         └────────┬─────────┘
+                                  │
+                    ┌─────────────┴─────────────┐
+                    ▼                           ▼
+            ┌───────────────┐          ┌────────────────┐
+            │ Neon PostgreSQL│          │ Private SHA-256│
+            │   Application  │          │   Blockchain   │
+            │      Data      │          └───────┬────────┘
+            └───────────────┘                  │
+                                               │ Result Hash
+                                               ▼
+                                      ┌────────────────────┐
+                                      │ Ethereum Sepolia   │
+                                      │ ExamResultRegistry │
+                                      └─────────┬──────────┘
+                                                │
+                                                ▲
+                                          MetaMask
+                                                │
+                                      ┌─────────┴──────────┐
+                                      │      Teacher       │
+                                      └────────────────────┘
 ```
 
-**Important distinction**: The Python blockchain is a private hash-chain securing every result automatically. Ethereum is used as a second public integrity layer, initiated manually by the teacher via MetaMask, to store an external, independently verifiable cryptographic hash of the result.
-
-## Technologies Used
+## Technology Stack
 
 ### Frontend
-- HTML, CSS (Vanilla)
-- JavaScript
-- Jinja2 (Templating)
+
+- HTML5
+- CSS3
+- Vanilla JavaScript
+- Jinja2 templates
+- Ethers.js
 
 ### Backend
+
 - Python
 - Flask
+- Flask-SQLAlchemy
+- SQLAlchemy
 
 ### Database
-- SQLite
-- Flask-SQLAlchemy
 
-### Existing Blockchain
-- SHA-256 (Python `hashlib`)
-- Hash-linked blockchain
+- Neon PostgreSQL for deployment
+- SQLite fallback for local development
 
-### Ethereum Layer
+### Blockchain
+
+- Python `hashlib`
+- SHA-256
+- Private hash-linked blockchain
 - Solidity
 - Ethereum Sepolia Testnet
 - MetaMask
 - Remix IDE
-- ethers.js
+- Ethers.js
 
 ### Deployment
-- PythonAnywhere (Hosting)
+
+- Vercel
+- Neon PostgreSQL
 - GitHub
 
 ## Project Structure
@@ -86,146 +192,327 @@ This is an online examination system that implements two blockchain integrity la
 ```text
 Blockchain-Based-Secure-Online-Examination-System/
 │
-├── app.py                 # Flask web application
-├── blockchain.py          # Private blockchain logic
-├── database.py            # SQLite database interactions
-├── models.py              # SQLAlchemy ORM models
-├── init_db.py             # Database initialization script
-├── migrate_db.py          # Script to update DB schema for Ethereum
-├── demo_tamper.py         # Script to demonstrate tampering on the private chain
-├── requirements.txt       # Python dependencies
-├── README.md              # Project documentation
+├── app.py
+├── blockchain.py
+├── database.py
+├── models.py
+├── validators.py
+├── init_db.py
+├── migrate_db.py
+├── demo_tamper.py
+├── requirements.txt
+├── vercel.json
+├── .env.example
 │
 ├── contracts/
-│   └── ExamResultRegistry.sol  # Solidity smart contract
+│   └── ExamResultRegistry.sol
 │
 ├── static/
 │   ├── style.css
 │   ├── script.js
 │   └── js/
-│       ├── ethereum.js         # MetaMask & Ethers.js logic
-│       └── ethereum-config.js  # Ethereum contract address & ABI
+│       ├── ethereum.js
+│       └── ethereum-config.js
 │
-├── templates/             # Jinja2 HTML templates
-│   └── ...
+├── public/
+│   └── static/
+│       ├── style.css
+│       ├── script.js
+│       └── js/
 │
-└── exam_system.db         # SQLite database file
+├── templates/
+│   ├── base.html
+│   ├── index.html
+│   ├── login.html
+│   ├── register.html
+│   ├── create_exam.html
+│   ├── exam.html
+│   ├── exam_results.html
+│   ├── result.html
+│   ├── blockchain.html
+│   ├── teacher_dashboard.html
+│   └── student_dashboard.html
+│
+└── tests/
+    └── test_system.py
 ```
 
 ## Local Setup
 
-1. **Clone the repository**:
-   ```bash
-   git clone https://github.com/deoreparth700-design/Blockchain-Based-Secure-Online-Examination-System.git
-   cd Blockchain-Based-Secure-Online-Examination-System
-   ```
-2. **Create a virtual environment**:
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows use: venv\Scripts\activate
-   ```
-3. **Install dependencies**:
-   ```bash
-   pip install -r requirements.txt
-   ```
-4. **Initialize database**:
-   ```bash
-   python init_db.py
-   # Follow the prompt to create the first teacher account
-   ```
-5. **Run Database Migration (for Ethereum updates)**:
-   ```bash
-   python migrate_db.py
-   ```
-6. **Start the application**:
-   ```bash
-   python app.py
-   ```
-   Open `http://localhost:5000` in your browser.
+### 1. Clone the repository
 
-## MetaMask & Sepolia Setup
+```bash
+git clone https://github.com/deoreparth700-design/Blockchain-Based-Secure-Online-Examination-System.git
+cd Blockchain-Based-Secure-Online-Examination-System
+```
 
-1. Install the [MetaMask browser extension](https://metamask.io/).
-2. Enable "Show test networks" in MetaMask settings.
-3. Switch to the **Sepolia** test network.
-4. Obtain test ETH from a Sepolia faucet (e.g., [Alchemy Sepolia Faucet](https://sepoliafaucet.com/)). *Never use real ETH for this academic project.*
+### 2. Create a virtual environment
 
-## Smart Contract Deployment via Remix IDE
+#### Windows
 
-1. Open [Remix IDE](https://remix.ethereum.org/).
-2. Create a new file named `ExamResultRegistry.sol`.
-3. Paste the contents of `contracts/ExamResultRegistry.sol` from this repository.
-4. Go to the **Solidity Compiler** tab and compile the contract (ensure compiler version `^0.8.0` is selected).
-5. Go to the **Deploy & Run Transactions** tab:
-   - Set **Environment** to `Injected Provider - MetaMask`.
-   - MetaMask will prompt you to connect. Approve it.
-   - Ensure the correct wallet (Teacher/Admin) and network (Sepolia) is selected.
-   - Click **Deploy**.
-   - Confirm the transaction in MetaMask.
-6. Once deployed, expand the contract under **Deployed Contracts**.
-7. Click the **Copy** icon next to the contract name to copy its address.
+```bash
+python -m venv venv
+venv\Scripts\activate
+```
 
-### Configuring the Application
+#### macOS / Linux
 
-1. Open `static/js/ethereum-config.js`.
-2. Replace `YOUR_DEPLOYED_CONTRACT_ADDRESS` with the copied contract address.
-3. Replace the `CONTRACT_ABI` if you made any changes to the Solidity code (copy from Remix's Compiler tab).
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
 
-## Result Anchoring Workflow
+### 3. Install dependencies
 
-1. A student submits an exam. The result is calculated and sealed into the **Private Blockchain**.
-2. A teacher logs in and views the result.
-3. The teacher clicks **"Anchor on Ethereum"**.
-4. MetaMask opens and requests transaction approval on the Sepolia network.
-5. Once confirmed, the result hash is permanently recorded on the public blockchain.
-6. The application displays a verifiable transaction hash and link to Etherscan.
+```bash
+pip install -r requirements.txt
+```
 
-## Ethereum Verification
+### 4. Configure environment variables
 
-Anyone viewing a result anchored on Ethereum can click **"Verify on Ethereum"**. The frontend (`ethers.js`) will query the smart contract on Sepolia to ensure the current result hash matches the immutable hash stored on the blockchain.
+Create a `.env` file based on `.env.example`.
 
-## Tamper Demonstration
+```env
+DATABASE_URL=postgresql://user:password@host/neondb?sslmode=require
+SECRET_KEY=your-random-secret-key
+FLASK_DEBUG=False
 
-1. Run the tampering script to simulate a database attack:
-   ```bash
-   python demo_tamper.py <block_index> <new_score>
-   # Example: python demo_tamper.py 1 100
-   ```
-2. Open the application, log in as a teacher, and go to "View Blockchain".
-3. The **Private Blockchain** will instantly flag the tampered block because the stored hash will no longer match the recalculated hash.
-4. If the result was anchored to Ethereum, verifying it will also fail because the tampered local hash won't match the one stored securely on Sepolia.
+ETHEREUM_CONTRACT_ADDRESS=your-contract-address
+ETHEREUM_CHAIN_ID=11155111
+```
 
-## PythonAnywhere Deployment
+For local development, `DATABASE_URL` can be omitted and the application will fall back to SQLite.
 
-1. Push your updated code to GitHub:
-   ```bash
-   git add .
-   git commit -m "Add Ethereum integration"
-   git push origin main
-   ```
-2. In the PythonAnywhere console, pull the latest code:
-   ```bash
-   cd /home/deore123/Blockchain-Based-Secure-Online-Examination-System
-   git pull origin main
-   ```
-3. Activate the virtual environment:
-   ```bash
-   workon exam-system-env
-   ```
-4. Run the database migration (Do NOT delete `exam_system.db`!):
-   ```bash
-   python migrate_db.py
-   ```
-5. Reload the PythonAnywhere web app from the Web tab.
+### 5. Initialize the database
 
-## Security Considerations
+```bash
+python init_db.py
+```
 
-- **Never** commit a private key, seed phrase, or secret recovery phrase to GitHub.
-- The smart contract (`ExamResultRegistry.sol`) uses an `onlyOwner` modifier. Only the wallet address that deployed the contract can anchor results.
-- The student's private examination data (answers, personal info) is **not** stored on Ethereum. Only a cryptographic hash (`SHA-256`) of the canonical result data is anchored, preserving privacy.
+The script creates the required tables and prompts you to create the first teacher account.
 
-## Limitations & Future Improvements
+### 6. Start the application
 
-- Currently uses Ethereum Sepolia Testnet for academic demonstration. For production, it would be deployed to Mainnet or an L2 (Polygon, Arbitrum).
-- Smart contract role management could be expanded to allow multiple authorized teachers.
-- The system depends on the teacher manually anchoring results; a backend relayer could automate this process.
+```bash
+python app.py
+```
+
+Then open:
+
+```text
+http://localhost:5000
+```
+
+## Ethereum Setup
+
+The Ethereum integration is designed for the **Sepolia testnet**.
+
+### Requirements
+
+- MetaMask browser extension
+- Sepolia network enabled
+- Sepolia test ETH
+- Deployed `ExamResultRegistry` smart contract
+
+### Smart Contract
+
+The project includes:
+
+```text
+contracts/ExamResultRegistry.sol
+```
+
+The contract provides two main operations:
+
+```solidity
+recordResult(attemptId, resultHash)
+```
+
+Stores a result hash on Ethereum.
+
+```solidity
+verifyResult(attemptId, resultHash)
+```
+
+Checks whether the supplied hash matches the anchored hash.
+
+The contract uses an owner-based permission model, meaning only the contract owner can record a result.
+
+## Result Anchoring Flow
+
+1. Student completes an examination.
+2. Flask evaluates the submission.
+3. The result is stored in the database.
+4. The result is sealed into the private SHA-256 blockchain.
+5. A teacher opens the student's result.
+6. The teacher selects **Anchor on Ethereum**.
+7. MetaMask requests transaction approval.
+8. The result hash is written to the Ethereum Sepolia contract.
+9. The transaction hash is stored by the application.
+10. The result can later be verified against the Ethereum record.
+
+## Tamper Detection Demo
+
+The repository includes a demonstration script:
+
+```bash
+python demo_tamper.py <block_index> <new_score>
+```
+
+Example:
+
+```bash
+python demo_tamper.py 1 100
+```
+
+This simulates an attacker modifying blockchain data without recalculating the original block hash.
+
+The application can then detect the inconsistency when validating the private blockchain.
+
+If the original result was also anchored to Ethereum, the changed local hash will no longer match the hash stored on-chain.
+
+> This is a demonstration of tamper detection, not a claim that the application itself is an immutable decentralized database.
+
+## Security
+
+The application includes several security-related controls:
+
+- Password hashing using Werkzeug security utilities
+- Server-side validation
+- Client-side validation
+- CSRF protection
+- HTTP-only session cookies
+- SameSite session configuration
+- Role-based access control
+- Server-enforced exam time windows
+- Single-attempt enforcement
+- Ethereum owner authorization
+- Cryptographic hash verification
+
+### Important
+
+Never commit sensitive credentials to GitHub.
+
+Do not commit:
+
+```text
+.env
+```
+
+Never expose:
+
+- Database passwords
+- Flask secret keys
+- Wallet private keys
+- Seed phrases
+- Secret recovery phrases
+
+## Testing
+
+The project includes an automated system test suite.
+
+Run:
+
+```bash
+python -m unittest tests/test_system.py
+```
+
+The current test suite contains **13 tests**, covering core examination-system functionality.
+
+A formatting check can also be performed with:
+
+```bash
+git diff --check
+```
+
+## Deployment
+
+### Vercel
+
+The application is configured for Vercel using:
+
+```text
+vercel.json
+```
+
+The deployed Flask application uses Neon PostgreSQL through the `DATABASE_URL` environment variable.
+
+Required Vercel environment variables include:
+
+```text
+DATABASE_URL
+SECRET_KEY
+ETHEREUM_CONTRACT_ADDRESS
+ETHEREUM_CHAIN_ID
+```
+
+### Database
+
+The application supports:
+
+```text
+Production → Neon PostgreSQL
+Local Development → SQLite fallback
+```
+
+This allows the same application to run locally without requiring a cloud database while still supporting persistent PostgreSQL storage in deployment.
+
+## Limitations
+
+This project is primarily an academic and demonstration system.
+
+Current limitations include:
+
+- Ethereum integration uses the Sepolia testnet.
+- Result anchoring is initiated manually by the teacher.
+- The private blockchain is application-controlled rather than decentralized.
+- Ethereum stores the result hash, not the complete examination record.
+- The smart contract currently uses a single owner for anchoring authorization.
+- Production deployment would require stronger operational controls, monitoring, backup strategy, and scalability considerations.
+
+## Future Improvements
+
+Possible future enhancements include:
+
+- Multiple authorized teachers on the smart contract
+- Automated Ethereum anchoring through a backend relayer
+- Better audit logging
+- Production-grade database migrations
+- Advanced examination analytics
+- Question banks and randomized questions
+- Role and permission management
+- Email notifications
+- Scalable blockchain/L2 deployment
+- Improved administration dashboard
+
+## Why Blockchain Is Used
+
+Traditional database storage can be modified by someone with sufficient database access.
+
+This project adds cryptographic integrity checks:
+
+```text
+Result Data
+    ↓
+SHA-256 Hash
+    ↓
+Private Hash-Linked Blockchain
+    ↓
+Optional Ethereum Anchor
+```
+
+The goal is not to store the complete exam on a public blockchain.
+
+Instead, blockchain technology is used to create a **verifiable integrity fingerprint** for the result.
+
+## Author
+
+**Parth Deore**
+
+B.Tech Computer Science & Engineering
+
+GitHub: `deoreparth700-design`
+
+## License
+
+This project is intended for educational and academic use.
