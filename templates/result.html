@@ -5,7 +5,7 @@
 <div class="card" style="max-width: 720px; margin: 0 auto; text-align: center;">
     <h2 style="margin-bottom: 4px;">{{ result_summary.exam_title or block.data.exam_title }}</h2>
     <p style="color: var(--muted); margin: 0 0 16px; font-size: 0.95rem;">
-        Candidate: <strong>{{ result_summary.student_name }}</strong> &middot; PRN: <strong>{{ result_summary.prn }}</strong>
+        Candidate: <strong>{{ result_summary.student_name }}</strong> &middot; PRN: <strong>{{ result_summary.prn }}</strong> &middot; Class: <strong>{{ academic_display }}</strong> ({{ academic_program }})
     </p>
 
     <!-- Main Score & Percentage -->
@@ -52,7 +52,7 @@
         <h3 style="margin: 0 0 10px; font-size: 1.05rem; color: var(--text);">Result Integrity</h3>
         {% if integrity_result.valid %}
             <div class="status-badge status-valid" style="font-size: 0.95rem; padding: 6px 16px; display: inline-flex; align-items: center; gap: 6px;">
-                &#10003; Integrity Verified
+                &#10003; SHA-256 Integrity Verified
             </div>
             <p style="color: var(--muted); font-size: 0.85rem; margin: 10px 0 14px;">
                 The stored result data matches its authoritative cryptographic fingerprint and backward ledger link.
@@ -70,7 +70,7 @@
         {% endif %}
 
         <div>
-            <label style="font-weight: 600; color: var(--text); font-size: 0.82rem; display: block; margin-bottom: 4px;">SHA-256 fingerprint</label>
+            <label style="font-weight: 600; color: var(--text); font-size: 0.82rem; display: block; margin-bottom: 4px;">Tamper-evident result fingerprint (SHA-256)</label>
             <div class="hash-box" style="margin: 0; word-break: break-all; {% if not integrity_result.valid %}border-color: var(--danger); background: #fef2f2; color: var(--danger);{% endif %}">
                 {{ block.hash }}
             </div>

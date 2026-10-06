@@ -65,9 +65,20 @@ def handle_csrf():
             return redirect(request.referrer or url_for("index"))
 
 
+# Fixed Academic Scope for V1 BE Final Year Platform
+ACADEMIC_PROGRAM = "B.E. Computer Science and Engineering"
+ACADEMIC_LEVEL = "Final Year"
+ACADEMIC_DISPLAY = "B.E. Final Year"
+
+
 @app.context_processor
-def inject_csrf():
-    return {"csrf_token": session.get("csrf_token", "")}
+def inject_academic_and_csrf_context():
+    return {
+        "csrf_token": session.get("csrf_token", ""),
+        "academic_program": ACADEMIC_PROGRAM,
+        "academic_level": ACADEMIC_LEVEL,
+        "academic_display": ACADEMIC_DISPLAY,
+    }
 
 
 # ---------- Auth Helpers ----------
@@ -462,27 +473,61 @@ def student_dashboard():
     student_id = session["user_id"]
 
     exam_rows = []
+    in_progress_exams = []
+    available_exams = []
+    upcoming_exams = []
+    completed_exams = []
+    closed_exams = []
+
     for exam in exams:
         attempt = database.get_attempt(exam.id, student_id)
         if attempt and attempt.is_submitted:
             status = "attempted"
+            row = {"exam": exam, "status": status, "attempt": attempt}
+            exam_rows.append(row)
+            completed_exams.append(row)
         elif attempt and attempt.is_active:
             deadline = database.get_effective_deadline(exam, attempt)
             if now > deadline:
                 status = "closed"
+                row = {"exam": exam, "status": status, "attempt": attempt}
+                exam_rows.append(row)
+                closed_exams.append(row)
             else:
                 status = "in_progress"
+                row = {"exam": exam, "status": status, "attempt": attempt}
+                exam_rows.append(row)
+                in_progress_exams.append(row)
         elif exam.status == "closed":
             status = "closed"
+            row = {"exam": exam, "status": status, "attempt": attempt}
+            exam_rows.append(row)
+            closed_exams.append(row)
         elif now < exam.start_time:
             status = "upcoming"
+            row = {"exam": exam, "status": status, "attempt": attempt}
+            exam_rows.append(row)
+            upcoming_exams.append(row)
         elif now > exam.end_time:
             status = "closed"
+            row = {"exam": exam, "status": status, "attempt": attempt}
+            exam_rows.append(row)
+            closed_exams.append(row)
         else:
             status = "open"
-        exam_rows.append({"exam": exam, "status": status, "attempt": attempt})
+            row = {"exam": exam, "status": status, "attempt": attempt}
+            exam_rows.append(row)
+            available_exams.append(row)
 
-    return render_template("student_dashboard.html", exam_rows=exam_rows)
+    return render_template(
+        "student_dashboard.html",
+        exam_rows=exam_rows,
+        in_progress_exams=in_progress_exams,
+        available_exams=available_exams,
+        upcoming_exams=upcoming_exams,
+        completed_exams=completed_exams,
+        closed_exams=closed_exams,
+    )
 
 
 @app.route("/student/exam/<int:exam_id>", methods=["GET", "POST"])

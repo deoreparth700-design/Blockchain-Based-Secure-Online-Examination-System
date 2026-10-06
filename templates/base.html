@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>{% block title %}Blockchain Exam System{% endblock %}</title>
+<title>{% block title %}B.E. Final Year Examination Platform{% endblock %}</title>
 <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
 <nav class="navbar">
-    <a href="{{ url_for('index') }}" class="brand">&#9878; Exam<span>Chain</span></a>
+    <a href="{{ url_for('index') }}" class="brand">&#9878; Exam<span>Chain</span> <small style="font-size:0.75rem; opacity:0.85; font-weight:normal; margin-left:4px;">&middot; B.E. Final Year</small></a>
     <div class="nav-links">
         {% if session.get('role') == 'admin' %}
             <a href="{{ url_for('admin_dashboard') }}">Admin Dashboard</a>
@@ -38,7 +38,7 @@
 </main>
 
 <footer>
-    <p>Blockchain-Based Secure Online Examination System</p>
+    <p>B.E. Final Year Examination Platform &middot; B.E. Computer Science and Engineering &middot; SHA-256 Cryptographic Integrity</p>
 </footer>
 
 <script src="{{ url_for('static', filename='script.js') }}"></script>
