@@ -1,32 +1,32 @@
 {% extends "base.html" %}
-{% block title %}Blockchain Ledger - ExamChain{% endblock %}
+{% block title %}SHA-256 Integrity Ledger - ExamChain{% endblock %}
 
 {% block content %}
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
     <div>
-        <h2 style="margin: 0;">Immutable Blockchain Ledger</h2>
+        <h2 style="margin: 0;">Tamper-Evident SHA-256 Integrity Ledger</h2>
         <p style="color: var(--muted); margin: 4px 0 0; font-size: 0.9rem;">
-            Every examination submission sealed cryptographically with SHA-256 and backward-linked hash pointers.
+            Authoritative backward-linked cryptographic ledger for exam result verification and tamper detection.
         </p>
     </div>
     <div>
-        <button id="verify-btn" class="btn" style="font-weight: 600;">&#128269; Verify Blockchain Integrity</button>
+        <button id="verify-btn" class="btn" style="font-weight: 600;">&#128269; Verify Integrity</button>
     </div>
 </div>
 
 <div class="card" style="text-align: center; margin-bottom: 24px;">
-    <h3 style="margin-top: 0;">Chain Integrity Status</h3>
+    <h3 style="margin-top: 0; margin-bottom: 12px;">Ledger Integrity Status</h3>
     <div id="verify-result">
         {% if chain_valid %}
             <div class="status-badge status-valid" style="font-size: 1rem; padding: 8px 20px;">
-                &#10003; VALID &mdash; No Tampering Detected
+                &#10003; VALID &mdash; Cryptographic Integrity Verified
             </div>
             <p style="color: var(--muted); margin-top: 8px; font-size: 0.9rem;">
-                Every block's stored SHA-256 hash matches its recomputed hash, and all cryptographic hash links are intact.
+                Every block's stored SHA-256 hash matches its recomputed fingerprint, and all backward hash pointers are intact.
             </p>
         {% else %}
             <div class="status-badge status-invalid" style="font-size: 1rem; padding: 8px 20px;">
-                &#9888; TAMPERING DETECTED IN BLOCKCHAIN
+                &#9888; TAMPERING DETECTED IN LEDGER
             </div>
             <p style="color: var(--danger); font-size: 0.9rem; margin-top: 8px;">
                 Unauthorized modification detected: The cryptographic hash of one or more blocks does not match the stored value.
@@ -40,64 +40,70 @@
 
 <!-- Architecture Explanation -->
 <div class="card" style="margin-bottom: 24px; background: #fafcff;">
-    <h4 style="margin: 0 0 8px; color: var(--accent);">How Cryptographic Tamper-Detection Works:</h4>
+    <h4 style="margin: 0 0 8px; color: var(--accent);">&#128274; How Cryptographic Tamper-Detection Works:</h4>
     <p style="margin: 0; font-size: 0.88rem; color: var(--muted); line-height: 1.6;">
-        Each block seals the candidate's name, roll number, and exam score together with the <strong>Previous Block's Hash</strong> into a unique 256-bit SHA-256 fingerprint. If any adversary modifies a student's score in the database, recomputing the hash immediately produces a completely different value, catching the unauthorized change instantly.
+        Each result block cryptographically seals student identifying information and scores together with the <strong>Previous Block's Hash</strong> into a unique 256-bit SHA-256 fingerprint. Any unauthorized modification to a recorded result alters the recalculated hash and breaks subsequent block links, making tampering immediately evident during server verification.
     </p>
 </div>
 
 <!-- Blocks Sequence -->
-<h3 style="margin-bottom: 16px;">Ledger Blocks ({{ blocks|length }})</h3>
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+    <h3 style="margin: 0;">Ledger Blocks ({{ blocks|length }})</h3>
+    <span style="font-size: 0.85rem; color: var(--muted);">Private SHA-256 Linked Hash Chain</span>
+</div>
 
 {% for b in blocks %}
-<div class="block-card {{ 'mismatch' if b.mismatch else '' }}">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
+<div class="block-card {{ '' if b.is_valid else 'mismatch' }}" id="block-card-{{ b.index }}">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
         <div>
-            <strong style="font-size: 1.1rem; color: var(--text);">Block #{{ b.index }}</strong>
-            <span style="color: var(--muted); font-size: 0.85rem; margin-left: 10px;">{{ b.time_str }}</span>
+            <strong style="font-size: 1.15rem; color: var(--text);">Block #{{ b.index }}</strong>
         </div>
-        <div>
-            {% if b.mismatch %}
-                <span class="status-badge status-invalid">&#9888; MISMATCH DETECTED</span>
-            {% else %}
-                <span class="status-badge status-valid">&#10003; HASH OK</span>
-            {% endif %}
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <span id="block-status-badge-{{ b.index }}">
+                {% if b.is_valid %}
+                    <span class="status-badge status-valid">&#10003; Valid</span>
+                {% else %}
+                    <span class="status-badge status-invalid">&#9888; Invalid</span>
+                {% endif %}
+            </span>
+            <button class="btn btn-secondary btn-sm verify-single-block-btn" data-block-index="{{ b.index }}" style="font-size: 0.8rem; padding: 3px 10px;">
+                Verify Block
+            </button>
         </div>
     </div>
 
-    {% if b.data.type == "exam_result" %}
-        <div style="background: var(--bg); padding: 12px 14px; border-radius: 6px; margin-bottom: 12px; border: 1px solid var(--border);">
-            <div style="font-weight: 600; font-size: 1rem; color: var(--text);">{{ b.data.exam_title }}</div>
-            <div style="color: var(--muted); font-size: 0.9rem; margin-top: 2px;">
-                Student: <strong>{{ b.data.student_name }}</strong> (Roll No: <code>{{ b.data.roll_no }}</code>) &middot;
-                Score: <strong style="color: var(--accent-2);">{{ b.data.score }} / {{ b.data.total }}</strong>
-                ({{ "%.1f"|format((b.data.score / b.data.total) * 100) }}%)
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 12px; background: var(--bg); padding: 12px 14px; border-radius: 6px; border: 1px solid var(--border);">
+        <div>
+            <div style="font-size: 0.78rem; font-weight: 600; color: var(--muted); text-transform: uppercase;">Created / Timestamp:</div>
+            <div style="font-size: 0.92rem; font-weight: 500; color: var(--text); margin-top: 2px;">{{ b.time_str }}</div>
+        </div>
+        <div>
+            <div style="font-size: 0.78rem; font-weight: 600; color: var(--muted); text-transform: uppercase;">Linked Result:</div>
+            <div style="font-size: 0.92rem; margin-top: 2px;">
+                {% if b.linked_result.is_exam %}
+                    <div style="font-weight: 600; color: var(--text);">{{ b.linked_result.exam_title }}</div>
+                    <div style="color: var(--muted); font-size: 0.85rem;">{{ b.linked_result.student_info }}</div>
+                {% else %}
+                    <div style="font-weight: 500; color: var(--muted);">{{ b.linked_result.info }}</div>
+                {% endif %}
             </div>
         </div>
-    {% else %}
-        <div style="background: var(--bg); padding: 12px 14px; border-radius: 6px; margin-bottom: 12px; border: 1px solid var(--border);">
-            <p style="margin: 0; color: var(--muted); font-size: 0.9rem;">
-                <strong>System Notice:</strong> {{ b.data.info }}
-            </p>
+        <div>
+            <div style="font-size: 0.78rem; font-weight: 600; color: var(--muted); text-transform: uppercase;">Integrity Status:</div>
+            <div style="font-size: 0.92rem; font-weight: 600; margin-top: 2px; color: {% if b.is_valid %}var(--accent-2){% else %}var(--danger){% endif %};" id="block-integrity-text-{{ b.index }}">
+                {% if b.is_valid %}&#10003; Valid{% else %}&#9888; {{ b.integrity_reason }}{% endif %}
+            </div>
         </div>
-    {% endif %}
+    </div>
 
     <div style="display: grid; gap: 8px;">
         <div>
-            <label style="margin-bottom: 2px; font-weight: 600; font-size: 0.8rem;">Previous Block Hash (Link)</label>
-            <div class="hash-box">{{ b.previous_hash }}</div>
+            <label style="margin-bottom: 2px; font-weight: 600; font-size: 0.8rem; color: var(--muted);">Previous Hash:</label>
+            <div class="hash-box" style="margin: 0; font-size: 0.82rem;">{{ b.previous_hash }}</div>
         </div>
-
         <div>
-            <label style="margin-bottom: 2px; font-weight: 600; font-size: 0.8rem;">Stored Block Hash</label>
-            <div class="hash-box">{{ b.hash }}</div>
-        </div>
-
-        <div>
-            <label style="margin-bottom: 2px; font-weight: 600; font-size: 0.8rem;">Recomputed Hash (Evaluated Right Now)</label>
-            <div class="hash-box" style="{{ 'color: var(--danger); font-weight: bold; border-color: var(--danger); background: #fef2f2;' if b.mismatch else '' }}">
-                {{ b.recomputed_hash }}
-            </div>
+            <label style="margin-bottom: 2px; font-weight: 600; font-size: 0.8rem; color: var(--muted);">Current Hash:</label>
+            <div class="hash-box" style="margin: 0; font-size: 0.82rem; {% if not b.is_valid %}border-color: var(--danger); background: #fef2f2; color: var(--danger);{% endif %}">{{ b.hash }}</div>
         </div>
     </div>
 </div>

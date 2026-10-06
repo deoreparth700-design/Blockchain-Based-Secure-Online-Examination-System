@@ -8,8 +8,7 @@ Features:
 - Strict server-side and client-side form validation.
 - Server-enforced exam time windows (start_time to end_time).
 - Database-enforced single attempt per student per exam.
-- SHA-256 private blockchain for tamper-evident result sealing.
-- Ethereum Sepolia smart contract anchoring via MetaMask & ethers.js.
+- SHA-256 private blockchain for tamper-evident result sealing and verification.
 - CSRF protection and secure session management.
 - Zero-configuration Vercel deployment compatibility.
 - Neon PostgreSQL cloud database with local SQLite fallback.
@@ -26,7 +25,7 @@ from sqlalchemy.exc import IntegrityError
 
 import database
 import validators
-from blockchain import Blockchain
+from blockchain import Blockchain, verify_result_integrity
 from models import format_duration
 
 load_dotenv()
@@ -57,8 +56,8 @@ def handle_csrf():
         session["csrf_token"] = secrets.token_hex(16)
 
     if request.method == "POST":
-        # Exempt JSON API endpoints and public verify check
-        if request.path.startswith("/api/") or request.path == "/verify":
+        # Allow read-only verification query for AJAX integrity check
+        if request.path == "/verify":
             return
         token = request.form.get("csrf_token")
         if not token or token != session.get("csrf_token"):
@@ -702,12 +701,17 @@ def show_result(block_index):
             return redirect(url_for("student_dashboard"))
     elif session.get("role") == "admin":
         exam = database.get_exam(attempt.exam_id)
-        if not exam:
+        if not exam or exam.created_by != session.get("user_id"):
             flash("You do not have permission to view results for this exam.", "error")
             return redirect(url_for("admin_dashboard"))
+    else:
+        flash("Unauthorized access.", "error")
+        return redirect(url_for("index"))
 
+    # Dedicated backend integrity verification
+    integrity_result = blockchain.verify_result_integrity(block_index)
     chain_valid, _ = blockchain.is_chain_valid()
-    is_block_tampered = (block.hash != block.recompute_hash())
+    is_block_tampered = not integrity_result["valid"]
 
     # Build structured result summary with fallbacks for older blocks
     answers = block.data.get("answers", [])
@@ -754,67 +758,77 @@ def show_result(block_index):
         block=block,
         chain_valid=chain_valid,
         is_block_tampered=is_block_tampered,
+        integrity_result=integrity_result,
         attempt=attempt,
         result_summary=result_summary,
     )
 
 
-# ---------- Blockchain (Any Logged-in User) ----------
+# ---------- Integrity Ledger (Admin Only) ----------
 @app.route("/blockchain")
 @login_required
+@role_required("admin")
 def view_blockchain():
     chain_valid, problems = blockchain.is_chain_valid()
     blocks = []
     for b in blockchain.all_blocks():
+        integrity = blockchain.verify_result_integrity(b.index)
+        linked_result = None
+        if b.data.get("type") == "exam_result":
+            exam_title = b.data.get("exam_title", "Examination")
+            student_name = b.data.get("student_name", "Student")
+            prn = b.data.get("prn", b.data.get("roll_no", "N/A"))
+            linked_result = {
+                "is_exam": True,
+                "exam_title": exam_title,
+                "student_info": f"{student_name} — {prn}",
+            }
+        else:
+            linked_result = {
+                "is_exam": False,
+                "info": b.data.get("info", "Genesis Block — Exam Chain Initialized"),
+            }
+
         blocks.append({
             "index": b.index,
-            "time_str": datetime.fromtimestamp(b.timestamp).strftime("%d %b %Y, %I:%M:%S %p"),
-            "data": b.data,
+            "time_str": datetime.fromtimestamp(b.timestamp).strftime("%d %b %Y %H:%M"),
             "previous_hash": b.previous_hash,
             "hash": b.hash,
-            "recomputed_hash": b.recompute_hash(),
-            "mismatch": b.hash != b.recompute_hash(),
+            "linked_result": linked_result,
+            "is_valid": integrity["valid"],
+            "integrity_reason": integrity["reason"],
         })
     return render_template("blockchain.html", blocks=blocks, chain_valid=chain_valid, problems=problems)
 
 
 @app.route("/verify", methods=["POST"])
 @login_required
+@role_required("admin")
 def verify():
+    data = request.get_json(silent=True) or {}
+    block_index = data.get("block_index") if request.is_json else request.form.get("block_index")
+    if block_index is not None:
+        try:
+            b_idx = int(block_index)
+            res = blockchain.verify_result_integrity(b_idx)
+            return jsonify(res)
+        except ValueError:
+            return jsonify({"valid": False, "reason": "Invalid block index"}), 400
+
     valid, problems = blockchain.is_chain_valid()
-    return jsonify({"valid": valid, "problems": problems})
+    return jsonify({
+        "valid": valid,
+        "problems": problems,
+        "message": "Integrity verified: all blocks in the ledger are cryptographically valid." if valid else "Tampering detected in ledger."
+    })
 
 
-# ---------- Ethereum Smart Contract Anchoring ----------
-@app.route("/api/anchor_result/<int:attempt_id>", methods=["POST"])
+@app.route("/admin/verify_block/<int:block_index>", methods=["GET", "POST"])
 @login_required
 @role_required("admin")
-def anchor_result(attempt_id):
-    attempt = database.get_attempt_by_id(attempt_id)
-    if not attempt:
-        return jsonify({"error": "Attempt not found"}), 404
-
-    exam = database.get_exam(attempt.exam_id)
-    if not exam or exam.created_by != session["user_id"]:
-        return jsonify({"error": "Unauthorized: You can only anchor results for exams you created."}), 403
-
-    data = request.get_json(silent=True) or {}
-    tx_hash = data.get("tx_hash")
-    contract_address = data.get("contract_address")
-    result_hash = data.get("result_hash")
-    wallet_address = data.get("wallet_address")
-
-    if not tx_hash or not contract_address or not result_hash or not wallet_address:
-        return jsonify({"error": "Missing required Ethereum transaction details."}), 400
-
-    attempt.ethereum_tx_hash = tx_hash
-    attempt.ethereum_contract_address = contract_address
-    attempt.ethereum_result_hash = result_hash
-    attempt.ethereum_wallet_address = wallet_address
-    attempt.ethereum_anchored_at = datetime.now()
-
-    database.db.session.commit()
-    return jsonify({"status": "success"})
+def verify_block_route(block_index):
+    res = blockchain.verify_result_integrity(block_index)
+    return jsonify(res)
 
 
 if __name__ == "__main__":

@@ -144,7 +144,7 @@ class Attempt(db.Model):
     student = db.relationship("User")
     block = db.relationship("Block")
 
-    # Ethereum fields
+    # Legacy Ethereum fields (Schema debt - preserved for DB table safety, completely unused in V1 runtime)
     ethereum_tx_hash = db.Column(db.String(66), nullable=True)
     ethereum_contract_address = db.Column(db.String(42), nullable=True)
     ethereum_result_hash = db.Column(db.String(66), nullable=True)
