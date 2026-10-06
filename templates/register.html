@@ -1,17 +1,17 @@
 {% extends "base.html" %}
-{% block title %}Student Sign Up - ExamChain{% endblock %}
+{% block title %}Create Account - ExamChain{% endblock %}
 
 {% block content %}
 <div class="card" style="max-width: 480px; margin: 20px auto;">
-    <h2>Student Sign Up</h2>
+    <h2>Create Your Account</h2>
     <p style="color: var(--muted); font-size: 0.9rem; margin-bottom: 20px;">
-        Register to access your online examinations. All fields are required.
+        Register for BE Final Year Online Examination. All fields are required.
     </p>
 
     <form method="POST" id="register-form" novalidate>
         <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
 
-        <!-- Full Name -->
+        <!-- 1. Full Name -->
         <div class="form-group">
             <label for="name">Full Name</label>
             <input
@@ -29,34 +29,33 @@
                 {% if field_errors.get('name') %}
                     &#10007; {{ field_errors.get('name') }}
                 {% else %}
-                    Letters and spaces only (e.g. Priya Patil). No numbers.
+                    Letters and spaces only (e.g. Priya Patil).
                 {% endif %}
             </div>
         </div>
 
-        <!-- Username -->
+        <!-- 2. College PRN -->
         <div class="form-group">
-            <label for="username">Username</label>
+            <label for="prn">College PRN</label>
             <input
                 type="text"
-                id="username"
-                name="username"
-                value="{{ form_data.get('username', '') }}"
+                id="prn"
+                name="prn"
+                value="{{ form_data.get('prn', '') }}"
                 required
-                placeholder="e.g. rahul_demo"
-                autocomplete="username"
-                class="form-control {% if field_errors.get('username') %}input-error{% endif %}"
+                placeholder="e.g. 2024-BE-101"
+                class="form-control {% if field_errors.get('prn') %}input-error{% endif %}"
             >
-            <div id="username-msg" class="field-feedback {% if field_errors.get('username') %}feedback-error{% endif %}">
-                {% if field_errors.get('username') %}
-                    &#10007; {{ field_errors.get('username') }}
+            <div id="prn-msg" class="field-feedback {% if field_errors.get('prn') %}feedback-error{% endif %}">
+                {% if field_errors.get('prn') %}
+                    &#10007; {{ field_errors.get('prn') }}
                 {% else %}
-                    3–30 characters. Letters, numbers, and underscores only (no spaces).
+                    Your college permanent registration number (PRN).
                 {% endif %}
             </div>
         </div>
 
-        <!-- Email -->
+        <!-- 3. Email Address -->
         <div class="form-group">
             <label for="email">Email Address</label>
             <input
@@ -73,33 +72,12 @@
                 {% if field_errors.get('email') %}
                     &#10007; {{ field_errors.get('email') }}
                 {% else %}
-                    Standard email format (e.g. rahul@gmail.com).
+                    Standard email format (e.g. student@gmail.com).
                 {% endif %}
             </div>
         </div>
 
-        <!-- Roll No / PRN -->
-        <div class="form-group">
-            <label for="roll_no">Roll No / PRN</label>
-            <input
-                type="text"
-                id="roll_no"
-                name="roll_no"
-                value="{{ form_data.get('roll_no', '') }}"
-                required
-                placeholder="e.g. 2024-CS-101"
-                class="form-control {% if field_errors.get('roll_no') %}input-error{% endif %}"
-            >
-            <div id="roll-msg" class="field-feedback {% if field_errors.get('roll_no') %}feedback-error{% endif %}">
-                {% if field_errors.get('roll_no') %}
-                    &#10007; {{ field_errors.get('roll_no') }}
-                {% else %}
-                    Your college roll number or university PRN.
-                {% endif %}
-            </div>
-        </div>
-
-        <!-- Password -->
+        <!-- 4. Password -->
         <div class="form-group">
             <label for="password">Password</label>
             <input
@@ -120,7 +98,7 @@
             </div>
         </div>
 
-        <!-- Confirm Password -->
+        <!-- 5. Confirm Password -->
         <div class="form-group">
             <label for="confirm_password">Confirm Password</label>
             <input
@@ -142,26 +120,24 @@
         </div>
 
         <button type="submit" id="submit-btn" class="btn" style="width:100%; margin-top: 10px;">
-            Create Student Account
+            Create Account
         </button>
     </form>
 
     <p style="color: var(--muted); font-size: 0.85rem; margin-top: 16px; text-align: center;">
-        Already have an account? <a href="{{ url_for('login') }}" style="color: var(--accent); font-weight: 600;">Log in</a>.
+        Already registered? <a href="{{ url_for('login') }}" style="color: var(--accent); font-weight: 600;">Log in here</a>.
     </p>
 </div>
 
 <script>
-// Interactive Client-Side Validation with Instant Feedback
+// Interactive Client-Side Validation for 5 Target Registration Fields
 document.addEventListener("DOMContentLoaded", () => {
     const nameInput = document.getElementById("name");
     const nameMsg = document.getElementById("name-msg");
-    const userInput = document.getElementById("username");
-    const userMsg = document.getElementById("username-msg");
+    const prnInput = document.getElementById("prn");
+    const prnMsg = document.getElementById("prn-msg");
     const emailInput = document.getElementById("email");
     const emailMsg = document.getElementById("email-msg");
-    const rollInput = document.getElementById("roll_no");
-    const rollMsg = document.getElementById("roll-msg");
     const passInput = document.getElementById("password");
     const passMsg = document.getElementById("password-msg");
     const confInput = document.getElementById("confirm_password");
@@ -169,9 +145,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const form = document.getElementById("register-form");
 
     const reName = /^[A-Za-z]+(?: [A-Za-z]+)*$/;
-    const reUser = /^[a-zA-Z0-9_]{3,30}$/;
+    const rePrn = /^[A-Za-z0-9/_-]{2,40}$/;
     const reEmail = /^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/;
-    const reRoll = /^[A-Za-z0-9/_-]{2,40}$/;
 
     function setFieldState(input, msgEl, isValid, validText, errorText) {
         if (!input.value.trim()) {
@@ -205,24 +180,16 @@ document.addEventListener("DOMContentLoaded", () => {
         return setFieldState(nameInput, nameMsg, valid, "Valid name", error);
     }
 
-    function checkUser() {
-        const val = userInput.value.trim();
-        let error = "Letters, numbers, and underscore only (3-30 chars, no spaces).";
-        if (val.includes(" ")) error = "Username cannot contain spaces.";
-        const valid = reUser.test(val);
-        return setFieldState(userInput, userMsg, valid, "Valid username", error);
+    function checkPrn() {
+        const val = prnInput.value.trim();
+        const valid = rePrn.test(val);
+        return setFieldState(prnInput, prnMsg, valid, "Valid PRN format", "PRN must be 2–40 characters (letters, numbers, hyphens, slashes).");
     }
 
     function checkEmail() {
         const val = emailInput.value.trim();
         const valid = reEmail.test(val) && val.length <= 120;
-        return setFieldState(emailInput, emailMsg, valid, "Valid email address", "Please enter a valid email address (e.g. rahul@gmail.com).");
-    }
-
-    function checkRoll() {
-        const val = rollInput.value.trim();
-        const valid = reRoll.test(val);
-        return setFieldState(rollInput, rollMsg, valid, "Valid roll number", "Roll number must be 2–40 characters (letters, numbers, hyphens).");
+        return setFieldState(emailInput, emailMsg, valid, "Valid email address", "Please enter a valid email address (e.g. student@gmail.com).");
     }
 
     function checkPass() {
@@ -239,21 +206,19 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     nameInput.addEventListener("input", checkName);
-    userInput.addEventListener("input", checkUser);
+    prnInput.addEventListener("input", checkPrn);
     emailInput.addEventListener("input", checkEmail);
-    rollInput.addEventListener("input", checkRoll);
     passInput.addEventListener("input", () => { checkPass(); if (confInput.value) checkConfirm(); });
     confInput.addEventListener("input", checkConfirm);
 
     form.addEventListener("submit", (e) => {
         const v1 = checkName();
-        const v2 = checkUser();
+        const v2 = checkPrn();
         const v3 = checkEmail();
-        const v4 = checkRoll();
-        const v5 = checkPass();
-        const v6 = checkConfirm();
+        const v4 = checkPass();
+        const v5 = checkConfirm();
 
-        if (!v1 || !v2 || !v3 || !v4 || !v5 || !v6) {
+        if (!v1 || !v2 || !v3 || !v4 || !v5) {
             e.preventDefault();
         }
     });

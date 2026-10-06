@@ -82,7 +82,7 @@ class TestPhase1Roles(unittest.TestCase):
         self.assertEqual(res.status_code, 200)
 
         with app.app_context():
-            user = database.get_user_by_username("aarav_user")
+            user = database.get_user_by_identifier("2024-BE-101")
             self.assertIsNotNone(user)
             self.assertEqual(user.role, "user")
             self.assertNotEqual(user.role, "admin")
@@ -96,7 +96,7 @@ class TestPhase1Roles(unittest.TestCase):
             "csrf_token": "csrf-test-token",
             "name": "Evil Attacker",
             "username": "evil_hacker",
-            "roll_no": "2024-BE-999",
+            "prn": "2024-BE-999",
             "email": "evil@example.com",
             "password": "Password123",
             "confirm_password": "Password123",
@@ -105,7 +105,7 @@ class TestPhase1Roles(unittest.TestCase):
         self.assertEqual(res.status_code, 200)
 
         with app.app_context():
-            user = database.get_user_by_username("evil_hacker")
+            user = database.get_user_by_identifier("2024-BE-999")
             self.assertIsNotNone(user)
             # Backend MUST ignore user-supplied role and enforce 'user'
             self.assertEqual(user.role, "user")

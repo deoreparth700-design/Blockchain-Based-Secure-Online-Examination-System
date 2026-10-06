@@ -45,6 +45,15 @@ class User(db.Model):
     def check_password(self, raw_password):
         return check_password_hash(self.password_hash, raw_password)
 
+    @property
+    def prn(self):
+        """Primary student identifier for V1."""
+        return self.identifier
+
+    @prn.setter
+    def prn(self, value):
+        self.identifier = value
+
 
 class Exam(db.Model):
     __tablename__ = "exams"
