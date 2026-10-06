@@ -1,22 +1,21 @@
 # Blockchain-Based Secure Online Examination System
 
-A web-based examination platform designed to conduct scheduled MCQ exams and protect result integrity using **SHA-256 hash chaining** and **Ethereum Sepolia** anchoring.
+**Current Version: BE Final Year Single-Class Examination Platform (V1)**
+
+A web-based examination platform designed to conduct scheduled MCQ exams and protect result integrity using **SHA-256 hash chaining** for tamper detection.
 
 [![Live Demo](https://img.shields.io/badge/Live-Demo-success)](https://blockchain-based-secure-online-exam.vercel.app/)
 [![Python](https://img.shields.io/badge/Python-3.x-blue?logo=python)](https://www.python.org/)
 [![Flask](https://img.shields.io/badge/Flask-Web_Framework-black?logo=flask)](https://flask.palletsprojects.com/)
-[![Ethereum](https://img.shields.io/badge/Ethereum-Sepolia-purple?logo=ethereum)](https://ethereum.org/)
 
 ## Overview
 
-The **Blockchain-Based Secure Online Examination System** is a Flask-based online examination platform with two roles:
+The **Blockchain-Based Secure Online Examination System** is a Flask-based examination platform for a single BE Final Year class with two roles:
 
-- **Teacher** — create and schedule exams, manage questions, view submissions, and anchor results to Ethereum.
-- **Student** — register, log in, take scheduled exams, submit answers, and view results.
+- **Admin** — create and schedule exams, manage questions, publish/close exams, view submissions, and verify result integrity.
+- **User** (Student) — register with PRN and email, log in, take scheduled exams, submit answers, and view results.
 
-After an exam is submitted, the system automatically evaluates the answers and records the result. The result is then sealed into a private SHA-256 hash chain. Teachers can optionally anchor that result hash to an Ethereum smart contract on the **Sepolia testnet** for an additional, publicly verifiable integrity layer.
-
-> The system does not store student answers or personal information on Ethereum. Only the cryptographic result hash is anchored on-chain.
+After an exam is submitted, the system automatically evaluates the answers and records the result. The result is then sealed into a private SHA-256 hash-linked ledger. Each block contains the result data, a timestamp, its SHA-256 hash, and the previous block's hash. Modifying any stored block data causes the recalculated hash to differ, allowing the system to detect unauthorized changes.
 
 ## Live Demo
 
@@ -28,96 +27,82 @@ The application is deployed on Vercel and uses Neon PostgreSQL for cloud databas
 
 ### Examination
 
-- Teacher-created MCQ examinations
+- Admin-created MCQ examinations with draft → published → closed lifecycle
 - Configurable exam start and end times
-- Configurable examination duration
-- Server-side exam time enforcement
-- Automatic answer evaluation
-- One attempt per student per exam
-- Student result viewing
+- Configurable examination duration per exam
+- Server-side exam time enforcement (server clock is authoritative)
+- Automatic answer evaluation and scoring
+- One attempt per student per exam (database-enforced)
+- Detailed result breakdown (correct, incorrect, unanswered)
 
-### Authentication & Validation
+### Authentication & Security
 
-- Separate teacher and student roles
-- Student self-registration
-- Login using username, roll number, or email
-- Password hashing
+- Two roles: `admin` and `user`
+- Student self-registration with PRN and email
+- Login using PRN or email
+- Password hashing (Werkzeug)
 - Server-side input validation
-- CSRF protection
-- Secure session configuration
+- CSRF protection on all state-changing routes
+- HTTP-only, SameSite session cookies
+- Role-based access control
+- IDOR protection on results (users cannot view other users' results)
+- Admin-only integrity ledger (students cannot access raw blockchain data)
+- Client parameter injection protection (score, percentage, student_id ignored)
 
-### Blockchain Integrity
+### SHA-256 Integrity System
 
 - SHA-256 based result hashing
-- Private hash-linked blockchain
-- Previous-hash chaining between blocks
-- Blockchain validation for tamper detection
-- Demonstration script for simulating database tampering
-
-### Ethereum Integration
-
-- Solidity smart contract
-- Ethereum Sepolia testnet
-- MetaMask wallet integration
-- Teacher-controlled result anchoring
-- On-chain result verification
-- Transaction and wallet information stored with anchored results
-- Ethers.js integration in the frontend
+- Private hash-linked blockchain (each block references previous block's hash)
+- Automatic block sealing on exam submission
+- Per-block integrity verification (`verify_result_integrity`)
+- Full chain validation (Genesis to latest block)
+- Tamper detection with clear status on result page
+- Admin integrity ledger with summary metadata (raw answers suppressed)
 
 ## How It Works
 
 ```text
-Student
+Student Registers (PRN + Email)
    │
    ▼
-Take Scheduled Exam
+Login → Student Dashboard
+   │
+   ▼
+Take Published Exam (Timed)
    │
    ▼
 Submit Answers
    │
    ▼
-Flask Evaluates Result
+Flask Evaluates Result (Server-Side)
    │
    ▼
-Database Stores Attempt
+Result Sealed into SHA-256 Block
    │
    ▼
-SHA-256 Hash Generated
-   │
-   ▼
-Private Blockchain Block Created
-   │
-   ▼
-Teacher Can Anchor Result Hash
-   │
-   ▼
-Ethereum Sepolia Smart Contract
-   │
-   ▼
-Result Hash Can Be Verified
+View Result + Integrity Verification
 ```
 
-### Integrity Layers
+### Exam Lifecycle
 
-**Layer 1 — Application Database**
-
-Exam data, users, questions, attempts, and blockchain records are stored using SQLAlchemy.
-
-**Layer 2 — Private Blockchain**
-
-Each result block contains data, a timestamp, its hash, and the previous block's hash. Modifying stored block data causes the recalculated hash to differ, allowing the system to detect unauthorized changes.
-
-**Layer 3 — Ethereum**
-
-The teacher can submit the result hash to the deployed `ExamResultRegistry` smart contract. The contract records the hash together with the wallet address and timestamp.
-
-During verification, the application compares the current result hash with the hash stored on Ethereum.
+```text
+Admin creates exam → Draft
+   │
+   ▼
+Admin publishes → Published (visible to students)
+   │
+   ▼
+Students take exam within time window
+   │
+   ▼
+Admin closes → Closed (no new attempts)
+```
 
 ## Architecture
 
 ```text
                          ┌──────────────────┐
-                         │     Student      │
+                         │   Student/Admin   │
                          └────────┬─────────┘
                                   │
                                   ▼
@@ -131,21 +116,8 @@ During verification, the application compares the current result hash with the h
             ┌───────────────┐          ┌────────────────┐
             │ Neon PostgreSQL│          │ Private SHA-256│
             │   Application  │          │   Blockchain   │
-            │      Data      │          └───────┬────────┘
-            └───────────────┘                  │
-                                               │ Result Hash
-                                               ▼
-                                      ┌────────────────────┐
-                                      │ Ethereum Sepolia   │
-                                      │ ExamResultRegistry │
-                                      └─────────┬──────────┘
-                                                │
-                                                ▲
-                                          MetaMask
-                                                │
-                                      ┌─────────┴──────────┐
-                                      │      Teacher       │
-                                      └────────────────────┘
+            │      Data      │          │    Ledger      │
+            └───────────────┘          └────────────────┘
 ```
 
 ## Technology Stack
@@ -156,7 +128,6 @@ During verification, the application compares the current result hash with the h
 - CSS3
 - Vanilla JavaScript
 - Jinja2 templates
-- Ethers.js
 
 ### Backend
 
@@ -164,22 +135,18 @@ During verification, the application compares the current result hash with the h
 - Flask
 - Flask-SQLAlchemy
 - SQLAlchemy
+- Werkzeug (password hashing)
 
 ### Database
 
-- Neon PostgreSQL for deployment
-- SQLite fallback for local development
+- Neon PostgreSQL (production deployment)
+- SQLite (local development fallback)
 
-### Blockchain
+### Integrity
 
 - Python `hashlib`
 - SHA-256
-- Private hash-linked blockchain
-- Solidity
-- Ethereum Sepolia Testnet
-- MetaMask
-- Remix IDE
-- Ethers.js
+- Private hash-linked blockchain ledger
 
 ### Deployment
 
@@ -192,49 +159,47 @@ During verification, the application compares the current result hash with the h
 ```text
 Blockchain-Based-Secure-Online-Examination-System/
 │
-├── app.py
-├── blockchain.py
-├── database.py
-├── models.py
-├── validators.py
-├── init_db.py
-├── migrate_db.py
-├── demo_tamper.py
-├── requirements.txt
-├── vercel.json
-├── .env.example
-│
-├── contracts/
-│   └── ExamResultRegistry.sol
+├── app.py                          # Flask application and routes
+├── blockchain.py                   # SHA-256 blockchain logic and verification
+├── database.py                     # Database layer (SQLAlchemy helpers)
+├── models.py                       # ORM models (User, Exam, Question, Attempt, Block)
+├── validators.py                   # Input validation (registration, login, exam creation)
+├── init_db.py                      # First-time database setup and admin creation
+├── requirements.txt                # Python dependencies
+├── vercel.json                     # Vercel deployment configuration
+├── .env.example                    # Environment variable template
 │
 ├── static/
-│   ├── style.css
-│   ├── script.js
-│   └── js/
-│       ├── ethereum.js
-│       └── ethereum-config.js
+│   ├── style.css                   # Application stylesheet
+│   └── script.js                   # Client-side JavaScript
 │
-├── public/
-│   └── static/
-│       ├── style.css
-│       ├── script.js
-│       └── js/
+├── public/static/                  # Vercel static asset mirror
 │
 ├── templates/
-│   ├── base.html
-│   ├── index.html
-│   ├── login.html
-│   ├── register.html
-│   ├── create_exam.html
-│   ├── exam.html
-│   ├── exam_results.html
-│   ├── result.html
-│   ├── blockchain.html
-│   ├── teacher_dashboard.html
-│   └── student_dashboard.html
+│   ├── base.html                   # Base template with navigation
+│   ├── index.html                  # Landing page
+│   ├── login.html                  # Login form
+│   ├── register.html               # Registration form
+│   ├── admin_dashboard.html        # Admin dashboard with stats
+│   ├── create_exam.html            # Exam creation form
+│   ├── edit_exam.html              # Exam editing form
+│   ├── exam.html                   # Exam-taking interface with countdown
+│   ├── exam_results.html           # Admin results view
+│   ├── result.html                 # Student result with integrity badge
+│   ├── blockchain.html             # Admin integrity ledger view
+│   └── student_dashboard.html      # Student dashboard
+│
+├── experimental/
+│   └── ethereum/                   # Archived Ethereum/MetaMask integration (not used in V1)
 │
 └── tests/
-    └── test_system.py
+    ├── test_phase1_roles.py        # Authentication and role tests
+    ├── test_phase2_registration.py # Registration and PRN tests
+    ├── test_phase3_admin_exam_management.py  # Admin exam lifecycle tests
+    ├── test_phase4_exam_engine.py  # Exam timing and submission tests
+    ├── test_phase5_results.py      # Evaluation and result tests
+    ├── test_phase6_security_integrity.py    # Security and integrity tests
+    └── test_phase8_be_final_v1.py  # B.E. Final Year V1 completion tests
 ```
 
 ## Local Setup
@@ -276,9 +241,6 @@ Create a `.env` file based on `.env.example`.
 DATABASE_URL=postgresql://user:password@host/neondb?sslmode=require
 SECRET_KEY=your-random-secret-key
 FLASK_DEBUG=False
-
-ETHEREUM_CONTRACT_ADDRESS=your-contract-address
-ETHEREUM_CHAIN_ID=11155111
 ```
 
 For local development, `DATABASE_URL` can be omitted and the application will fall back to SQLite.
@@ -289,7 +251,7 @@ For local development, `DATABASE_URL` can be omitted and the application will fa
 python init_db.py
 ```
 
-The script creates the required tables and prompts you to create the first teacher account.
+The script creates the required tables and prompts you to create the first admin account.
 
 ### 6. Start the application
 
@@ -303,91 +265,50 @@ Then open:
 http://localhost:5000
 ```
 
-## Ethereum Setup
+## Testing
 
-The Ethereum integration is designed for the **Sepolia testnet**.
+The project includes 122 automated tests across 7 phase-specific test suites.
 
-### Requirements
-
-- MetaMask browser extension
-- Sepolia network enabled
-- Sepolia test ETH
-- Deployed `ExamResultRegistry` smart contract
-
-### Smart Contract
-
-The project includes:
-
-```text
-contracts/ExamResultRegistry.sol
-```
-
-The contract provides two main operations:
-
-```solidity
-recordResult(attemptId, resultHash)
-```
-
-Stores a result hash on Ethereum.
-
-```solidity
-verifyResult(attemptId, resultHash)
-```
-
-Checks whether the supplied hash matches the anchored hash.
-
-The contract uses an owner-based permission model, meaning only the contract owner can record a result.
-
-## Result Anchoring Flow
-
-1. Student completes an examination.
-2. Flask evaluates the submission.
-3. The result is stored in the database.
-4. The result is sealed into the private SHA-256 blockchain.
-5. A teacher opens the student's result.
-6. The teacher selects **Anchor on Ethereum**.
-7. MetaMask requests transaction approval.
-8. The result hash is written to the Ethereum Sepolia contract.
-9. The transaction hash is stored by the application.
-10. The result can later be verified against the Ethereum record.
-
-## Tamper Detection Demo
-
-The repository includes a demonstration script:
+Run all tests:
 
 ```bash
-python demo_tamper.py <block_index> <new_score>
+python -m unittest tests/test_phase1_roles.py tests/test_phase2_registration.py tests/test_phase3_admin_exam_management.py tests/test_phase4_exam_engine.py tests/test_phase5_results.py tests/test_phase6_security_integrity.py tests/test_phase8_be_final_v1.py
 ```
 
-Example:
+All test suites use isolated SQLite databases and do not touch the production Neon PostgreSQL database.
+
+| Suite | Coverage |
+|-------|----------|
+| Phase 1 | Authentication, roles, login redirect, role normalization |
+| Phase 2 | PRN registration, duplicate prevention, admin injection |
+| Phase 3 | Exam creation, lifecycle (draft/publish/close), editing, deletion |
+| Phase 4 | Exam timing, server-authoritative deadlines, submission protection |
+| Phase 5 | Scoring, result breakdown, ownership, admin statistics |
+| Phase 6 | Ethereum removal, ledger privacy, integrity verification, CSRF, IDOR |
+| Phase 8 | B.E. Final Year academic scope, registration, state organization, tamper detection |
+
+A formatting check can also be performed with:
 
 ```bash
-python demo_tamper.py 1 100
+git diff --check
 ```
-
-This simulates an attacker modifying blockchain data without recalculating the original block hash.
-
-The application can then detect the inconsistency when validating the private blockchain.
-
-If the original result was also anchored to Ethereum, the changed local hash will no longer match the hash stored on-chain.
-
-> This is a demonstration of tamper detection, not a claim that the application itself is an immutable decentralized database.
 
 ## Security
 
 The application includes several security-related controls:
 
 - Password hashing using Werkzeug security utilities
-- Server-side validation
-- Client-side validation
-- CSRF protection
-- HTTP-only session cookies
-- SameSite session configuration
-- Role-based access control
-- Server-enforced exam time windows
-- Single-attempt enforcement
-- Ethereum owner authorization
-- Cryptographic hash verification
+- Server-side and client-side input validation
+- CSRF protection on all state-changing POST routes
+- HTTP-only session cookies with SameSite=Lax
+- Role-based access control (admin/user)
+- Server-enforced exam time windows (server clock is authoritative)
+- Database-enforced single-attempt constraint per student per exam
+- IDOR protection: users cannot view another user's result
+- Admin-only blockchain ledger: students cannot access raw chain data
+- Client parameter injection protection: score, percentage, student_id, hash, block_id, time_used are server-derived and cannot be overridden by POST data
+- Custom error handlers: no Python tracebacks or SQL details exposed to users
+- Cryptographic SHA-256 hash verification with per-block and full-chain validation
 
 ### Important
 
@@ -403,27 +324,6 @@ Never expose:
 
 - Database passwords
 - Flask secret keys
-- Wallet private keys
-- Seed phrases
-- Secret recovery phrases
-
-## Testing
-
-The project includes an automated system test suite.
-
-Run:
-
-```bash
-python -m unittest tests/test_system.py
-```
-
-The current test suite contains **13 tests**, covering core examination-system functionality.
-
-A formatting check can also be performed with:
-
-```bash
-git diff --check
-```
 
 ## Deployment
 
@@ -437,13 +337,11 @@ vercel.json
 
 The deployed Flask application uses Neon PostgreSQL through the `DATABASE_URL` environment variable.
 
-Required Vercel environment variables include:
+Required Vercel environment variables:
 
 ```text
 DATABASE_URL
 SECRET_KEY
-ETHEREUM_CONTRACT_ADDRESS
-ETHEREUM_CHAIN_ID
 ```
 
 ### Database
@@ -457,32 +355,54 @@ Local Development → SQLite fallback
 
 This allows the same application to run locally without requiring a cloud database while still supporting persistent PostgreSQL storage in deployment.
 
+## Ethereum Integration (Experimental / Archived)
+
+An experimental Ethereum Sepolia and MetaMask integration was developed as a research component and has been **archived** under `experimental/ethereum/`. It is **not required** by V1 and is completely decoupled from the active application runtime.
+
+The V1 examination system relies entirely on the private SHA-256 hash-linked ledger for tamper detection and result verification. No Ethereum wallet, MetaMask extension, or Sepolia testnet connection is needed to operate the current system.
+
+The archived experimental files are preserved for academic documentation only.
+
+## Tamper Detection Demo
+
+The repository includes a demonstration script:
+
+```bash
+python demo_tamper.py <block_index> <new_score>
+```
+
+Example:
+
+```bash
+python demo_tamper.py 1 100
+```
+
+This simulates an attacker modifying blockchain data without recalculating the original block hash. The application can then detect the inconsistency when validating the blockchain.
+
+> This is a demonstration of tamper detection, not a claim that the application itself is an immutable decentralized database.
+
 ## Limitations
 
 This project is primarily an academic and demonstration system.
 
 Current limitations include:
 
-- Ethereum integration uses the Sepolia testnet.
-- Result anchoring is initiated manually by the teacher.
-- The private blockchain is application-controlled rather than decentralized.
-- Ethereum stores the result hash, not the complete examination record.
-- The smart contract currently uses a single owner for anchoring authorization.
-- Production deployment would require stronger operational controls, monitoring, backup strategy, and scalability considerations.
+- The system is designed for a single BE Final Year class (not multi-class or college-wide)
+- The private blockchain is application-controlled rather than decentralized
+- Production deployment would require stronger operational controls, monitoring, backup strategy, and scalability considerations
+- Future multi-class/college-wide expansion is planned but not implemented
 
 ## Future Improvements
 
 Possible future enhancements include:
 
-- Multiple authorized teachers on the smart contract
-- Automated Ethereum anchoring through a backend relayer
-- Better audit logging
+- Multi-class and department support
+- Role expansion (T&P coordinator, department admin)
 - Production-grade database migrations
-- Advanced examination analytics
+- Advanced examination analytics and export
 - Question banks and randomized questions
-- Role and permission management
 - Email notifications
-- Scalable blockchain/L2 deployment
+- Audit logging
 - Improved administration dashboard
 
 ## Why Blockchain Is Used
@@ -498,12 +418,10 @@ SHA-256 Hash
     ↓
 Private Hash-Linked Blockchain
     ↓
-Optional Ethereum Anchor
+Tamper Detection via Hash Mismatch
 ```
 
-The goal is not to store the complete exam on a public blockchain.
-
-Instead, blockchain technology is used to create a **verifiable integrity fingerprint** for the result.
+The goal is not to store the complete exam on a public blockchain. Instead, blockchain technology is used to create a **verifiable integrity fingerprint** for the result. Any modification to stored data causes the SHA-256 hash to change, which is immediately detectable through chain validation.
 
 ## Author
 

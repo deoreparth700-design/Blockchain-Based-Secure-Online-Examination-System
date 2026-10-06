@@ -16,11 +16,17 @@
 </div>
 
 <!-- Summary Statistics Cards -->
-<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 28px;">
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; margin-bottom: 28px;">
     <div class="card" style="text-align: center; padding: 18px 12px; margin-bottom: 0;">
         <div style="color: var(--muted); font-size: 0.8rem; font-weight: 700; letter-spacing: 0.5px;">TOTAL EXAMS</div>
         <div style="font-size: 2rem; font-weight: 700; color: var(--accent); margin-top: 4px;" id="stat-total-exams">
             {{ stats.total_exams }}
+        </div>
+    </div>
+    <div class="card" style="text-align: center; padding: 18px 12px; margin-bottom: 0;">
+        <div style="color: var(--muted); font-size: 0.8rem; font-weight: 700; letter-spacing: 0.5px;">DRAFT EXAMS</div>
+        <div style="font-size: 2rem; font-weight: 700; color: #f59e0b; margin-top: 4px;" id="stat-draft-exams">
+            {{ stats.draft_exams }}
         </div>
     </div>
     <div class="card" style="text-align: center; padding: 18px 12px; margin-bottom: 0;">
@@ -40,6 +46,7 @@
         <div style="font-size: 2rem; font-weight: 700; color: var(--accent); margin-top: 4px;" id="stat-total-users">
             {{ stats.total_users }}
         </div>
+        <div style="font-size: 0.75rem; color: var(--muted); margin-top: 2px;">B.E. Final Year Students</div>
     </div>
     <div class="card" style="text-align: center; padding: 18px 12px; margin-bottom: 0;">
         <div style="color: var(--muted); font-size: 0.8rem; font-weight: 700; letter-spacing: 0.5px;">TOTAL SUBMISSIONS</div>
@@ -49,7 +56,7 @@
     </div>
 </div>
 
-<h3 style="margin-bottom: 16px;">Managed Examinations</h3>
+<h3 style="margin-bottom: 16px;">Managed Examinations (B.E. Final Year)</h3>
 
 {% if not exams %}
     <div class="card" style="text-align: center; padding: 40px 20px;">
