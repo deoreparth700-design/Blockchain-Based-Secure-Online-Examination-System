@@ -1,27 +1,30 @@
-# Blockchain-Based Secure Online Examination System
+# MGM University — B.E. Final Year Examination Platform
 
-**Current Version: BE Final Year Single-Class Examination Platform (V1)**
-
-A web-based examination platform designed to conduct scheduled MCQ exams and protect result integrity using **SHA-256 hash chaining** for tamper detection.
+**Version:** B.E. Final Year Examination Platform (V1)<br>
+**Academic Scope:** Department of Computer Science & Engineering · Final Year (2025–2026)<br>
+**Security Framework:** Server-Authoritative Evaluation & SHA-256 Tamper-Evident Ledger
 
 [![Live Demo](https://img.shields.io/badge/Live-Demo-success)](https://blockchain-based-secure-online-exam.vercel.app/)
 [![Python](https://img.shields.io/badge/Python-3.x-blue?logo=python)](https://www.python.org/)
 [![Flask](https://img.shields.io/badge/Flask-Web_Framework-black?logo=flask)](https://flask.palletsprojects.com/)
+[![Tests](https://img.shields.io/badge/Tests-135%2F135%20Passing-brightgreen)](#testing)
 
 ## Overview
 
-The **Blockchain-Based Secure Online Examination System** is a Flask-based examination platform for a single BE Final Year class with two roles:
+The **MGM University B.E. Final Year Examination Platform** is an institutional web-based examination portal designed for conducting scheduled MCQ examinations and maintaining tamper-evident marksheet records. The user interface adheres to the visual identity and institutional design principles of **MGM University** ([mgmu.ac.in](https://mgmu.ac.in/)).
 
-- **Admin** — create and schedule exams, manage questions, publish/close exams, view submissions, and verify result integrity.
-- **User** (Student) — register with PRN and email, log in, take scheduled exams, submit answers, and view results.
+The platform supports two roles:
 
-After an exam is submitted, the system automatically evaluates the answers and records the result. The result is then sealed into a private SHA-256 hash-linked ledger. Each block contains the result data, a timestamp, its SHA-256 hash, and the previous block's hash. Modifying any stored block data causes the recalculated hash to differ, allowing the system to detect unauthorized changes.
+- **Admin / Faculty** — Author examination papers, configure start/end windows and timers, manage draft/published/closed lifecycle, review class submission metrics, and audit the cryptographic ledger.
+- **Student (Candidate)** — Register with official college PRN, access scheduled examinations within designated windows, take distraction-free timed exams, and receive server-evaluated marksheets.
 
-## Live Demo
+Cryptographic security is provided via a private, hash-linked **SHA-256 integrity ledger**. When an examination attempt is finalized, an immutable cryptographic fingerprint is sealed into the chain. Any post-submission tampering with marks or candidate data immediately breaks hash validation and is flagged upon audit.
 
-**Application:** https://blockchain-based-secure-online-exam.vercel.app/
+## Live Application
 
-The application is deployed on Vercel and uses Neon PostgreSQL for cloud database storage.
+**Production URL:** https://blockchain-based-secure-online-exam.vercel.app/
+
+Deployed on Vercel with Neon PostgreSQL cloud database and local SQLite development fallback.
 
 ## Key Features
 
@@ -199,7 +202,8 @@ Blockchain-Based-Secure-Online-Examination-System/
     ├── test_phase4_exam_engine.py  # Exam timing and submission tests
     ├── test_phase5_results.py      # Evaluation and result tests
     ├── test_phase6_security_integrity.py    # Security and integrity tests
-    └── test_phase8_be_final_v1.py  # B.E. Final Year V1 completion tests
+    ├── test_phase8_be_final_v1.py  # B.E. Final Year V1 completion tests
+    └── test_phase9_pilot_readiness.py # Pilot readiness and end-to-end tests
 ```
 
 ## Local Setup
@@ -287,6 +291,7 @@ All test suites use isolated SQLite databases and do not touch the production Ne
 | Phase 6 | Ethereum removal, ledger privacy, integrity verification, CSRF, IDOR |
 | Phase 8 | B.E. Final Year academic scope, registration, state organization, tamper detection |
 | Phase 9 | Pilot readiness audit, access control failure cases, client injection immunity, seed integrity, E2E demo workflow |
+| Phase 10 & 11 | MGM University visual identity redesign, responsive & accessibility QA, final release |
 
 A formatting check can also be performed with:
 
