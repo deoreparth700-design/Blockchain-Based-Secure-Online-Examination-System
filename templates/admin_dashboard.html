@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard - BE Final Year Examination System{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 12px;">
+    <div>
+        <h2 style="margin: 0;">Admin Dashboard</h2>
+        <p style="color: var(--muted); margin: 4px 0 0; font-size: 0.95rem;">
+            BE Final Year Examination System &middot; Logged in as <strong>{{ session.get('name') }}</strong> (Administrator)
+        </p>
+    </div>
+    <div style="display: flex; gap: 10px;">
+        <a href="{{ url_for('view_blockchain') }}" class="btn btn-secondary btn-sm">View Blockchain</a>
+        <a href="{{ url_for('create_exam') }}" class="btn btn-sm">+ Create New Exam</a>
+    </div>
+</div>
+
+<!-- Summary Statistics Cards -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 28px;">
+    <div class="card" style="text-align: center; padding: 18px 12px; margin-bottom: 0;">
+        <div style="color: var(--muted); font-size: 0.8rem; font-weight: 700; letter-spacing: 0.5px;">TOTAL EXAMS</div>
+        <div style="font-size: 2rem; font-weight: 700; color: var(--accent); margin-top: 4px;" id="stat-total-exams">
+            {{ stats.total_exams }}
+        </div>
+    </div>
+    <div class="card" style="text-align: center; padding: 18px 12px; margin-bottom: 0;">
+        <div style="color: var(--muted); font-size: 0.8rem; font-weight: 700; letter-spacing: 0.5px;">PUBLISHED EXAMS</div>
+        <div style="font-size: 2rem; font-weight: 700; color: var(--accent-2); margin-top: 4px;" id="stat-published-exams">
+            {{ stats.published_exams }}
+        </div>
+    </div>
+    <div class="card" style="text-align: center; padding: 18px 12px; margin-bottom: 0;">
+        <div style="color: var(--muted); font-size: 0.8rem; font-weight: 700; letter-spacing: 0.5px;">CLOSED EXAMS</div>
+        <div style="font-size: 2rem; font-weight: 700; color: var(--muted); margin-top: 4px;" id="stat-closed-exams">
+            {{ stats.closed_exams }}
+        </div>
+    </div>
+    <div class="card" style="text-align: center; padding: 18px 12px; margin-bottom: 0;">
+        <div style="color: var(--muted); font-size: 0.8rem; font-weight: 700; letter-spacing: 0.5px;">REGISTERED USERS</div>
+        <div style="font-size: 2rem; font-weight: 700; color: var(--accent); margin-top: 4px;" id="stat-total-users">
+            {{ stats.total_users }}
+        </div>
+    </div>
+    <div class="card" style="text-align: center; padding: 18px 12px; margin-bottom: 0;">
+        <div style="color: var(--muted); font-size: 0.8rem; font-weight: 700; letter-spacing: 0.5px;">TOTAL SUBMISSIONS</div>
+        <div style="font-size: 2rem; font-weight: 700; color: var(--accent-2); margin-top: 4px;" id="stat-total-submissions">
+            {{ stats.total_submissions }}
+        </div>
+    </div>
+</div>
+
+<h3 style="margin-bottom: 16px;">Managed Examinations</h3>
+
+{% if not exams %}
+    <div class="card" style="text-align: center; padding: 40px 20px;">
+        <div style="font-size: 2.2rem; color: var(--muted); margin-bottom: 8px;">&#128221;</div>
+        <h4 style="margin: 0 0 6px;">No Examinations Created Yet</h4>
+        <p style="color: var(--muted); margin: 0 0 16px; font-size: 0.9rem;">
+            Create your first examination with multiple-choice questions and a scheduled time window.
+        </p>
+        <a href="{{ url_for('create_exam') }}" class="btn">+ Create Exam Now</a>
+    </div>
+{% else %}
+    {% for exam in exams %}
+    <div class="card" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; margin-bottom: 16px;">
+        <div style="flex: 1; min-width: 280px;">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
+                <h3 style="margin: 0; font-size: 1.15rem;">{{ exam.title }}</h3>
+                {% if exam.status == 'draft' %}
+                    <span class="status-badge status-draft">&#9998; Draft</span>
+                {% elif exam.status == 'closed' %}
+                    <span class="status-badge status-closed">&#10005; Closed</span>
+                {% elif exam.status == 'published' %}
+                    {% if now < exam.start_time %}
+                        <span class="status-badge status-upcoming">&#9200; Published (Upcoming)</span>
+                    {% elif now > exam.end_time %}
+                        <span class="status-badge status-closed">&#9679; Published (Window Expired)</span>
+                    {% else %}
+                        <span class="status-badge status-valid">&#9679; Published (Open Now)</span>
+                    {% endif %}
+                {% endif %}
+            </div>
+
+            <p style="color: var(--muted); font-size: 0.88rem; margin: 0;">
+                <strong>Schedule:</strong> {{ exam.start_time.strftime('%d %b %Y, %I:%M %p') }} &rarr; {{ exam.end_time.strftime('%d %b %Y, %I:%M %p') }}
+                &middot; <strong>Duration:</strong> {{ exam.duration_minutes }} min
+                &middot; <strong>Questions:</strong> {{ exam.questions|length }}
+                &middot; <strong>Submissions:</strong> {{ exam.attempts|length }}
+            </p>
+        </div>
+
+        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+            {% if exam.status == 'draft' %}
+                <a href="{{ url_for('edit_exam', exam_id=exam.id) }}" class="btn btn-secondary btn-sm">Edit</a>
+                <form method="POST" action="{{ url_for('publish_exam', exam_id=exam.id) }}" style="display: inline; margin: 0;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <button type="submit" class="btn btn-sm">Publish</button>
+                </form>
+                <form method="POST" action="{{ url_for('delete_exam', exam_id=exam.id) }}" style="display: inline; margin: 0;" onsubmit="return confirm('Are you sure you want to permanently delete this draft exam?');">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                </form>
+            {% elif exam.status == 'published' %}
+                {% if exam.attempts|length == 0 %}
+                    <a href="{{ url_for('edit_exam', exam_id=exam.id) }}" class="btn btn-secondary btn-sm">Edit</a>
+                {% endif %}
+                <form method="POST" action="{{ url_for('close_exam', exam_id=exam.id) }}" style="display: inline; margin: 0;" onsubmit="return confirm('Are you sure you want to close this exam? Students will immediately be prevented from taking or submitting it.');">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <button type="submit" class="btn btn-warning btn-sm">Close</button>
+                </form>
+                <a href="{{ url_for('exam_results', exam_id=exam.id) }}" class="btn btn-secondary btn-sm">
+                    Results ({{ exam.attempts|length }})
+                </a>
+            {% elif exam.status == 'closed' %}
+                <a href="{{ url_for('exam_results', exam_id=exam.id) }}" class="btn btn-secondary btn-sm">
+                    Results ({{ exam.attempts|length }})
+                </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+{% endif %}
+{% endblock %}

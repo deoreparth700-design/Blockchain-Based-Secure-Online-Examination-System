@@ -11,8 +11,8 @@
     <a href="{{ url_for('index') }}" class="brand">&#9878; Exam<span>Chain</span></a>
     <div class="nav-links">
         {% if session.get('role') == 'admin' %}
-            <a href="{{ url_for('teacher_dashboard') }}">My Exams</a>
-            <a href="{{ url_for('create_exam') }}">Create Exam</a>
+            <a href="{{ url_for('admin_dashboard') }}">Admin Dashboard</a>
+            <a href="{{ url_for('create_exam') }}">+ Create Exam</a>
             <a href="{{ url_for('view_blockchain') }}">View Blockchain</a>
             <a href="{{ url_for('logout') }}">Logout ({{ session.get('name') }} - Admin)</a>
         {% elif session.get('role') == 'user' %}

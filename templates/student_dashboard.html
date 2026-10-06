@@ -54,9 +54,13 @@
                     <span style="font-size: 1.05rem; font-weight: 700; color: var(--accent-2);">
                         Score: {{ row.attempt.score }}/{{ row.attempt.total }}
                     </span>
+                    {% if row.attempt.block_id is not none %}
                     <a href="{{ url_for('show_result', block_index=row.attempt.block_id) }}" class="btn btn-secondary btn-sm">
                         View Sealed Result
                     </a>
+                    {% else %}
+                    <span style="color: var(--muted); font-size: 0.85rem;">Result Recorded</span>
+                    {% endif %}
                 </div>
             {% elif row.status == "open" %}
                 <a href="{{ url_for('take_exam', exam_id=row.exam.id) }}" class="btn btn-sm" style="font-weight: 600;">
@@ -68,7 +72,7 @@
                 </span>
             {% else %}
                 <span style="color: var(--muted); font-size: 0.85rem;">
-                    Window closed
+                    {% if row.exam.status == 'closed' %}Exam closed{% else %}Window closed{% endif %}
                 </span>
             {% endif %}
         </div>

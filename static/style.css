@@ -81,6 +81,7 @@ h1, h2, h3 { color: var(--text); }
 .btn:hover { opacity: 0.9; }
 .btn-secondary { background: transparent; border: 1px solid var(--border); color: var(--text); }
 .btn-danger { background: var(--danger); }
+.btn-warning { background: #d97706; color: #fff; }
 .btn-sm { padding: 6px 14px; font-size: 0.85rem; }
 
 .status-badge {
@@ -94,6 +95,7 @@ h1, h2, h3 { color: var(--text); }
 .status-invalid { background: rgba(220,38,38,0.12); color: var(--danger); }
 .status-upcoming { background: rgba(59,91,253,0.12); color: var(--accent); }
 .status-closed { background: rgba(107,118,136,0.15); color: var(--muted); }
+.status-draft { background: rgba(217,119,6,0.15); color: #d97706; }
 
 .flash {
     padding: 12px 16px;
