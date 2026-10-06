@@ -80,7 +80,7 @@
         <div id="eth-status" style="margin-top: 14px; font-weight: 600; text-align: center; font-size: 0.9rem;"></div>
 
         <div style="text-align: center; margin-top: 14px;">
-            {% if session.get('role') == 'teacher' and attempt and not attempt.ethereum_tx_hash %}
+            {% if session.get('role') == 'admin' and attempt and not attempt.ethereum_tx_hash %}
                 <button class="btn btn-primary" style="background: #0284c7;" onclick="anchorResultOnEthereum({{ attempt.id }}, '{{ block.hash }}')">
                     &#9878; Anchor on Ethereum Sepolia
                 </button>

@@ -24,13 +24,13 @@ with app.app_context():
     db.create_all()
     print("Database tables ready (exam_system.db).\n")
 
-    print("Let's create a teacher account.")
-    name = input("Teacher's full name: ").strip()
+    print("Let's create an admin account.")
+    name = input("Admin's full name: ").strip()
     username = input("Choose a username for login: ").strip()
     password = getpass.getpass("Choose a password: ")
 
     if database.get_user_by_identifier(username):
         print(f"\nA user with username '{username}' already exists. Skipping creation.")
     else:
-        database.create_user(name=name, identifier=username, username=username, password=password, role="teacher")
-        print(f"\nTeacher account created. Log in at /login with username '{username}'.")
+        database.create_user(name=name, identifier=username, username=username, password=password, role="admin")
+        print(f"\nAdmin account created. Log in at /login with username '{username}'.")

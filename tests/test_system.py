@@ -194,7 +194,7 @@ class TestSystem(unittest.TestCase):
         with app.app_context():
             user = database.get_user_by_login(test_uname)
             self.assertIsNotNone(user)
-            self.assertEqual(user.role, "student")
+            self.assertEqual(user.role, "user")
             self.assertTrue(user.check_password(test_pass))
 
         # 4. Duplicate registration attempt should be rejected
@@ -259,14 +259,14 @@ class TestSystem(unittest.TestCase):
         student_uname = f"stud_{ts}"
 
         with app.app_context():
-            # Create a test teacher and student
+            # Create a test admin and user
             teacher = database.create_user(
                 name="Prof Smith",
                 username=teacher_uname,
                 identifier=teacher_uname,
                 email=f"prof_{ts}@univ.edu",
                 password="TeacherPass123",
-                role="teacher"
+                role="admin"
             )
             student = database.create_user(
                 name="Alice Wonder",
@@ -274,7 +274,7 @@ class TestSystem(unittest.TestCase):
                 identifier=f"PRN_{ts}",
                 email=f"alice_{ts}@univ.edu",
                 password="StudentPass123",
-                role="student"
+                role="user"
             )
             teacher_id = teacher.id
             student_id = student.id
@@ -313,7 +313,7 @@ class TestSystem(unittest.TestCase):
         # Student logs in
         with self.client.session_transaction() as sess:
             sess["user_id"] = student_id
-            sess["role"] = "student"
+            sess["role"] = "user"
             sess["name"] = "Alice Wonder"
             sess["identifier"] = f"PRN_{ts}"
             sess["csrf_token"] = "test-csrf-token"
