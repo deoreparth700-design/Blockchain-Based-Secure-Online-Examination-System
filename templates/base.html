@@ -1,46 +1,125 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>{% block title %}B.E. Final Year Examination Platform{% endblock %}</title>
-<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}MGM University &middot; B.E. Final Year Examination Platform{% endblock %}</title>
+
+    <!-- Favicon & Touch Icons -->
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='images/favicon-32x32.png') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='images/mgm_seal.png') }}">
+
+    <!-- Google Fonts: Rubik (Official MGM Brand Typography) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Master Design System Stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-<nav class="navbar">
-    <a href="{{ url_for('index') }}" class="brand">&#9878; Exam<span>Chain</span> <small style="font-size:0.75rem; opacity:0.85; font-weight:normal; margin-left:4px;">&middot; B.E. Final Year</small></a>
-    <div class="nav-links">
-        {% if session.get('role') == 'admin' %}
-            <a href="{{ url_for('admin_dashboard') }}">Admin Dashboard</a>
-            <a href="{{ url_for('create_exam') }}">+ Create Exam</a>
-            <a href="{{ url_for('view_blockchain') }}">Integrity Ledger</a>
-            <a href="{{ url_for('logout') }}">Logout ({{ session.get('name') }} - Admin)</a>
-        {% elif session.get('role') == 'user' %}
-            <a href="{{ url_for('student_dashboard') }}">My Exams</a>
-            <a href="{{ url_for('logout') }}">Logout ({{ session.get('name') }})</a>
-        {% else %}
-            <a href="{{ url_for('login') }}">Login</a>
-            <a href="{{ url_for('register') }}">Create Account</a>
-        {% endif %}
-    </div>
-</nav>
 
-<main class="container">
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <div class="flash flash-{{ category }}">{{ message }}</div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
+    <!-- Header: Institutional Ribbon + Navigation Bar -->
+    <header class="mgm-header" role="banner">
+        <!-- Top Institutional Ribbon -->
+        <div class="mgm-topbar">
+            <div class="mgm-topbar-inner">
+                <div class="mgm-topbar-brand">
+                    <span>MGM UNIVERSITY &middot; CHHATRAPATI SAMBHAJINAGAR (AURANGABAD)</span>
+                </div>
+                <div class="mgm-topbar-meta">
+                    <span>Department of Computer Science &amp; Engineering</span>
+                    <span>&middot;</span>
+                    <span>Academic Year <strong>2025–2026</strong></span>
+                </div>
+            </div>
+        </div>
 
-    {% block content %}{% endblock %}
-</main>
+        <!-- Main University Navigation Bar -->
+        <nav class="mgm-navbar" aria-label="Main Navigation">
+            <a href="{{ url_for('index') }}" class="mgm-brand-link" title="MGM University B.E. Final Year Examination Platform">
+                <div class="mgm-brand-logo-wrap">
+                    <img src="{{ url_for('static', filename='images/mgm_logo.svg') }}"
+                         onerror="this.onerror=null; this.src='{{ url_for('static', filename='images/mgm_seal.png') }}';"
+                         alt="MGM University Logo"
+                         class="mgm-brand-logo">
+                </div>
+                <div class="mgm-brand-text">
+                    <span class="mgm-brand-title">MGM UNIVERSITY</span>
+                    <span class="mgm-brand-sub">B.E. Final Year Examination Platform</span>
+                </div>
+            </a>
 
-<footer>
-    <p>B.E. Final Year Examination Platform &middot; B.E. Computer Science and Engineering &middot; SHA-256 Cryptographic Integrity</p>
-</footer>
+            <div class="mgm-nav-links">
+                {% if session.get('role') == 'admin' %}
+                    <a href="{{ url_for('admin_dashboard') }}" class="mgm-nav-item {% if request.path in ['/admin', '/admin/exams', '/teacher'] %}active{% endif %}">Admin Dashboard</a>
+                    <a href="{{ url_for('create_exam') }}" class="mgm-nav-item {% if request.path in ['/admin/exams/create', '/teacher/create_exam'] %}active{% endif %}">+ Create Exam</a>
+                    <a href="{{ url_for('view_blockchain') }}" class="mgm-nav-item {% if request.path == '/blockchain' %}active{% endif %}">Integrity Ledger</a>
+                    <span class="mgm-user-badge role-admin">{{ session.get('name') }} (Admin)</span>
+                    <a href="{{ url_for('logout') }}" class="mgm-logout-btn">Logout</a>
+                {% elif session.get('role') == 'user' %}
+                    <a href="{{ url_for('student_dashboard') }}" class="mgm-nav-item {% if request.path in ['/student'] %}active{% endif %}">Dashboard</a>
+                    <a href="{{ url_for('student_dashboard') }}" class="mgm-nav-item">My Exams</a>
+                    <span class="mgm-user-badge">{{ session.get('name') }} (Student)</span>
+                    <a href="{{ url_for('logout') }}" class="mgm-logout-btn">Logout</a>
+                {% else %}
+                    <a href="{{ url_for('index') }}" class="mgm-nav-item {% if request.path == '/' %}active{% endif %}">Portal Home</a>
+                    <a href="{{ url_for('login') }}" class="btn btn-sm btn-primary">Student Login</a>
+                    <a href="{{ url_for('register') }}" class="btn btn-sm btn-secondary">Student Registration</a>
+                {% endif %}
+            </div>
+        </nav>
+    </header>
 
-<script src="{{ url_for('static', filename='script.js') }}"></script>
+    <!-- Main Application Shell -->
+    <main class="container" id="main-content" role="main">
+        <!-- Flash Alert Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash flash-{{ category }}" role="alert">
+                        {% if category == 'success' %}
+                            <span>&#10003;</span>
+                        {% elif category == 'error' %}
+                            <span>&#9888;</span>
+                        {% else %}
+                            <span>&#9432;</span>
+                        {% endif %}
+                        <div>{{ message }}</div>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Page Specific Content Block -->
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Institutional Footer -->
+    <footer class="mgm-footer" role="contentinfo">
+        <div class="mgm-footer-inner">
+            <div>
+                <div class="mgm-footer-brand-title">MGM University &middot; Examination Division</div>
+                <div class="mgm-footer-meta">
+                    B.E. Final Year Examination Platform &middot; Department of Computer Science &amp; Engineering<br>
+                    Chhatrapati Sambhajinagar (Aurangabad), Maharashtra, India
+                </div>
+            </div>
+            <div>
+                <div class="mgm-footer-links">
+                    <span style="color: rgba(255,255,255,0.85); font-weight: 500;">Security Framework:</span>
+                    <span>Server-Authoritative Evaluation</span>
+                    <span>&middot;</span>
+                    <span>SHA-256 Tamper-Evident Ledger</span>
+                </div>
+                <div class="mgm-footer-meta" style="margin-top: 4px; text-align: right;">
+                    Educational Academic Portal &middot; Confidential Internal Examination System
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Master Scripts -->
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>

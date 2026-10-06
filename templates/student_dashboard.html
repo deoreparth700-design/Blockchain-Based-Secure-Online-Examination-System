@@ -1,174 +1,196 @@
 {% extends "base.html" %}
-{% block title %}Student Dashboard - B.E. Final Year Examination Platform{% endblock %}
+{% block title %}Student Dashboard &middot; MGM University Examination Platform{% endblock %}
 
 {% block content %}
-<div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; flex-wrap: wrap; gap: 12px;">
+<!-- Academic Student Header -->
+<div class="academic-portal-header">
     <div>
-        <div style="display: inline-block; background: rgba(99, 102, 241, 0.12); color: var(--accent); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; padding: 3px 8px; border-radius: 4px; margin-bottom: 6px;">
-            {{ academic_display }} &middot; {{ academic_program }}
+        <div class="academic-scope-tag">
+            Student Portal &middot; {{ academic_display }} &middot; {{ academic_program }}
         </div>
-        <h2 style="margin: 0; font-size: 1.5rem;">Student Portal</h2>
-        <p style="color: var(--muted); margin: 4px 0 0; font-size: 0.95rem;">
-            Logged in as <strong>{{ session.get('name') }}</strong> &middot; College PRN: <strong>{{ session.get('identifier') }}</strong>
+        <h1 style="font-size: 1.6rem; color: var(--mgm-primary); margin: 0 0 4px;">
+            Welcome, {{ session.get('name') }}
+        </h1>
+        <p style="color: var(--text-secondary); margin: 0; font-size: 0.92rem;">
+            College PRN: <strong style="color: var(--text-primary);">{{ session.get('identifier') }}</strong> &middot;
+            Department of Computer Science &amp; Engineering &middot; {{ academic_level }}
         </p>
     </div>
 </div>
 
+<!-- Dashboard Summary Metric Tiles -->
+<div class="stat-grid">
+    <div class="stat-tile tile-accent">
+        <div class="stat-label">Available Now</div>
+        <div class="stat-value">{{ available_exams|length }}</div>
+        <div class="stat-subtext">Open for attempt</div>
+    </div>
+    <div class="stat-tile tile-warning">
+        <div class="stat-label">In Progress</div>
+        <div class="stat-value">{{ in_progress_exams|length }}</div>
+        <div class="stat-subtext">Active sessions</div>
+    </div>
+    <div class="stat-tile tile-primary">
+        <div class="stat-label">Upcoming</div>
+        <div class="stat-value">{{ upcoming_exams|length }}</div>
+        <div class="stat-subtext">Scheduled tests</div>
+    </div>
+    <div class="stat-tile tile-success">
+        <div class="stat-label">Completed</div>
+        <div class="stat-value">{{ completed_exams|length }}</div>
+        <div class="stat-subtext">Sealed submissions</div>
+    </div>
+</div>
+
 {% if not exam_rows %}
-    <div class="card" style="text-align: center; padding: 40px 20px;">
-        <div style="font-size: 2.2rem; color: var(--muted); margin-bottom: 8px;">&#128221;</div>
-        <h4 style="margin: 0 0 6px;">No Examinations Scheduled Yet</h4>
-        <p style="color: var(--muted); margin: 0; font-size: 0.9rem;">
-            Your instructor has not scheduled any examinations yet for B.E. Final Year. Check back soon.
+    <div class="card" style="text-align: center; padding: 48px 24px; margin-top: 10px;">
+        <div style="font-size: 2.4rem; color: var(--text-muted); margin-bottom: 12px;">&#128221;</div>
+        <h3 style="margin: 0 0 8px; color: var(--mgm-primary);">No Examinations Scheduled</h3>
+        <p style="color: var(--text-muted); margin: 0; font-size: 0.92rem; max-width: 500px; margin: 0 auto;">
+            There are currently no active or upcoming examinations scheduled for B.E. Final Year Computer Science &amp; Engineering. Please check back later.
         </p>
     </div>
 {% else %}
 
     <!-- 1. IN PROGRESS EXAMINATIONS -->
     {% if in_progress_exams %}
-    <div style="margin-bottom: 24px;">
-        <h3 style="margin-bottom: 12px; font-size: 1.15rem; color: #b45309; display: flex; align-items: center; gap: 8px;">
+    <section style="margin-bottom: 28px;">
+        <h3 style="margin-bottom: 12px; font-size: 1.15rem; color: var(--warning); display: flex; align-items: center; gap: 8px;">
             <span>&#9200;</span> In Progress Examinations
         </h3>
         {% for row in in_progress_exams %}
-        <div class="card" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; margin-bottom: 12px; border-left: 4px solid #f59e0b;">
+        <div class="card card-warning-border" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; margin-bottom: 12px; padding: 18px 20px;">
             <div style="flex: 1; min-width: 260px;">
                 <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
-                    <h4 style="margin: 0; font-size: 1.15rem;">{{ row.exam.title }}</h4>
+                    <h4 style="margin: 0; font-size: 1.15rem; color: var(--text-primary);">{{ row.exam.title }}</h4>
                     <span class="status-badge status-draft">&#9200; In Progress</span>
                 </div>
-                <p style="color: var(--muted); font-size: 0.88rem; margin: 0;">
-                    Questions: {{ row.exam.questions|length }} &middot; Duration: {{ row.exam.duration_minutes }} minutes
+                <p style="color: var(--text-muted); font-size: 0.88rem; margin: 0;">
+                    Questions: <strong>{{ row.exam.questions|length }}</strong> &middot;
+                    Duration: <strong>{{ row.exam.duration_minutes }} minutes</strong> &middot;
+                    Active timer session running
                 </p>
             </div>
             <div>
-                <a href="{{ url_for('take_exam', exam_id=row.exam.id) }}" class="btn btn-warning btn-sm" style="font-weight: 600;">
+                <a href="{{ url_for('take_exam', exam_id=row.exam.id) }}" class="btn btn-warning" style="font-weight: 600;">
                     Resume Exam &rarr;
                 </a>
             </div>
         </div>
         {% endfor %}
-    </div>
+    </section>
     {% endif %}
 
     <!-- 2. AVAILABLE NOW EXAMINATIONS -->
     {% if available_exams %}
-    <div style="margin-bottom: 24px;">
-        <h3 style="margin-bottom: 12px; font-size: 1.15rem; color: var(--accent-2); display: flex; align-items: center; gap: 8px;">
-            <span>&#9679;</span> Available Now
+    <section style="margin-bottom: 28px;">
+        <h3 style="margin-bottom: 12px; font-size: 1.15rem; color: var(--success); display: flex; align-items: center; gap: 8px;">
+            <span>&#9679;</span> Available Examinations (Open Now)
         </h3>
         {% for row in available_exams %}
-        <div class="card" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; margin-bottom: 12px; border-left: 4px solid var(--accent-2);">
+        <div class="card card-accent-border" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; margin-bottom: 12px; padding: 18px 20px;">
             <div style="flex: 1; min-width: 260px;">
                 <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
-                    <h4 style="margin: 0; font-size: 1.15rem;">{{ row.exam.title }}</h4>
+                    <h4 style="margin: 0; font-size: 1.15rem; color: var(--text-primary);">{{ row.exam.title }}</h4>
                     <span class="status-badge status-valid">&#9679; Open Now</span>
                 </div>
-                <p style="color: var(--muted); font-size: 0.88rem; margin: 0;">
-                    Duration: <strong>{{ row.exam.duration_minutes }} min</strong> &middot; Questions: {{ row.exam.questions|length }} &middot; Open until {{ row.exam.end_time.strftime('%d %b %Y, %I:%M %p') }}
+                <p style="color: var(--text-muted); font-size: 0.88rem; margin: 0;">
+                    Duration: <strong>{{ row.exam.duration_minutes }} min</strong> &middot;
+                    Questions: <strong>{{ row.exam.questions|length }}</strong> &middot;
+                    Window Closes: <strong>{{ row.exam.end_time.strftime('%d %b %Y, %I:%M %p') }}</strong>
                 </p>
             </div>
             <div>
-                <a href="{{ url_for('take_exam', exam_id=row.exam.id) }}" class="btn btn-sm" style="font-weight: 600;">
+                <a href="{{ url_for('take_exam', exam_id=row.exam.id) }}" class="btn btn-primary" style="font-weight: 600;">
                     Take Exam &rarr;
                 </a>
             </div>
         </div>
         {% endfor %}
-    </div>
+    </section>
     {% endif %}
 
     <!-- 3. UPCOMING EXAMINATIONS -->
     {% if upcoming_exams %}
-    <div style="margin-bottom: 24px;">
-        <h3 style="margin-bottom: 12px; font-size: 1.15rem; color: var(--accent); display: flex; align-items: center; gap: 8px;">
+    <section style="margin-bottom: 28px;">
+        <h3 style="margin-bottom: 12px; font-size: 1.15rem; color: var(--mgm-primary); display: flex; align-items: center; gap: 8px;">
             <span>&#128197;</span> Upcoming Examinations
         </h3>
         {% for row in upcoming_exams %}
-        <div class="card" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; margin-bottom: 12px; border-left: 4px solid var(--accent);">
+        <div class="card card-primary-border" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; margin-bottom: 12px; padding: 18px 20px;">
             <div style="flex: 1; min-width: 260px;">
                 <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
-                    <h4 style="margin: 0; font-size: 1.15rem;">{{ row.exam.title }}</h4>
-                    <span class="status-badge status-upcoming">&#9200; Upcoming</span>
+                    <h4 style="margin: 0; font-size: 1.15rem; color: var(--text-primary);">{{ row.exam.title }}</h4>
+                    <span class="status-badge status-upcoming">&#9200; Scheduled</span>
                 </div>
-                <p style="color: var(--muted); font-size: 0.88rem; margin: 0;">
-                    Start: <strong>{{ row.exam.start_time.strftime('%d %b %Y, %I:%M %p') }}</strong> &middot; Duration: <strong>{{ row.exam.duration_minutes }} min</strong> &middot; Questions: {{ row.exam.questions|length }}
+                <p style="color: var(--text-muted); font-size: 0.88rem; margin: 0;">
+                    Opening Time: <strong>{{ row.exam.start_time.strftime('%d %b %Y, %I:%M %p') }}</strong> &middot;
+                    Duration: <strong>{{ row.exam.duration_minutes }} min</strong> &middot;
+                    Questions: <strong>{{ row.exam.questions|length }}</strong>
                 </p>
             </div>
             <div>
-                <span class="status-badge status-upcoming" style="font-size: 0.85rem;">
+                <span class="status-badge status-upcoming" style="padding: 6px 14px; font-size: 0.82rem;">
                     Opens {{ row.exam.start_time.strftime('%d %b at %I:%M %p') }}
                 </span>
             </div>
         </div>
         {% endfor %}
-    </div>
+    </section>
     {% endif %}
 
     <!-- 4. COMPLETED EXAMINATIONS -->
     {% if completed_exams %}
-    <div style="margin-bottom: 24px;">
-        <h3 style="margin-bottom: 12px; font-size: 1.15rem; color: var(--text); display: flex; align-items: center; gap: 8px;">
-            <span>&#10003;</span> Completed Examinations
+    <section style="margin-bottom: 28px;">
+        <h3 style="margin-bottom: 12px; font-size: 1.15rem; color: var(--mgm-primary-dark); display: flex; align-items: center; gap: 8px;">
+            <span>&#10003;</span> Completed Examinations &amp; Sealed Results
         </h3>
         {% for row in completed_exams %}
-        <div class="card" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; margin-bottom: 12px; border-left: 4px solid var(--accent-2);">
+        <div class="card card-success-border" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; margin-bottom: 12px; padding: 18px 20px;">
             <div style="flex: 1; min-width: 260px;">
                 <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
-                    <h4 style="margin: 0; font-size: 1.15rem;">{{ row.exam.title }}</h4>
-                    <span class="status-badge status-valid">&#10003; Submitted</span>
+                    <h4 style="margin: 0; font-size: 1.15rem; color: var(--text-primary);">{{ row.exam.title }}</h4>
+                    <span class="status-badge status-valid">&#10003; Submitted &amp; Sealed</span>
                 </div>
-                <p style="color: var(--muted); font-size: 0.88rem; margin: 0;">
-                    Submitted: {{ row.attempt.submitted_at.strftime('%d %b %Y, %I:%M %p') if row.attempt.submitted_at else 'Recorded' }} &middot; Questions: {{ row.exam.questions|length }}
-                </p>
-            </div>
-            <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
-                <div>
-                    <span style="font-size: 1.1rem; font-weight: 700; color: var(--accent-2);">
-                        Score: {{ row.attempt.score }}/{{ row.attempt.total }}
-                    </span>
-                    <span style="font-size: 0.9rem; font-weight: 600; color: var(--muted); margin-left: 6px;">
-                        ({{ "%.1f"|format(row.attempt.percentage) }}%)
-                    </span>
-                </div>
-                {% if row.attempt.block_id is not none %}
-                <a href="{{ url_for('show_result', block_index=row.attempt.block_id) }}" class="btn btn-secondary btn-sm">
-                    View Result
-                </a>
-                {% else %}
-                <a href="{{ url_for('student_exam_result', exam_id=row.exam.id) }}" class="btn btn-secondary btn-sm">
-                    View Result
-                </a>
-                {% endif %}
-            </div>
-        </div>
-        {% endfor %}
-    </div>
-    {% endif %}
-
-    <!-- 5. CLOSED / PAST EXAMINATIONS (Not attempted) -->
-    {% if closed_exams %}
-    <div style="margin-bottom: 24px;">
-        <h3 style="margin-bottom: 12px; font-size: 1.05rem; color: var(--muted); display: flex; align-items: center; gap: 8px;">
-            <span>&#10005;</span> Closed Examinations
-        </h3>
-        {% for row in closed_exams %}
-        <div class="card" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; margin-bottom: 12px; opacity: 0.85;">
-            <div style="flex: 1; min-width: 260px;">
-                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
-                    <h4 style="margin: 0; font-size: 1.1rem; color: var(--muted);">{{ row.exam.title }}</h4>
-                    <span class="status-badge status-closed">&#10005; Closed</span>
-                </div>
-                <p style="color: var(--muted); font-size: 0.88rem; margin: 0;">
-                    Schedule expired: {{ row.exam.end_time.strftime('%d %b %Y, %I:%M %p') }}
+                <p style="color: var(--text-muted); font-size: 0.88rem; margin: 0;">
+                    Score: <strong style="color: var(--success); font-size: 0.95rem;">{{ row.attempt.score }} / {{ row.attempt.total }} ({{ row.attempt.percentage }}%)</strong> &middot;
+                    Submitted: {{ row.attempt.submitted_at.strftime('%d %b %Y, %I:%M %p') if row.attempt.submitted_at else 'Recorded' }} &middot;
+                    Time Used: {{ row.attempt.time_used_display }}
                 </p>
             </div>
             <div>
-                <span style="color: var(--muted); font-size: 0.85rem;">Not Attempted</span>
+                <a href="{{ url_for('student_exam_result', exam_id=row.exam.id) }}" class="btn btn-secondary btn-sm" style="font-weight: 600;">
+                    View Sealed Result &rarr;
+                </a>
             </div>
         </div>
         {% endfor %}
-    </div>
+    </section>
+    {% endif %}
+
+    <!-- 5. CLOSED EXAMINATIONS -->
+    {% if closed_exams %}
+    <section style="margin-bottom: 28px;">
+        <h3 style="margin-bottom: 12px; font-size: 1.1rem; color: var(--text-muted); display: flex; align-items: center; gap: 8px;">
+            <span>&#10005;</span> Concluded Examinations (No Longer Available)
+        </h3>
+        {% for row in closed_exams %}
+        <div class="card" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; margin-bottom: 10px; padding: 14px 18px; opacity: 0.85;">
+            <div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <strong style="color: var(--text-secondary);">{{ row.exam.title }}</strong>
+                    <span class="status-badge status-closed">Closed</span>
+                </div>
+                <small style="color: var(--text-muted);">
+                    Window closed on {{ row.exam.end_time.strftime('%d %b %Y, %I:%M %p') }}
+                </small>
+            </div>
+            <div>
+                <span class="status-badge status-closed">Concluded</span>
+            </div>
+        </div>
+        {% endfor %}
+    </section>
     {% endif %}
 
 {% endif %}

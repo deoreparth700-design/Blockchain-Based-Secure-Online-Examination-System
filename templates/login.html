@@ -1,18 +1,30 @@
 {% extends "base.html" %}
-{% block title %}Login - ExamChain{% endblock %}
+{% block title %}Sign In &middot; MGM University Examination Platform{% endblock %}
 
 {% block content %}
-<div class="card" style="max-width: 420px; margin: 30px auto;">
-    <h2>Sign In</h2>
-    <p style="color: var(--muted); font-size: 0.9rem; margin-bottom: 20px;">
-        Sign in to access exams or your admin dashboard.
-    </p>
+<div class="card" style="max-width: 440px; margin: 30px auto; padding: 32px 28px;">
+    <!-- MGM Branding Badge -->
+    <div style="text-align: center; margin-bottom: 20px;">
+        <img src="{{ url_for('static', filename='images/mgm_logo.svg') }}"
+             onerror="this.onerror=null; this.src='{{ url_for('static', filename='images/mgm_seal.png') }}';"
+             alt="MGM University"
+             style="height: 52px; width: auto; margin-bottom: 12px;">
 
-    <form method="POST" id="login-form">
+        <div class="academic-scope-tag" style="margin-bottom: 6px;">
+            {{ academic_display }} &middot; {{ academic_program }}
+        </div>
+
+        <h2 style="font-size: 1.35rem; color: var(--mgm-primary); margin: 0 0 4px;">Portal Sign In</h2>
+        <p style="color: var(--text-muted); font-size: 0.88rem; margin: 0;">
+            Enter your college PRN or registered email to continue.
+        </p>
+    </div>
+
+    <form method="POST" id="login-form" novalidate>
         <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
 
         <div class="form-group">
-            <label for="identifier">PRN or Email</label>
+            <label for="identifier">College PRN or Email Address <span style="color: var(--danger);">*</span></label>
             <input
                 type="text"
                 id="identifier"
@@ -20,30 +32,42 @@
                 value="{{ form_data.get('identifier', '') }}"
                 required
                 autofocus
-                placeholder="Enter PRN or email address"
+                placeholder="e.g. BE2026CS001 or student@demo.edu"
                 class="form-control"
+                autocomplete="username"
             >
+            <span class="field-feedback">Students: use your Permanent Registration Number (PRN).</span>
         </div>
 
         <div class="form-group">
-            <label for="password">Password</label>
+            <label for="password">Account Password <span style="color: var(--danger);">*</span></label>
             <input
                 type="password"
                 id="password"
                 name="password"
                 required
-                placeholder="Enter your password"
+                placeholder="Enter your confidential password"
                 class="form-control"
+                autocomplete="current-password"
             >
+            <span class="field-feedback">Case-sensitive password.</span>
         </div>
 
-        <button type="submit" class="btn" style="width:100%; margin-top: 10px;">
-            Sign In
+        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px; padding: 10px; font-weight: 600;">
+            Sign In &rarr;
         </button>
     </form>
 
-    <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--border); font-size: 0.85rem; color: var(--muted); text-align: center;">
-        <p>BE Final Year Students: Not registered yet? <a href="{{ url_for('register') }}" style="color: var(--accent); font-weight: 600;">Create Account</a></p>
+    <div style="margin-top: 24px; padding-top: 18px; border-top: 1px solid var(--border-subtle); text-align: center; font-size: 0.86rem; color: var(--text-muted);">
+        <p style="margin: 0 0 6px;">
+            B.E. Final Year CSE Candidate?
+            <a href="{{ url_for('register') }}" style="color: var(--mgm-accent); font-weight: 600; text-decoration: none;">
+                Register for Examination Account &rarr;
+            </a>
+        </p>
+        <p style="margin: 0; font-size: 0.78rem; color: var(--text-muted);">
+            Faculty &amp; Administrators may log in using assigned institutional identifiers.
+        </p>
     </div>
 </div>
 {% endblock %}

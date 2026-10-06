@@ -1,66 +1,126 @@
 {% extends "base.html" %}
-{% block title %}{{ exam.title }} - BE Final Year Examination{% endblock %}
+{% block title %}{{ exam.title }} &middot; MGM University Examination{% endblock %}
 
 {% block content %}
-<!-- Exam Header with Live Countdown Timer -->
-<div class="card" style="margin-bottom: 24px; border-left: 4px solid var(--accent); position: sticky; top: 12px; z-index: 10; box-shadow: 0 4px 12px rgba(0,0,0,0.06);">
-    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
+<!-- Distraction-Free Sticky Examination Header -->
+<div class="exam-sticky-header">
+    <div class="exam-sticky-top">
         <div>
-            <h2 style="margin: 0 0 4px; font-size: 1.35rem;">{{ exam.title }}</h2>
-            <p style="color: var(--muted); margin: 0; font-size: 0.88rem;">
-                Candidate: <strong>{{ session.get('name') }}</strong> &middot; PRN: <strong>{{ session.get('identifier') }}</strong>
-                &middot; Total Questions: <strong>{{ exam.questions|length }}</strong>
-            </p>
+            <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--mgm-primary); font-weight: 700; margin-bottom: 2px;">
+                MGM University &middot; {{ academic_program }} ({{ academic_level }})
+            </div>
+            <h2 style="margin: 0; font-size: 1.35rem; color: var(--mgm-primary);">{{ exam.title }}</h2>
+            <div style="color: var(--text-muted); font-size: 0.85rem; margin-top: 2px;">
+                Candidate: <strong style="color: var(--text-primary);">{{ session.get('name') }}</strong> &middot;
+                PRN: <strong style="color: var(--text-primary);">{{ session.get('identifier') }}</strong> &middot;
+                Total Questions: <strong>{{ exam.questions|length }}</strong>
+            </div>
         </div>
 
-        <div style="text-align: right; display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
-            <div>
-                <div style="font-size: 0.78rem; font-weight: 700; color: var(--muted); text-transform: uppercase; margin-bottom: 3px;">
-                    Time Remaining
-                </div>
-                <div id="exam-timer-container" class="timer-container timer-normal" data-remaining-seconds="{{ remaining_seconds }}" data-deadline="{{ effective_deadline }}">
-                    &#9200; <span id="exam-timer-display">--:--</span>
-                </div>
+        <!-- Sticky Prominent Countdown Timer -->
+        <div style="text-align: right;">
+            <div style="font-size: 0.72rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 3px;">
+                Time Remaining
+            </div>
+            <div id="exam-timer-container"
+                 class="timer-container timer-normal"
+                 data-remaining-seconds="{{ remaining_seconds }}"
+                 data-deadline="{{ effective_deadline }}"
+                 aria-live="polite">
+                &#9200; <span id="exam-timer-display">--:--</span>
             </div>
         </div>
     </div>
 
-    <div style="margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border); font-size: 0.82rem; color: var(--muted); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
-        <span>&#9888; <strong>Notice:</strong> Your session deadline is enforced server-side. Auto-submission occurs immediately upon expiration.</span>
-        <span>Duration: <strong>{{ exam.duration_minutes }} min</strong></span>
+    <!-- Live Progress Bar & Quick Stats -->
+    <div style="margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; font-size: 0.82rem;">
+        <div style="display: flex; gap: 14px; align-items: center;">
+            <span style="font-weight: 600; color: var(--text-secondary);">
+                Progress: <span id="answered-count-display">0</span> of {{ exam.questions|length }} Answered
+            </span>
+            <span style="color: var(--text-muted);">
+                &middot; Unanswered: <span id="unanswered-count-display">{{ exam.questions|length }}</span>
+            </span>
+        </div>
+        <div style="color: var(--text-muted);">
+            &#9888; Server deadline enforced. Unsubmitted answers are auto-finalized upon timer expiry.
+        </div>
     </div>
 </div>
 
+<!-- Examination Form -->
 <form method="POST" id="student-exam-form">
     <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
     <input type="hidden" name="auto_submit" id="auto_submit" value="false">
 
-    {% for q in exam.questions %}
-    {% set qi = loop.index0 %}
-    <div class="card question-block" style="margin-bottom: 18px;">
-        <div style="font-weight: 600; font-size: 1.05rem; margin-bottom: 12px; color: var(--text);">
-            <span style="color: var(--accent); margin-right: 6px;">Q{{ loop.index }}.</span> {{ q.question_text }}
-        </div>
+    <!-- Questions Container -->
+    <div id="exam-questions-list">
+        {% for q in exam.questions %}
+        {% set qi = loop.index0 %}
+        <div class="question-block" id="question-card-{{ qi }}">
+            <div class="question-prompt">
+                <span class="question-num">Q{{ loop.index }}.</span>
+                <span>{{ q.question_text }}</span>
+            </div>
 
-        {% for opt in q.options %}
-        {% set oi = loop.index0 %}
-        <div class="option-row" style="padding: 8px 12px; border-radius: 6px; margin-bottom: 6px; background: #fff; border: 1px solid var(--border);">
-            <input type="radio" name="answer_{{ qi }}" value="{{ oi }}" id="q{{ qi }}_o{{ oi }}">
-            <label for="q{{ qi }}_o{{ oi }}" style="margin: 0 0 0 8px; cursor: pointer; flex: 1; color: var(--text); font-size: 0.95rem;">
-                <strong>{{ ['A', 'B', 'C', 'D'][oi] }}.</strong> {{ opt }}
-            </label>
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+                {% for opt in q.options %}
+                {% set oi = loop.index0 %}
+                <label for="q{{ qi }}_o{{ oi }}" class="option-row">
+                    <input type="radio"
+                           name="answer_{{ qi }}"
+                           value="{{ oi }}"
+                           id="q{{ qi }}_o{{ oi }}"
+                           class="exam-answer-radio"
+                           data-question-idx="{{ qi }}">
+                    <span>
+                        <strong style="color: var(--mgm-primary); margin-right: 6px;">{{ ['A', 'B', 'C', 'D'][oi] }}.</strong>
+                        {{ opt }}
+                    </span>
+                </label>
+                {% endfor %}
+            </div>
         </div>
         {% endfor %}
     </div>
-    {% endfor %}
 
-    <div class="card" style="text-align: center; margin-top: 24px; padding: 24px;">
-        <p style="margin: 0 0 14px; color: var(--muted); font-size: 0.9rem;">
-            Please verify all selections above before clicking submit. Submissions are irreversible and permanently sealed on the blockchain.
+    <!-- Submission Confirmation Card -->
+    <div class="card" style="text-align: center; margin-top: 24px; padding: 28px 24px; border-top: 3px solid var(--mgm-primary);">
+        <h4 style="margin: 0 0 6px; color: var(--mgm-primary);">Ready to Submit Examination?</h4>
+        <p style="margin: 0 0 16px; color: var(--text-muted); font-size: 0.9rem; max-width: 580px; margin-left: auto; margin-right: auto;">
+            Please ensure you have reviewed your answers above. Once submitted, your examination is evaluated server-side and cryptographically sealed into the university integrity ledger.
         </p>
-        <button type="submit" id="exam-submit-btn" class="btn" style="padding: 12px 36px; font-size: 1.05rem; font-weight: 600;">
-            Submit Examination &amp; Seal on Blockchain
+        <button type="submit" id="exam-submit-btn" class="btn btn-primary btn-lg" style="padding: 12px 36px; font-weight: 600;">
+            Submit Examination &rarr;
         </button>
     </div>
 </form>
+
+<script>
+// Real-Time Answered / Unanswered Counter
+document.addEventListener("DOMContentLoaded", () => {
+    const totalQuestions = {{ exam.questions|length }};
+    const radios = document.querySelectorAll(".exam-answer-radio");
+    const answeredDisplay = document.getElementById("answered-count-display");
+    const unansweredDisplay = document.getElementById("unanswered-count-display");
+
+    function updateProgress() {
+        const answeredIndices = new Set();
+        radios.forEach(r => {
+            if (r.checked) {
+                answeredIndices.add(r.getAttribute("data-question-idx"));
+            }
+        });
+        const count = answeredIndices.size;
+        if (answeredDisplay) answeredDisplay.textContent = count;
+        if (unansweredDisplay) unansweredDisplay.textContent = (totalQuestions - count);
+    }
+
+    radios.forEach(r => {
+        r.addEventListener("change", updateProgress);
+    });
+
+    updateProgress();
+});
+</script>
 {% endblock %}
