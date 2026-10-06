@@ -13,11 +13,10 @@
         {% if session.get('role') == 'admin' %}
             <a href="{{ url_for('admin_dashboard') }}">Admin Dashboard</a>
             <a href="{{ url_for('create_exam') }}">+ Create Exam</a>
-            <a href="{{ url_for('view_blockchain') }}">View Blockchain</a>
+            <a href="{{ url_for('view_blockchain') }}">Integrity Ledger</a>
             <a href="{{ url_for('logout') }}">Logout ({{ session.get('name') }} - Admin)</a>
         {% elif session.get('role') == 'user' %}
             <a href="{{ url_for('student_dashboard') }}">My Exams</a>
-            <a href="{{ url_for('view_blockchain') }}">View Blockchain</a>
             <a href="{{ url_for('logout') }}">Logout ({{ session.get('name') }})</a>
         {% else %}
             <a href="{{ url_for('login') }}">Login</a>
@@ -42,9 +41,6 @@
     <p>Blockchain-Based Secure Online Examination System</p>
 </footer>
 
-<script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
-<script src="{{ url_for('static', filename='js/ethereum-config.js') }}"></script>
-<script src="{{ url_for('static', filename='js/ethereum.js') }}"></script>
 <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>

@@ -47,92 +47,49 @@
     </div>
     {% endif %}
 
-    <!-- Cryptographic Block Integrity -->
-    <div style="margin: 18px 0;">
-        {% if is_block_tampered %}
-            <div class="status-badge status-invalid" style="font-size: 0.95rem; padding: 8px 18px;">
-                &#9888; TAMPERING DETECTED ON THIS BLOCK
+    <!-- Result Integrity -->
+    <div style="margin: 20px 0; padding: 18px 20px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); text-align: left;">
+        <h3 style="margin: 0 0 10px; font-size: 1.05rem; color: var(--text);">Result Integrity</h3>
+        {% if integrity_result.valid %}
+            <div class="status-badge status-valid" style="font-size: 0.95rem; padding: 6px 16px; display: inline-flex; align-items: center; gap: 6px;">
+                &#10003; Integrity Verified
             </div>
-            <p style="color: var(--danger); font-size: 0.88rem; margin-top: 8px;">
-                Unauthorized modification detected: The current stored data does not match its cryptographic SHA-256 hash!
+            <p style="color: var(--muted); font-size: 0.85rem; margin: 10px 0 14px;">
+                The stored result data matches its authoritative cryptographic fingerprint and backward ledger link.
             </p>
-        {% elif chain_valid %}
-            <span class="status-badge status-valid" style="font-size: 0.95rem; padding: 8px 18px;">
-                &#10003; Sealed on a VALID Chain &mdash; Cryptographic Integrity Verified
-            </span>
         {% else %}
-            <span class="status-badge status-invalid" style="font-size: 0.95rem; padding: 8px 18px;">
-                &#9888; Chain Link Mismatch &mdash; Discrepancy Found in Prior Blocks
-            </span>
+            <div class="status-badge status-invalid" style="font-size: 0.95rem; padding: 6px 16px; display: inline-flex; align-items: center; gap: 6px;">
+                &#9888; Integrity Verification Failed
+            </div>
+            <p style="color: var(--danger); font-size: 0.88rem; margin: 10px 0 4px; font-weight: 600;">
+                The stored result data does not match its cryptographic fingerprint.
+            </p>
+            <p style="color: var(--muted); font-size: 0.82rem; margin: 0 0 14px;">
+                {{ integrity_result.reason }}
+            </p>
         {% endif %}
+
+        <div>
+            <label style="font-weight: 600; color: var(--text); font-size: 0.82rem; display: block; margin-bottom: 4px;">SHA-256 fingerprint</label>
+            <div class="hash-box" style="margin: 0; word-break: break-all; {% if not integrity_result.valid %}border-color: var(--danger); background: #fef2f2; color: var(--danger);{% endif %}">
+                {{ block.hash }}
+            </div>
+        </div>
     </div>
 
     <!-- Educational Concept Box -->
-    <div style="background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin: 16px 0; text-align: left; font-size: 0.82rem; color: var(--muted);">
+    <div style="background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; margin: 16px 0; text-align: left; font-size: 0.82rem; color: var(--muted);">
         <strong style="color: var(--text); display: block; margin-bottom: 4px;">&#128274; Tamper-Evident Architecture:</strong>
-        Result data is permanently converted into a cryptographic SHA-256 hash and bound to the previous block's hash. Any modification to scores or answers produces a completely different hash that fails recomputation verification.
-    </div>
-
-    <div style="margin: 16px 0; text-align: left;">
-        <label style="font-weight: 600; color: var(--text); margin-bottom: 4px;">Cryptographic Block Hash (SHA-256)</label>
-        <div class="hash-box">
-            Block #{{ block.index }} &mdash; {{ block.hash }}
-        </div>
-    </div>
-
-    <!-- Ethereum Anchoring Section -->
-    <hr style="margin: 20px 0; border: none; border-top: 1px solid var(--border);">
-    <h3 style="margin-bottom: 10px;">Public Ethereum Sepolia Anchor</h3>
-
-    <div style="text-align: left; background: var(--bg); padding: 16px; border-radius: 8px; border: 1px solid var(--border);">
-        {% if attempt and attempt.ethereum_tx_hash %}
-            <div style="text-align: center; margin-bottom: 12px;">
-                <span class="status-badge status-valid" style="background: rgba(33, 150, 243, 0.12); color: #0284c7; border: 1px solid rgba(2, 132, 199, 0.3);">
-                    &#10003; Permanently Anchored on Ethereum Sepolia
-                </span>
-            </div>
-            <p style="font-size: 0.85rem; margin: 6px 0; word-break: break-all; line-height: 1.6;">
-                <strong>Transaction Hash:</strong>
-                <a href="https://sepolia.etherscan.io/tx/{{ attempt.ethereum_tx_hash }}" target="_blank" rel="noopener noreferrer" style="color: #0284c7; font-weight: 600;">
-                    {{ attempt.ethereum_tx_hash }} &UpperRightArrow;
-                </a><br>
-                <strong>Smart Contract:</strong> <code style="font-size:0.8rem;">{{ attempt.ethereum_contract_address }}</code><br>
-                <strong>Anchored By Wallet:</strong> <code style="font-size:0.8rem;">{{ attempt.ethereum_wallet_address }}</code><br>
-                <strong>Network:</strong> Ethereum Sepolia Testnet (Chain ID 11155111)
-            </p>
-        {% else %}
-            <div style="text-align: center; padding: 6px 0;">
-                <span class="status-badge status-closed">
-                    Private Blockchain Only &middot; Not Yet Anchored to Public Ethereum
-                </span>
-                <p style="font-size: 0.82rem; color: var(--muted); margin: 8px 0 0;">
-                    The course instructor can anchor this result hash onto the Ethereum Sepolia smart contract for global, tamper-evident verification.
-                </p>
-            </div>
-        {% endif %}
-
-        <div id="eth-status" style="margin-top: 14px; font-weight: 600; text-align: center; font-size: 0.9rem;"></div>
-
-        <div style="text-align: center; margin-top: 14px;">
-            {% if session.get('role') == 'admin' and attempt and not attempt.ethereum_tx_hash %}
-                <button class="btn btn-primary" style="background: #0284c7;" onclick="anchorResultOnEthereum({{ attempt.id }}, '{{ block.hash }}')">
-                    &#9878; Anchor on Ethereum Sepolia
-                </button>
-            {% endif %}
-
-            {% if attempt and attempt.ethereum_tx_hash %}
-                <button class="btn btn-secondary btn-sm" onclick="verifyEthereumResult({{ attempt.id }}, '{{ block.hash }}')">
-                    &#128269; Verify on Ethereum Contract
-                </button>
-            {% endif %}
-        </div>
+        Result records are bound to a backward-linked SHA-256 cryptographic chain upon submission. Any unauthorized database modification to candidates, answers, or scores produces a hash mismatch and is flagged immediately.
     </div>
 
     <div style="margin-top: 24px; display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
         <a href="{{ url_for('student_dashboard') if session.get('role') == 'user' else url_for('admin_dashboard') }}" class="btn">
             &larr; Return to Dashboard
         </a>
-        <a href="{{ url_for('view_blockchain') }}" class="btn btn-secondary">Explore Blockchain Ledger</a>
+        {% if session.get('role') == 'admin' %}
+        <a href="{{ url_for('view_blockchain') }}" class="btn btn-secondary">Explore Integrity Ledger</a>
+        {% endif %}
     </div>
 </div>
 

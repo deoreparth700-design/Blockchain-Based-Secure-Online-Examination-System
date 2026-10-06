@@ -135,7 +135,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Blockchain page instant verification
+    // Blockchain ledger page instant verification
     const verifyBtn = document.getElementById("verify-btn");
     if (verifyBtn) {
         verifyBtn.addEventListener("click", async () => {
@@ -152,30 +152,67 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (data.valid) {
                     resultBox.innerHTML = `
                         <div class="status-badge status-valid" style="font-size:1rem; padding:8px 18px;">
-                            &#10003; VALID - No Tampering Detected
+                            &#10003; VALID &mdash; Cryptographic Integrity Verified
                         </div>
                         <p style="color: var(--muted); margin-top:8px; font-size:0.9rem;">
-                            Every block's stored SHA-256 hash matches its recomputed hash, and all cryptographic hash links are intact.
+                            Every block's stored SHA-256 hash matches its recomputed fingerprint, and all backward hash pointers are intact.
                         </p>`;
                 } else {
-                    const problemsHtml = data.problems.map(p => `<li>${p}</li>`).join("");
+                    const problemsHtml = (data.problems || []).map(p => `<li>${p}</li>`).join("");
                     resultBox.innerHTML = `
                         <div class="status-badge status-invalid" style="font-size:1rem; padding:8px 18px;">
-                            &#9888; TAMPERING DETECTED
+                            &#9888; TAMPERING DETECTED IN LEDGER
                         </div>
                         <p style="color: var(--danger); font-size:0.9rem; margin-top:6px;">
-                            Unauthorized modification detected because the stored cryptographic hash no longer matches.
+                            Unauthorized modification detected because stored cryptographic hashes do not match current data.
                         </p>
                         <ul style="color: var(--danger); margin-top:10px; text-align:left; display:inline-block;">${problemsHtml}</ul>`;
                 }
 
-                // Refresh after demo observation
                 setTimeout(() => window.location.reload(), 2500);
             } catch (err) {
-                resultBox.innerHTML = `<p style="color: var(--danger);">Error checking blockchain: ${err}</p>`;
+                resultBox.innerHTML = `<p style="color: var(--danger);">Error checking integrity: ${err}</p>`;
             }
         });
     }
+
+    // Individual block verification action
+    document.querySelectorAll(".verify-single-block-btn").forEach(btn => {
+        btn.addEventListener("click", async (e) => {
+            const blockIndex = e.target.getAttribute("data-block-index");
+            if (!blockIndex) return;
+
+            e.target.disabled = true;
+            e.target.innerText = "Checking...";
+
+            try {
+                const response = await fetch(`/admin/verify_block/${blockIndex}`);
+                const data = await response.json();
+
+                const badge = document.getElementById(`block-status-badge-${blockIndex}`);
+                const text = document.getElementById(`block-integrity-text-${blockIndex}`);
+
+                if (data.valid) {
+                    if (badge) badge.innerHTML = '<span class="status-badge status-valid">&#10003; Valid</span>';
+                    if (text) {
+                        text.style.color = "var(--accent-2)";
+                        text.innerHTML = `&#10003; Integrity Verified: Block #${blockIndex} is valid.`;
+                    }
+                } else {
+                    if (badge) badge.innerHTML = '<span class="status-badge status-invalid">&#9888; Invalid</span>';
+                    if (text) {
+                        text.style.color = "var(--danger)";
+                        text.innerHTML = `&#9888; Integrity Failure: ${data.reason}`;
+                    }
+                }
+            } catch (err) {
+                alert(`Error verifying Block #${blockIndex}: ${err}`);
+            } finally {
+                e.target.disabled = false;
+                e.target.innerText = "Verify Block";
+            }
+        });
+    });
 
     // Student Exam Countdown Timer & Auto-Submission Engine
     const timerContainer = document.getElementById("exam-timer-container");

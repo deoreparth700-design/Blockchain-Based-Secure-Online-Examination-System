@@ -138,6 +138,89 @@ class Blockchain:
         rows = BlockModel.query.order_by(BlockModel.id.asc()).all()
         return [BlockView(r) for r in rows]
 
+    def verify_result_integrity(self, block_index):
+        """
+        Dedicated backend integrity verification service for a specific result block.
+        Determines:
+        1. Block exists.
+        2. Block's stored hash matches the block's current data (recomputed hash).
+        3. Block's previous_hash matches the preceding block's actual hash.
+        4. Relevant chain integrity up to this block is valid.
+        5. Result has not been altered.
+        """
+        if block_index is None:
+            return {
+                "valid": False,
+                "block_index": None,
+                "reason": "Block index must be specified",
+            }
+
+        target_block = self.get_block(block_index)
+        if target_block is None:
+            return {
+                "valid": False,
+                "block_index": block_index,
+                "reason": f"Block #{block_index} does not exist",
+            }
+
+        # 1. Verify target block's own data hash
+        recomputed = target_block.recompute_hash()
+        if target_block.hash != recomputed:
+            return {
+                "valid": False,
+                "block_index": block_index,
+                "reason": "Block data hash mismatch: stored hash does not match current data",
+            }
+
+        # 2. If genesis block (index == 0), hash match is sufficient
+        if target_block.index == 0:
+            return {
+                "valid": True,
+                "block_index": 0,
+                "reason": "Integrity verified (Genesis Block)",
+            }
+
+        # 3. Verify link to preceding block
+        prev_row = BlockModel.query.filter(BlockModel.id < target_block.index).order_by(BlockModel.id.desc()).first()
+        if not prev_row:
+            return {
+                "valid": False,
+                "block_index": block_index,
+                "reason": "Preceding block not found (broken link)",
+            }
+
+        if target_block.previous_hash != prev_row.hash:
+            return {
+                "valid": False,
+                "block_index": block_index,
+                "reason": f"Broken chain link: previous_hash does not match Block #{prev_row.id}'s hash",
+            }
+
+        # 4. Verify historical chain integrity from genesis up to this block
+        chain_rows = BlockModel.query.filter(BlockModel.id <= target_block.index).order_by(BlockModel.id.asc()).all()
+        for i in range(1, len(chain_rows)):
+            curr_v = BlockView(chain_rows[i])
+            prev_v = BlockView(chain_rows[i - 1])
+
+            if curr_v.hash != curr_v.recompute_hash():
+                return {
+                    "valid": False,
+                    "block_index": block_index,
+                    "reason": f"Chain integrity failure at Block #{curr_v.index}: data was modified",
+                }
+            if curr_v.previous_hash != prev_v.hash:
+                return {
+                    "valid": False,
+                    "block_index": block_index,
+                    "reason": f"Broken chain link between Block #{prev_v.index} and Block #{curr_v.index}",
+                }
+
+        return {
+            "valid": True,
+            "block_index": block_index,
+            "reason": "Integrity verified",
+        }
+
     def is_chain_valid(self):
         blocks = self.all_blocks()
         problems = []
@@ -159,3 +242,8 @@ class Blockchain:
                 )
 
         return (len(problems) == 0, problems)
+
+
+def verify_result_integrity(block_index):
+    """Module-level helper to verify integrity of a specific block."""
+    return Blockchain().verify_result_integrity(block_index)
