@@ -4,10 +4,14 @@
 {% block content %}
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
     <div>
-        <h2 style="margin: 0;">{{ exam.title }} &mdash; Submissions</h2>
-        <p style="color: var(--muted); margin: 4px 0 0; font-size: 0.9rem;">
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 4px;">
+            <h2 style="margin: 0;">Exam Results &mdash; {{ exam.title }}</h2>
+            <span class="status-badge status-{{ exam.status }}">{{ exam.status|title }}</span>
+        </div>
+        <p style="color: var(--muted); margin: 0; font-size: 0.9rem;">
             Window: {{ exam.start_time.strftime('%d %b %Y, %I:%M %p') }} &rarr; {{ exam.end_time.strftime('%d %b %Y, %I:%M %p') }}
-            &middot; Total Questions: {{ exam.questions|length }}
+            &middot; Total Questions: <strong>{{ exam.questions|length }}</strong>
+            &middot; Duration: <strong>{{ exam.duration_minutes }} min</strong>
         </p>
     </div>
     <div>
@@ -23,67 +27,91 @@
         </p>
     </div>
 {% else %}
-    <!-- Statistics Cards -->
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 20px;">
-        <div class="card" style="text-align: center; padding: 18px 12px; margin-bottom: 0;">
-            <div style="color: var(--muted); font-size: 0.85rem; font-weight: 600;">SUBMISSIONS</div>
-            <div style="font-size: 1.8rem; font-weight: 700; color: var(--accent); margin-top: 4px;">{{ attempts|length }}</div>
+    <!-- Summary Statistics Cards -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 22px;">
+        <div class="card" style="text-align: center; padding: 16px 12px; margin-bottom: 0;">
+            <div style="color: var(--muted); font-size: 0.78rem; font-weight: 700; text-transform: uppercase;">Total Submissions</div>
+            <div style="font-size: 1.75rem; font-weight: 700; color: var(--accent); margin-top: 4px;">{{ stats.total_submissions }}</div>
         </div>
-        <div class="card" style="text-align: center; padding: 18px 12px; margin-bottom: 0;">
-            <div style="color: var(--muted); font-size: 0.85rem; font-weight: 600;">CLASS AVERAGE</div>
-            <div style="font-size: 1.8rem; font-weight: 700; color: var(--accent-2); margin-top: 4px;">
-                {{ "%.1f"|format((attempts|sum(attribute='score')) / (attempts|length)) }} / {{ attempts[0].total }}
+        <div class="card" style="text-align: center; padding: 16px 12px; margin-bottom: 0;">
+            <div style="color: var(--muted); font-size: 0.78rem; font-weight: 700; text-transform: uppercase;">Average Score</div>
+            <div style="font-size: 1.75rem; font-weight: 700; color: var(--accent-2); margin-top: 4px;">
+                {{ "%.1f"|format(stats.avg_score) }} <span style="font-size: 0.95rem; color: var(--muted);">/ {{ exam.questions|length }}</span>
             </div>
         </div>
-        <div class="card" style="text-align: center; padding: 18px 12px; margin-bottom: 0;">
-            <div style="color: var(--muted); font-size: 0.85rem; font-weight: 600;">HIGHEST SCORE</div>
-            <div style="font-size: 1.8rem; font-weight: 700; color: var(--accent-2); margin-top: 4px;">
-                {{ attempts|map(attribute='score')|max }} / {{ attempts[0].total }}
+        <div class="card" style="text-align: center; padding: 16px 12px; margin-bottom: 0;">
+            <div style="color: var(--muted); font-size: 0.78rem; font-weight: 700; text-transform: uppercase;">Average Percentage</div>
+            <div style="font-size: 1.75rem; font-weight: 700; color: var(--accent-2); margin-top: 4px;">
+                {{ "%.1f"|format(stats.avg_percentage) }}%
+            </div>
+        </div>
+        <div class="card" style="text-align: center; padding: 16px 12px; margin-bottom: 0;">
+            <div style="color: var(--muted); font-size: 0.78rem; font-weight: 700; text-transform: uppercase;">Highest Score</div>
+            <div style="font-size: 1.75rem; font-weight: 700; color: var(--accent-2); margin-top: 4px;">
+                {{ stats.highest_score }} <span style="font-size: 0.95rem; color: var(--muted);">/ {{ exam.questions|length }}</span>
+            </div>
+        </div>
+        <div class="card" style="text-align: center; padding: 16px 12px; margin-bottom: 0;">
+            <div style="color: var(--muted); font-size: 0.78rem; font-weight: 700; text-transform: uppercase;">Lowest Score</div>
+            <div style="font-size: 1.75rem; font-weight: 700; color: var(--danger); margin-top: 4px;">
+                {{ stats.lowest_score }} <span style="font-size: 0.95rem; color: var(--muted);">/ {{ exam.questions|length }}</span>
             </div>
         </div>
     </div>
 
-    <div class="card">
-        <h3>Candidate Submissions</h3>
+    <!-- Results Table -->
+    <div class="card" style="overflow-x: auto;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <h3 style="margin: 0;">Student Submissions (Ranked by Score)</h3>
+            <span style="font-size: 0.85rem; color: var(--muted);">Showing {{ attempts|length }} candidate{{ 's' if attempts|length != 1 else '' }}</span>
+        </div>
         <table>
             <thead>
                 <tr>
-                    <th>Student Name</th>
-                    <th>Roll No / PRN</th>
+                    <th style="width: 50px;">Rank</th>
+                    <th>Name</th>
+                    <th>PRN</th>
                     <th>Score</th>
                     <th>Percentage</th>
-                    <th>Submission Time</th>
-                    <th>Sealed Block</th>
-                    <th>Ethereum Anchor</th>
+                    <th>Correct</th>
+                    <th>Incorrect</th>
+                    <th>Unanswered</th>
+                    <th>Time Used</th>
+                    <th>Submitted At</th>
+                    <th>Integrity Status</th>
                     <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
                 {% for a in attempts %}
                 <tr>
+                    <td style="font-weight: 700; color: var(--accent);">#{{ loop.index }}</td>
                     <td><strong>{{ a.student.name }}</strong></td>
                     <td><code>{{ a.student.identifier }}</code></td>
                     <td><strong>{{ a.score }} / {{ a.total }}</strong></td>
-                    <td>{{ "%.1f"|format((a.score / a.total) * 100) }}%</td>
+                    <td><strong style="color: var(--accent-2);">{{ "%.1f"|format(a.percentage) }}%</strong></td>
+                    <td style="color: var(--accent-2); font-weight: 600;">{{ a.correct_count }}</td>
+                    <td style="color: var(--danger); font-weight: 600;">{{ a.incorrect_count }}</td>
+                    <td style="color: #d97706; font-weight: 600;">{{ a.unanswered_count }}</td>
+                    <td style="font-size: 0.85rem; color: var(--muted);">{{ a.time_used_display }}</td>
                     <td style="font-size: 0.85rem; color: var(--muted);">{{ a.submitted_at.strftime('%d %b %Y, %I:%M %p') }}</td>
                     <td>
-                        <a href="{{ url_for('show_result', block_index=a.block_id) }}" style="font-weight: 600; color: var(--accent);">
-                            Block #{{ a.block_id }}
-                        </a>
-                    </td>
-                    <td>
-                        {% if a.ethereum_tx_hash %}
-                            <a href="https://sepolia.etherscan.io/tx/{{ a.ethereum_tx_hash }}" target="_blank" rel="noopener noreferrer" class="status-badge status-valid" style="font-size: 0.75rem; text-decoration: none;">
-                                &#10003; Anchored
+                        {% if a.block_id is not none %}
+                            <a href="{{ url_for('show_result', block_index=a.block_id) }}" class="status-badge status-valid" style="text-decoration: none; font-size: 0.78rem;">
+                                &#10003; Block #{{ a.block_id }}
                             </a>
                         {% else %}
-                            <span class="status-badge status-closed" style="font-size: 0.75rem;">Unanchored</span>
+                            <span class="status-badge status-closed" style="font-size: 0.78rem;">Unsealed</span>
                         {% endif %}
                     </td>
                     <td>
-                        <a href="{{ url_for('show_result', block_index=a.block_id) }}" class="btn btn-secondary btn-sm" style="padding: 4px 10px; font-size: 0.8rem;">
-                            View
-                        </a>
+                        {% if a.block_id is not none %}
+                            <a href="{{ url_for('show_result', block_index=a.block_id) }}" class="btn btn-secondary btn-sm" style="padding: 3px 8px; font-size: 0.8rem;">
+                                View
+                            </a>
+                        {% else %}
+                            <span style="font-size: 0.8rem; color: var(--muted);">&mdash;</span>
+                        {% endif %}
                     </td>
                 </tr>
                 {% endfor %}

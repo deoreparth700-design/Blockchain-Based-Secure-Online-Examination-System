@@ -1,19 +1,53 @@
 {% extends "base.html" %}
-{% block title %}Result - {{ block.data.exam_title }} - ExamChain{% endblock %}
+{% block title %}Result - {{ result_summary.exam_title or block.data.exam_title }} - ExamChain{% endblock %}
 
 {% block content %}
-<div class="card" style="max-width: 650px; margin: 0 auto; text-align: center;">
-    <h2 style="margin-bottom: 4px;">{{ block.data.exam_title }}</h2>
+<div class="card" style="max-width: 720px; margin: 0 auto; text-align: center;">
+    <h2 style="margin-bottom: 4px;">{{ result_summary.exam_title or block.data.exam_title }}</h2>
     <p style="color: var(--muted); margin: 0 0 16px; font-size: 0.95rem;">
-        Candidate: <strong>{{ block.data.student_name }}</strong> (Roll No: <strong>{{ block.data.roll_no }}</strong>)
+        Candidate: <strong>{{ result_summary.student_name }}</strong> &middot; PRN: <strong>{{ result_summary.prn }}</strong>
     </p>
 
-    <div class="score-big">{{ block.data.score }} / {{ block.data.total }}</div>
-    <div style="font-size: 1.1rem; font-weight: 600; color: var(--muted); margin-top: 4px;">
-        {{ "%.1f"|format((block.data.score / block.data.total) * 100) }}% Score
+    <!-- Main Score & Percentage -->
+    <div class="score-big">{{ result_summary.score }} / {{ result_summary.total }}</div>
+    <div style="font-size: 1.25rem; font-weight: 700; color: var(--accent); margin-top: 4px;">
+        {{ "%.1f"|format(result_summary.percentage) }}% Score
     </div>
-    <p style="color: var(--muted); font-size: 0.85rem; margin-top: 6px;">Submitted at: {{ block.data.submitted_at }}</p>
 
+    <!-- Quick Stats Grid -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; margin: 20px 0 16px; text-align: center;">
+        <div style="background: rgba(22, 163, 74, 0.08); border: 1px solid rgba(22, 163, 74, 0.25); border-radius: 8px; padding: 12px 8px;">
+            <div style="font-size: 0.78rem; font-weight: 700; color: var(--accent-2); text-transform: uppercase;">Correct</div>
+            <div style="font-size: 1.45rem; font-weight: 700; color: var(--accent-2); margin-top: 2px;">{{ result_summary.correct_count }}</div>
+        </div>
+        <div style="background: rgba(220, 38, 38, 0.08); border: 1px solid rgba(220, 38, 38, 0.25); border-radius: 8px; padding: 12px 8px;">
+            <div style="font-size: 0.78rem; font-weight: 700; color: var(--danger); text-transform: uppercase;">Incorrect</div>
+            <div style="font-size: 1.45rem; font-weight: 700; color: var(--danger); margin-top: 2px;">{{ result_summary.incorrect_count }}</div>
+        </div>
+        <div style="background: rgba(217, 119, 6, 0.08); border: 1px solid rgba(217, 119, 6, 0.25); border-radius: 8px; padding: 12px 8px;">
+            <div style="font-size: 0.78rem; font-weight: 700; color: #d97706; text-transform: uppercase;">Unanswered</div>
+            <div style="font-size: 1.45rem; font-weight: 700; color: #d97706; margin-top: 2px;">{{ result_summary.unanswered_count }}</div>
+        </div>
+        <div style="background: rgba(59, 91, 253, 0.08); border: 1px solid rgba(59, 91, 253, 0.25); border-radius: 8px; padding: 12px 8px;">
+            <div style="font-size: 0.78rem; font-weight: 700; color: var(--accent); text-transform: uppercase;">Time Used</div>
+            <div style="font-size: 1.45rem; font-weight: 700; color: var(--accent); margin-top: 2px;">{{ result_summary.time_used }}</div>
+        </div>
+    </div>
+
+    <!-- Session Timing Details -->
+    <div style="background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; margin-bottom: 20px; font-size: 0.85rem; color: var(--muted); text-align: left; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+        <span>Started: <strong>{{ result_summary.started_at }}</strong></span>
+        <span>Submitted: <strong>{{ result_summary.submitted_at }}</strong></span>
+        <span>Duration Used: <strong>{{ result_summary.time_used }}</strong></span>
+    </div>
+
+    {% if result_summary.is_timeout %}
+    <div style="background: rgba(217, 119, 6, 0.12); border: 1px solid rgba(217, 119, 6, 0.35); border-radius: 8px; padding: 8px 14px; margin-bottom: 18px; font-size: 0.85rem; color: #b45309; text-align: left;">
+        &#9200; <strong>Notice:</strong> Your exam session reached the time limit. Your submitted answers were evaluated automatically.
+    </div>
+    {% endif %}
+
+    <!-- Cryptographic Block Integrity -->
     <div style="margin: 18px 0;">
         {% if is_block_tampered %}
             <div class="status-badge status-invalid" style="font-size: 0.95rem; padding: 8px 18px;">
@@ -36,7 +70,7 @@
     <!-- Educational Concept Box -->
     <div style="background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin: 16px 0; text-align: left; font-size: 0.82rem; color: var(--muted);">
         <strong style="color: var(--text); display: block; margin-bottom: 4px;">&#128274; Tamper-Evident Architecture:</strong>
-        Result data is permanently converted into a cryptographic SHA-256 hash and bound to the previous block's hash. Unauthorized modification can be detected immediately because any change to scores or answers produces a completely different hash that fails recomputation verification.
+        Result data is permanently converted into a cryptographic SHA-256 hash and bound to the previous block's hash. Any modification to scores or answers produces a completely different hash that fails recomputation verification.
     </div>
 
     <div style="margin: 16px 0; text-align: left;">
@@ -72,7 +106,7 @@
                     Private Blockchain Only &middot; Not Yet Anchored to Public Ethereum
                 </span>
                 <p style="font-size: 0.82rem; color: var(--muted); margin: 8px 0 0;">
-                    The course instructor can anchor this result hash onto the Ethereum Sepolia smart contract for global, immutable verification.
+                    The course instructor can anchor this result hash onto the Ethereum Sepolia smart contract for global, tamper-evident verification.
                 </p>
             </div>
         {% endif %}
@@ -95,34 +129,50 @@
     </div>
 
     <div style="margin-top: 24px; display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
+        <a href="{{ url_for('student_dashboard') if session.get('role') == 'user' else url_for('admin_dashboard') }}" class="btn">
+            &larr; Return to Dashboard
+        </a>
         <a href="{{ url_for('view_blockchain') }}" class="btn btn-secondary">Explore Blockchain Ledger</a>
-        <a href="{{ url_for('index') }}" class="btn">Return to Home</a>
     </div>
 </div>
 
-<div class="card" style="max-width: 650px; margin: 24px auto;">
-    <h3 style="margin-top: 0;">Detailed Answer Breakdown</h3>
+<!-- Detailed Question Review -->
+<div class="card" style="max-width: 720px; margin: 24px auto;">
+    <h3 style="margin-top: 0; margin-bottom: 16px;">Question-by-Question Review</h3>
     <table>
         <thead>
             <tr>
                 <th style="width: 40px;">#</th>
-                <th>Question</th>
-                <th style="width: 100px; text-align: center;">Evaluation</th>
+                <th>Question &amp; Answer Comparison</th>
+                <th style="width: 120px; text-align: center;">Evaluation</th>
             </tr>
         </thead>
         <tbody>
             {% for a in block.data.answers %}
             <tr>
-                <td>{{ loop.index }}</td>
+                <td style="font-weight: 600; vertical-align: top;">{{ loop.index }}</td>
                 <td>
-                    <div style="font-weight: 500;">{{ a.question }}</div>
-                    <div style="font-size: 0.82rem; color: var(--muted); margin-top: 3px;">
-                        Selected Option: {% if a.selected_index >= 0 %}{{ ['A', 'B', 'C', 'D'][a.selected_index] }}{% else %}Unanswered{% endif %}
+                    <div style="font-weight: 600; margin-bottom: 6px; color: var(--text);">{{ a.question }}</div>
+
+                    <div style="font-size: 0.88rem; margin-bottom: 4px;">
+                        <span style="color: var(--muted); font-weight: 500;">Your answer:</span>
+                        {% if a.selected_index >= 0 %}
+                            <strong>{{ ['A', 'B', 'C', 'D'][a.selected_index] }}</strong>{% if a.options %}. {{ a.options[a.selected_index] }}{% endif %}
+                        {% else %}
+                            <span style="color: #d97706; font-style: italic;">&mdash; Unanswered</span>
+                        {% endif %}
+                    </div>
+
+                    <div style="font-size: 0.88rem; color: var(--accent-2);">
+                        <span style="color: var(--muted); font-weight: 500;">Correct answer:</span>
+                        <strong>{{ ['A', 'B', 'C', 'D'][a.correct_index] }}</strong>{% if a.options %}. {{ a.options[a.correct_index] }}{% endif %}
                     </div>
                 </td>
-                <td style="text-align: center;">
+                <td style="text-align: center; vertical-align: top;">
                     {% if a.is_correct %}
                         <span class="status-badge status-valid">&#10003; Correct</span>
+                    {% elif a.selected_index == -1 %}
+                        <span class="status-badge status-draft">&#9675; Unanswered</span>
                     {% else %}
                         <span class="status-badge status-invalid">&#10007; Incorrect</span>
                     {% endif %}
