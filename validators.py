@@ -12,20 +12,26 @@ from datetime import datetime
 
 # Regex patterns
 RE_NAME = re.compile(r"^[A-Za-z]+(?: [A-Za-z]+)*$")
-RE_USERNAME = re.compile(r"^[a-zA-Z0-9_]{3,30}$")
+RE_PRN = re.compile(r"^[A-Za-z0-9/_-]{2,40}$")
 RE_EMAIL = re.compile(r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$")
-RE_ROLL_NO = re.compile(r"^[A-Za-z0-9/_-]{2,40}$")
+RE_ROLL_NO = RE_PRN  # Backward compatibility alias
 
 
-def validate_student_registration(name, username, email, roll_no, password, confirm_password):
+def validate_user_registration(name, prn, email, password, confirm_password):
     """
-    Validates all student registration fields.
+    Validates BE Final Year user registration fields:
+    - name
+    - prn
+    - email
+    - password
+    - confirm_password
+    No username or role allowed.
     Returns: (is_valid, errors_dict, cleaned_data)
     """
     errors = {}
     cleaned = {}
 
-    # 1. Name validation: letters and spaces only, no numbers, no special characters
+    # 1. Name validation: letters and spaces only, 2-100 chars
     name_clean = (name or "").strip()
     if not name_clean:
         errors["name"] = "Full name is required."
@@ -39,18 +45,18 @@ def validate_student_registration(name, username, email, roll_no, password, conf
     else:
         cleaned["name"] = name_clean
 
-    # 2. Username validation: letters, numbers, underscore, 3-30 chars, no spaces
-    user_clean = (username or "").strip()
-    if not user_clean:
-        errors["username"] = "Username is required."
-    elif " " in user_clean:
-        errors["username"] = "Username cannot contain spaces."
-    elif len(user_clean) < 3 or len(user_clean) > 30:
-        errors["username"] = "Username must be between 3 and 30 characters."
-    elif not RE_USERNAME.match(user_clean):
-        errors["username"] = "Username can only contain letters, numbers, and underscores."
+    # 2. PRN validation: letters, numbers, hyphens, slashes, 2-40 chars
+    prn_clean = (prn or "").strip().upper()
+    if not prn_clean:
+        errors["prn"] = "PRN is required."
+    elif len(prn_clean) < 2 or len(prn_clean) > 40:
+        errors["prn"] = "PRN must be between 2 and 40 characters."
+    elif not RE_PRN.match(prn_clean):
+        errors["prn"] = "PRN can only contain letters, numbers, hyphens, and slashes."
     else:
-        cleaned["username"] = user_clean
+        cleaned["prn"] = prn_clean
+        # Also provide 'roll_no' key in cleaned dict for backward compatibility
+        cleaned["roll_no"] = prn_clean
 
     # 3. Email validation
     email_clean = (email or "").strip().lower()
@@ -63,18 +69,7 @@ def validate_student_registration(name, username, email, roll_no, password, conf
     else:
         cleaned["email"] = email_clean
 
-    # 4. Roll No / Identifier validation
-    roll_clean = (roll_no or "").strip()
-    if not roll_clean:
-        errors["roll_no"] = "Roll number / PRN is required."
-    elif len(roll_clean) < 2 or len(roll_clean) > 40:
-        errors["roll_no"] = "Roll number must be between 2 and 40 characters."
-    elif not RE_ROLL_NO.match(roll_clean):
-        errors["roll_no"] = "Roll number can only contain letters, numbers, hyphens, and slashes."
-    else:
-        cleaned["roll_no"] = roll_clean
-
-    # 5. Password validation
+    # 4. Password validation
     if not password:
         errors["password"] = "Password is required."
     elif len(password) < 6:
@@ -82,13 +77,31 @@ def validate_student_registration(name, username, email, roll_no, password, conf
     elif len(password) > 128:
         errors["password"] = "Password cannot exceed 128 characters."
 
-    # 6. Confirm Password validation
+    # 5. Confirm Password validation
     if not confirm_password:
         errors["confirm_password"] = "Please confirm your password."
     elif password != confirm_password:
         errors["confirm_password"] = "Passwords do not match."
 
     is_valid = len(errors) == 0
+    return is_valid, errors, cleaned
+
+
+def validate_student_registration(name, username=None, email=None, roll_no=None, password=None, confirm_password=None, prn=None):
+    """
+    Backward-compatible wrapper for validate_user_registration.
+    Accepts roll_no or prn. Username is optional and ignored.
+    """
+    effective_prn = prn or roll_no
+    is_valid, errors, cleaned = validate_user_registration(
+        name=name,
+        prn=effective_prn,
+        email=email,
+        password=password,
+        confirm_password=confirm_password,
+    )
+    if "prn" in errors:
+        errors["roll_no"] = errors["prn"]
     return is_valid, errors, cleaned
 
 
@@ -99,7 +112,7 @@ def validate_login_input(identifier, password):
     """
     ident_clean = (identifier or "").strip()
     if not ident_clean:
-        return False, "Please enter your username, roll number, or email.", ""
+        return False, "Please enter your PRN or email.", ""
     if not password:
         return False, "Please enter your password.", ident_clean
     return True, None, ident_clean

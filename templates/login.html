@@ -12,7 +12,7 @@
         <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
 
         <div class="form-group">
-            <label for="identifier">Username, Roll No, or Email</label>
+            <label for="identifier">PRN or Email</label>
             <input
                 type="text"
                 id="identifier"
@@ -20,7 +20,7 @@
                 value="{{ form_data.get('identifier', '') }}"
                 required
                 autofocus
-                placeholder="Enter username, roll number, or email"
+                placeholder="Enter PRN or email address"
                 class="form-control"
             >
         </div>
@@ -43,7 +43,7 @@
     </form>
 
     <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--border); font-size: 0.85rem; color: var(--muted); text-align: center;">
-        <p>Students: Not registered yet? <a href="{{ url_for('register') }}" style="color: var(--accent); font-weight: 600;">Sign up as a student</a></p>
+        <p>BE Final Year Students: Not registered yet? <a href="{{ url_for('register') }}" style="color: var(--accent); font-weight: 600;">Create Account</a></p>
     </div>
 </div>
 {% endblock %}

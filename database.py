@@ -52,6 +52,11 @@ def get_user_by_identifier(identifier):
     return User.query.filter_by(identifier=identifier).first()
 
 
+def get_user_by_prn(prn):
+    """Alias for get_user_by_identifier representing the student PRN."""
+    return get_user_by_identifier(prn)
+
+
 def get_user_by_username(username):
     if not username:
         return None

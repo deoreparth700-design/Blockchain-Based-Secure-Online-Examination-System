@@ -110,7 +110,7 @@ def index():
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
-    """Student self-registration with complete backend validation."""
+    """BE Final Year student self-registration with PRN and email."""
     if session.get("user_id"):
         return redirect(url_for("index"))
 
@@ -119,24 +119,21 @@ def register():
 
     if request.method == "POST":
         name = request.form.get("name", "")
-        username = request.form.get("username", "")
+        prn = request.form.get("prn", "") or request.form.get("roll_no", "")
         email = request.form.get("email", "")
-        roll_no = request.form.get("roll_no", "")
         password = request.form.get("password", "")
         confirm_password = request.form.get("confirm_password", "")
 
         form_data = {
             "name": name,
-            "username": username,
+            "prn": prn,
             "email": email,
-            "roll_no": roll_no,
         }
 
-        is_valid, errors, cleaned = validators.validate_student_registration(
+        is_valid, errors, cleaned = validators.validate_user_registration(
             name=name,
-            username=username,
+            prn=prn,
             email=email,
-            roll_no=roll_no,
             password=password,
             confirm_password=confirm_password,
         )
@@ -146,15 +143,10 @@ def register():
                 flash(err, "error")
             return render_template("register.html", form_data=form_data, field_errors=errors)
 
-        # Database uniqueness checks
-        if database.get_user_by_username(cleaned["username"]):
-            flash("That username is already taken. Please choose another.", "error")
-            field_errors["username"] = "Username is already taken."
-            return render_template("register.html", form_data=form_data, field_errors=field_errors)
-
-        if database.get_user_by_identifier(cleaned["roll_no"]):
-            flash("That roll number / PRN is already registered.", "error")
-            field_errors["roll_no"] = "Roll number is already registered."
+        # Database uniqueness checks (PRN and Email only)
+        if database.get_user_by_identifier(cleaned["prn"]):
+            flash("That PRN is already registered.", "error")
+            field_errors["prn"] = "PRN is already registered."
             return render_template("register.html", form_data=form_data, field_errors=field_errors)
 
         if database.get_user_by_email(cleaned["email"]):
@@ -162,13 +154,15 @@ def register():
             field_errors["email"] = "Email address is already registered."
             return render_template("register.html", form_data=form_data, field_errors=field_errors)
 
+        # Create user: explicitly role='user', username=None.
+        # User-supplied 'role' or 'username' in POST data are strictly ignored.
         database.create_user(
             name=cleaned["name"],
-            username=cleaned["username"],
-            identifier=cleaned["roll_no"],
+            identifier=cleaned["prn"],
             email=cleaned["email"],
             password=password,
             role="user",
+            username=None,
         )
 
         flash("Account created successfully! You can now log in.", "success")
@@ -196,7 +190,7 @@ def login():
         user = database.get_user_by_login(clean_ident)
         if not user or not user.check_password(password):
             # Generic error to prevent account enumeration
-            flash("Invalid username, roll number, or password.", "error")
+            flash("Invalid PRN, email, or password.", "error")
             return render_template("login.html", form_data=form_data)
 
         # Normalize role value: ensure it's either "admin" or "user"

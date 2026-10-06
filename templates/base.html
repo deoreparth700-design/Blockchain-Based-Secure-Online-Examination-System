@@ -21,7 +21,7 @@
             <a href="{{ url_for('logout') }}">Logout ({{ session.get('name') }})</a>
         {% else %}
             <a href="{{ url_for('login') }}">Login</a>
-            <a href="{{ url_for('register') }}">Student Sign Up</a>
+            <a href="{{ url_for('register') }}">Create Account</a>
         {% endif %}
     </div>
 </nav>
