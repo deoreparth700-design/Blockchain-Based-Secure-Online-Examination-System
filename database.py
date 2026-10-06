@@ -103,22 +103,50 @@ def get_exam(exam_id):
     return db.session.get(Exam, exam_id)
 
 
-def get_exams_by_teacher(teacher_id):
-    return Exam.query.filter_by(created_by=teacher_id).order_by(Exam.start_time.desc()).all()
+def get_admin_dashboard_stats():
+    """Summary metrics for the V1 Admin Dashboard."""
+    total_exams = Exam.query.count()
+    published_exams = Exam.query.filter_by(status="published").count()
+    closed_exams = Exam.query.filter_by(status="closed").count()
+    draft_exams = Exam.query.filter_by(status="draft").count()
+    total_users = User.query.filter_by(role="user").count()
+    total_submissions = Attempt.query.count()
+    return {
+        "total_exams": total_exams,
+        "published_exams": published_exams,
+        "closed_exams": closed_exams,
+        "draft_exams": draft_exams,
+        "total_users": total_users,
+        "total_submissions": total_submissions,
+    }
 
 
-def get_all_exams():
-    """Used on the student dashboard so they can see upcoming/open/closed exams."""
+def get_admin_exams():
+    """All exams managed by Admin in the V1 single-class system."""
     return Exam.query.order_by(Exam.start_time.desc()).all()
 
 
-def create_exam(title, created_by, start_time, end_time, duration_minutes, questions):
+def get_exams_by_teacher(teacher_id):
+    """Compatibility alias for get_admin_exams."""
+    return Exam.query.order_by(Exam.start_time.desc()).all()
+
+
+def get_all_exams(include_drafts=False):
+    """Used on the student dashboard so they can see upcoming/open/closed exams (drafts excluded)."""
+    query = Exam.query
+    if not include_drafts:
+        query = query.filter(Exam.status != "draft")
+    return query.order_by(Exam.start_time.desc()).all()
+
+
+def create_exam(title, created_by, start_time, end_time, duration_minutes, questions, status="draft"):
     exam = Exam(
         title=title,
         created_by=created_by,
         start_time=start_time,
         end_time=end_time,
         duration_minutes=duration_minutes,
+        status=status,
     )
     db.session.add(exam)
     db.session.flush()  # so exam.id is available before commit
@@ -135,6 +163,112 @@ def create_exam(title, created_by, start_time, end_time, duration_minutes, quest
         ))
     db.session.commit()
     return exam
+
+
+def update_exam(exam_id, title, start_time, end_time, duration_minutes, questions):
+    """
+    Safely update an exam and its questions.
+    Only permitted if zero attempts exist and exam is not closed.
+    """
+    exam = db.session.get(Exam, exam_id)
+    if not exam:
+        return None, "Exam not found."
+    if exam.status == "closed":
+        return None, "Cannot edit a closed exam."
+    if len(exam.attempts) > 0:
+        return None, "Cannot edit this exam: student submissions have already been recorded."
+
+    exam.title = title
+    exam.start_time = start_time
+    exam.end_time = end_time
+    exam.duration_minutes = duration_minutes
+
+    # Replace questions cleanly
+    for q in list(exam.questions):
+        db.session.delete(q)
+    db.session.flush()
+
+    for q in questions:
+        db.session.add(Question(
+            exam_id=exam.id,
+            question_text=q["question"],
+            option_a=q["options"][0],
+            option_b=q["options"][1],
+            option_c=q["options"][2],
+            option_d=q["options"][3],
+            correct_index=q["correct_index"],
+        ))
+    db.session.commit()
+    return exam, None
+
+
+def publish_exam(exam_id):
+    """
+    Publish a draft exam: draft -> published.
+    Validates title, start/end time, schedule ordering, and valid questions.
+    """
+    exam = db.session.get(Exam, exam_id)
+    if not exam:
+        return False, "Exam not found."
+    if exam.status == "closed":
+        return False, "Cannot publish a closed exam."
+    if exam.status == "published":
+        return True, "Exam is already published."
+
+    if not exam.title or not exam.title.strip():
+        return False, "Exam title is required to publish."
+    if not exam.start_time or not exam.end_time:
+        return False, "Exam start and end times are required to publish."
+    if exam.end_time <= exam.start_time:
+        return False, "Exam end time must be after start time."
+    if not exam.questions or len(exam.questions) == 0:
+        return False, "Exam must contain at least one question before publishing."
+
+    for q in exam.questions:
+        if not q.question_text or not q.question_text.strip():
+            return False, "All questions must contain question text."
+        if not q.option_a or not q.option_b or not q.option_c or not q.option_d:
+            return False, "All four options are required for every question."
+        if q.correct_index not in (0, 1, 2, 3):
+            return False, "Each question must have a valid correct option marked."
+
+    exam.status = "published"
+    db.session.commit()
+    return True, f"Exam '{exam.title}' published successfully."
+
+
+def close_exam(exam_id):
+    """
+    Close a published exam manually: published -> closed.
+    Students cannot start or submit closed exams. Attempts/results are preserved.
+    """
+    exam = db.session.get(Exam, exam_id)
+    if not exam:
+        return False, "Exam not found."
+    if exam.status == "closed":
+        return True, f"Exam '{exam.title}' is already closed."
+    if exam.status == "draft":
+        return False, "Draft exams cannot be closed directly. Publish or delete the draft instead."
+
+    exam.status = "closed"
+    db.session.commit()
+    return True, f"Exam '{exam.title}' has been closed."
+
+
+def delete_exam(exam_id):
+    """
+    Delete an exam only if zero attempts exist.
+    Prevents deleting any exam whose results are sealed in the blockchain.
+    """
+    exam = db.session.get(Exam, exam_id)
+    if not exam:
+        return False, "Exam not found."
+    if len(exam.attempts) > 0:
+        return False, "Cannot delete exam: student results have already been recorded and cryptographically sealed into the blockchain ledger."
+
+    db.session.delete(exam)
+    db.session.commit()
+    return True, f"Exam '{exam.title}' was deleted successfully."
 
 
 # ---------- Attempts ----------

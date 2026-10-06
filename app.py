@@ -102,7 +102,7 @@ def current_user():
 @app.route("/")
 def index():
     if session.get("role") == "admin":
-        return redirect(url_for("teacher_dashboard"))
+        return redirect(url_for("admin_dashboard"))
     if session.get("role") == "user":
         return redirect(url_for("student_dashboard"))
     return render_template("index.html")
@@ -219,15 +219,26 @@ def logout():
 
 
 # ---------- Admin Routes ----------
+@app.route("/admin")
+@app.route("/admin/exams")
+@login_required
+@role_required("admin")
+def admin_dashboard():
+    exams = database.get_admin_exams()
+    stats = database.get_admin_dashboard_stats()
+    now = datetime.now()
+    return render_template("admin_dashboard.html", exams=exams, stats=stats, now=now)
+
+
 @app.route("/teacher")
 @login_required
 @role_required("admin")
 def teacher_dashboard():
-    exams = database.get_exams_by_teacher(session["user_id"])
-    now = datetime.now()
-    return render_template("teacher_dashboard.html", exams=exams, now=now)
+    """Compatibility alias for the canonical V1 Admin dashboard."""
+    return admin_dashboard()
 
 
+@app.route("/admin/exams/create", methods=["GET", "POST"])
 @app.route("/teacher/create_exam", methods=["GET", "POST"])
 @login_required
 @role_required("admin")
@@ -267,28 +278,152 @@ def create_exam():
                 flash(err, "error")
             return render_template("create_exam.html")
 
-        database.create_exam(
+        # Newly created exams start as DRAFT
+        exam = database.create_exam(
             title=cleaned["title"],
             created_by=session["user_id"],
             start_time=cleaned["start_time"],
             end_time=cleaned["end_time"],
             duration_minutes=cleaned["duration"],
             questions=cleaned["questions"],
+            status="draft",
         )
-        flash(f"Exam '{cleaned['title']}' created successfully with {len(cleaned['questions'])} question(s).", "success")
-        return redirect(url_for("teacher_dashboard"))
+        flash(f"Exam '{cleaned['title']}' created as Draft. Review and publish when ready.", "success")
+        return redirect(url_for("admin_dashboard"))
 
     return render_template("create_exam.html")
 
 
+@app.route("/admin/exams/<int:exam_id>/edit", methods=["GET", "POST"])
+@login_required
+@role_required("admin")
+def edit_exam(exam_id):
+    exam = database.get_exam(exam_id)
+    if not exam:
+        flash("Exam not found.", "error")
+        return redirect(url_for("admin_dashboard"))
+
+    if exam.status == "closed":
+        flash("Cannot edit a closed exam.", "error")
+        return redirect(url_for("admin_dashboard"))
+
+    if len(exam.attempts) > 0:
+        flash("Cannot edit this exam: student submissions have already been recorded.", "error")
+        return redirect(url_for("admin_dashboard"))
+
+    if request.method == "POST":
+        title = request.form.get("title", "")
+        start_raw = request.form.get("start_time", "")
+        end_raw = request.form.get("end_time", "")
+        duration_raw = request.form.get("duration", "30")
+
+        q_texts = request.form.getlist("question_text")
+        questions_raw = []
+        for i, qtext in enumerate(q_texts):
+            options = [
+                request.form.get(f"option_{i}_0", ""),
+                request.form.get(f"option_{i}_1", ""),
+                request.form.get(f"option_{i}_2", ""),
+                request.form.get(f"option_{i}_3", ""),
+            ]
+            correct_idx = request.form.get(f"correct_{i}", "0")
+            questions_raw.append({
+                "question": qtext,
+                "options": options,
+                "correct_index": correct_idx,
+            })
+
+        is_valid, errors, cleaned = validators.validate_exam_creation(
+            title=title,
+            start_raw=start_raw,
+            end_raw=end_raw,
+            duration_raw=duration_raw,
+            questions_raw=questions_raw,
+        )
+
+        if not is_valid:
+            for err in errors:
+                flash(err, "error")
+            return render_template("edit_exam.html", exam=exam)
+
+        updated_exam, err = database.update_exam(
+            exam_id=exam.id,
+            title=cleaned["title"],
+            start_time=cleaned["start_time"],
+            end_time=cleaned["end_time"],
+            duration_minutes=cleaned["duration"],
+            questions=cleaned["questions"],
+        )
+        if err:
+            flash(err, "error")
+            return render_template("edit_exam.html", exam=exam)
+
+        flash(f"Exam '{updated_exam.title}' updated successfully.", "success")
+        return redirect(url_for("admin_dashboard"))
+
+    return render_template("edit_exam.html", exam=exam)
+
+
+@app.route("/admin/exams/<int:exam_id>/publish", methods=["POST"])
+@login_required
+@role_required("admin")
+def publish_exam(exam_id):
+    exam = database.get_exam(exam_id)
+    if not exam:
+        flash("Exam not found.", "error")
+        return redirect(url_for("admin_dashboard"))
+
+    success, message = database.publish_exam(exam_id)
+    if success:
+        flash(message, "success")
+    else:
+        flash(message, "error")
+    return redirect(url_for("admin_dashboard"))
+
+
+@app.route("/admin/exams/<int:exam_id>/close", methods=["POST"])
+@login_required
+@role_required("admin")
+def close_exam(exam_id):
+    exam = database.get_exam(exam_id)
+    if not exam:
+        flash("Exam not found.", "error")
+        return redirect(url_for("admin_dashboard"))
+
+    success, message = database.close_exam(exam_id)
+    if success:
+        flash(message, "success")
+    else:
+        flash(message, "error")
+    return redirect(url_for("admin_dashboard"))
+
+
+@app.route("/admin/exams/<int:exam_id>/delete", methods=["POST"])
+@login_required
+@role_required("admin")
+def delete_exam(exam_id):
+    exam = database.get_exam(exam_id)
+    if not exam:
+        flash("Exam not found.", "error")
+        return redirect(url_for("admin_dashboard"))
+
+    success, message = database.delete_exam(exam_id)
+    if success:
+        flash(message, "success")
+    else:
+        flash(message, "error")
+    return redirect(url_for("admin_dashboard"))
+
+
+@app.route("/admin/exams/<int:exam_id>/results")
 @app.route("/teacher/exam/<int:exam_id>/results")
 @login_required
 @role_required("admin")
 def exam_results(exam_id):
     exam = database.get_exam(exam_id)
-    if not exam or exam.created_by != session["user_id"]:
-        flash("Exam not found or unauthorized.", "error")
-        return redirect(url_for("teacher_dashboard"))
+    if not exam:
+        flash("Exam not found.", "error")
+        return redirect(url_for("admin_dashboard"))
 
     attempts = database.get_attempts_for_exam(exam_id)
     return render_template("exam_results.html", exam=exam, attempts=attempts)
@@ -308,6 +443,8 @@ def student_dashboard():
         attempt = database.get_attempt(exam.id, student_id)
         if attempt:
             status = "attempted"
+        elif exam.status == "closed":
+            status = "closed"
         elif now < exam.start_time:
             status = "upcoming"
         elif now > exam.end_time:
@@ -335,6 +472,19 @@ def take_exam(exam_id):
     existing = database.get_attempt(exam_id, student_id)
     if existing:
         flash("You have already submitted this exam.", "error")
+        return redirect(url_for("student_dashboard"))
+
+    # Draft and closed exams cannot be attempted or submitted
+    if exam.status == "draft":
+        flash("This exam is not available.", "error")
+        return redirect(url_for("student_dashboard"))
+
+    if exam.status == "closed":
+        flash("This exam has been closed.", "error")
+        return redirect(url_for("student_dashboard"))
+
+    if exam.status != "published":
+        flash("This exam is not available.", "error")
         return redirect(url_for("student_dashboard"))
 
     if now < exam.start_time:
@@ -413,9 +563,9 @@ def show_result(block_index):
             return redirect(url_for("student_dashboard"))
     elif session.get("role") == "admin":
         exam = database.get_exam(attempt.exam_id)
-        if not exam or exam.created_by != session.get("user_id"):
+        if not exam:
             flash("You do not have permission to view results for this exam.", "error")
-            return redirect(url_for("teacher_dashboard"))
+            return redirect(url_for("admin_dashboard"))
 
     chain_valid, _ = blockchain.is_chain_valid()
     is_block_tampered = (block.hash != block.recompute_hash())

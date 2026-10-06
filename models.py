@@ -64,13 +64,15 @@ class Exam(db.Model):
     start_time = db.Column(db.DateTime, nullable=False)
     end_time = db.Column(db.DateTime, nullable=False)
     duration_minutes = db.Column(db.Integer, nullable=False, default=30)
+    status = db.Column(db.String(20), nullable=False, default="draft")
 
     questions = db.relationship("Question", backref="exam", cascade="all, delete-orphan")
     attempts = db.relationship("Attempt", backref="exam", cascade="all, delete-orphan")
 
     def is_open(self, now=None):
         """
-        True if right now falls within this exam's start/end window.
+        True if right now falls within this exam's start/end window AND
+        the exam has 'published' status.
         Deliberately uses naive (timezone-less) datetimes throughout --
         for a single-server classroom deployment where the server and
         every student are in the same timezone, this is simpler and
@@ -78,6 +80,8 @@ class Exam(db.Model):
         serve students across timezones, switch to timezone-aware
         datetimes everywhere at once.
         """
+        if self.status != "published":
+            return False
         now = now or datetime.now()
         return self.start_time <= now <= self.end_time
 
