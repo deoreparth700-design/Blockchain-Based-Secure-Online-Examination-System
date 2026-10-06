@@ -267,12 +267,12 @@ http://localhost:5000
 
 ## Testing
 
-The project includes 122 automated tests across 7 phase-specific test suites.
+The project includes 135 automated tests across 8 phase-specific test suites.
 
 Run all tests:
 
 ```bash
-python -m unittest tests/test_phase1_roles.py tests/test_phase2_registration.py tests/test_phase3_admin_exam_management.py tests/test_phase4_exam_engine.py tests/test_phase5_results.py tests/test_phase6_security_integrity.py tests/test_phase8_be_final_v1.py
+python -m unittest tests/test_phase1_roles.py tests/test_phase2_registration.py tests/test_phase3_admin_exam_management.py tests/test_phase4_exam_engine.py tests/test_phase5_results.py tests/test_phase6_security_integrity.py tests/test_phase8_be_final_v1.py tests/test_phase9_pilot_readiness.py
 ```
 
 All test suites use isolated SQLite databases and do not touch the production Neon PostgreSQL database.
@@ -286,6 +286,7 @@ All test suites use isolated SQLite databases and do not touch the production Ne
 | Phase 5 | Scoring, result breakdown, ownership, admin statistics |
 | Phase 6 | Ethereum removal, ledger privacy, integrity verification, CSRF, IDOR |
 | Phase 8 | B.E. Final Year academic scope, registration, state organization, tamper detection |
+| Phase 9 | Pilot readiness audit, access control failure cases, client injection immunity, seed integrity, E2E demo workflow |
 
 A formatting check can also be performed with:
 
@@ -362,6 +363,25 @@ An experimental Ethereum Sepolia and MetaMask integration was developed as a res
 The V1 examination system relies entirely on the private SHA-256 hash-linked ledger for tamper detection and result verification. No Ethereum wallet, MetaMask extension, or Sepolia testnet connection is needed to operate the current system.
 
 The archived experimental files are preserved for academic documentation only.
+
+## Teacher Pilot Demonstration
+
+A complete step-by-step teacher and student demonstration guide is available in:
+[`docs/BE_FINAL_YEAR_V1_DEMO.md`](docs/BE_FINAL_YEAR_V1_DEMO.md)
+
+To seed a realistic, fictional pilot dataset in the local development SQLite database:
+
+```bash
+python seed_demo_pilot.py
+```
+
+This seeds:
+- 1 Administrator account (`admin_demo`)
+- 3 Fictional B.E. Final Year student accounts (`BE2026CS001`, `BE2026CS002`, `BE2026CS003`)
+- 1 Draft examination
+- 1 Published examination
+- 1 Completed submission sealed into SHA-256 Block #1
+- 1 Closed examination
 
 ## Tamper Detection Demo
 
