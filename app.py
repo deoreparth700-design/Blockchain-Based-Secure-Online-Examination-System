@@ -4,7 +4,7 @@ app.py
 Flask application for the Blockchain-Based Secure Online Examination System.
 
 Features:
-- Dual-role authentication: Teacher and Student.
+- Dual-role authentication: Admin and User.
 - Strict server-side and client-side form validation.
 - Server-enforced exam time windows (start_time to end_time).
 - Database-enforced single attempt per student per exam.
@@ -101,9 +101,9 @@ def current_user():
 # ---------- Public Routes ----------
 @app.route("/")
 def index():
-    if session.get("role") == "teacher":
+    if session.get("role") == "admin":
         return redirect(url_for("teacher_dashboard"))
-    if session.get("role") == "student":
+    if session.get("role") == "user":
         return redirect(url_for("student_dashboard"))
     return render_template("index.html")
 
@@ -168,7 +168,7 @@ def register():
             identifier=cleaned["roll_no"],
             email=cleaned["email"],
             password=password,
-            role="student",
+            role="user",
         )
 
         flash("Account created successfully! You can now log in.", "success")
@@ -199,10 +199,16 @@ def login():
             flash("Invalid username, roll number, or password.", "error")
             return render_template("login.html", form_data=form_data)
 
+        # Normalize role value: ensure it's either "admin" or "user"
+        effective_role = "admin" if user.role in ("admin", "teacher") else "user"
+        if user.role != effective_role:
+            user.role = effective_role
+            database.db.session.commit()
+
         # Regenerate session to protect against session fixation
         session.clear()
         session["user_id"] = user.id
-        session["role"] = user.role
+        session["role"] = effective_role
         session["name"] = user.name
         session["identifier"] = user.identifier
         session["csrf_token"] = secrets.token_hex(16)
@@ -218,10 +224,10 @@ def logout():
     return redirect(url_for("index"))
 
 
-# ---------- Teacher Routes ----------
+# ---------- Admin Routes ----------
 @app.route("/teacher")
 @login_required
-@role_required("teacher")
+@role_required("admin")
 def teacher_dashboard():
     exams = database.get_exams_by_teacher(session["user_id"])
     now = datetime.now()
@@ -230,7 +236,7 @@ def teacher_dashboard():
 
 @app.route("/teacher/create_exam", methods=["GET", "POST"])
 @login_required
-@role_required("teacher")
+@role_required("admin")
 def create_exam():
     if request.method == "POST":
         title = request.form.get("title", "")
@@ -283,7 +289,7 @@ def create_exam():
 
 @app.route("/teacher/exam/<int:exam_id>/results")
 @login_required
-@role_required("teacher")
+@role_required("admin")
 def exam_results(exam_id):
     exam = database.get_exam(exam_id)
     if not exam or exam.created_by != session["user_id"]:
@@ -294,10 +300,10 @@ def exam_results(exam_id):
     return render_template("exam_results.html", exam=exam, attempts=attempts)
 
 
-# ---------- Student Routes ----------
+# ---------- User Routes ----------
 @app.route("/student")
 @login_required
-@role_required("student")
+@role_required("user")
 def student_dashboard():
     exams = database.get_all_exams()
     now = datetime.now()
@@ -321,7 +327,7 @@ def student_dashboard():
 
 @app.route("/student/exam/<int:exam_id>", methods=["GET", "POST"])
 @login_required
-@role_required("student")
+@role_required("user")
 def take_exam(exam_id):
     exam = database.get_exam(exam_id)
     if not exam:
@@ -405,13 +411,13 @@ def show_result(block_index):
         return redirect(url_for("index"))
 
     # Role-based authorization:
-    # Students can only view their own result.
-    # Teachers can only view results for exams they created.
-    if session.get("role") == "student":
+    # Users can only view their own result.
+    # Admins can only view results for exams they created.
+    if session.get("role") == "user":
         if attempt.student_id != session.get("user_id"):
             flash("You do not have permission to view another student's result.", "error")
             return redirect(url_for("student_dashboard"))
-    elif session.get("role") == "teacher":
+    elif session.get("role") == "admin":
         exam = database.get_exam(attempt.exam_id)
         if not exam or exam.created_by != session.get("user_id"):
             flash("You do not have permission to view results for this exam.", "error")
@@ -458,7 +464,7 @@ def verify():
 # ---------- Ethereum Smart Contract Anchoring ----------
 @app.route("/api/anchor_result/<int:attempt_id>", methods=["POST"])
 @login_required
-@role_required("teacher")
+@role_required("admin")
 def anchor_result(attempt_id):
     attempt = database.get_attempt_by_id(attempt_id)
     if not attempt:

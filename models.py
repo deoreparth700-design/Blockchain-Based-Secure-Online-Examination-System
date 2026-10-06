@@ -9,7 +9,7 @@ This is what replaced the old data/exam.json and data/blockchain.json
 files. Everything now lives in one SQLite file: exam_system.db.
 
 Five tables:
-    User      - a login account, either role="teacher" or role="student"
+    User      - a login account, either role="admin" or role="user"
     Exam      - a teacher-created exam with a start/end time window
     Question  - one MCQ question belonging to an Exam
     Attempt   - one student's finished submission for an Exam
@@ -36,7 +36,8 @@ class User(db.Model):
     identifier = db.Column(db.String(80), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=True)
     password_hash = db.Column(db.String(255), nullable=False)
-    role = db.Column(db.String(20), nullable=False)  # "teacher" or "student"
+    # User role: either "admin" or "user"
+    role = db.Column(db.String(20), nullable=False, default="user")  # "admin" or "user"
 
     def set_password(self, raw_password):
         self.password_hash = generate_password_hash(raw_password)

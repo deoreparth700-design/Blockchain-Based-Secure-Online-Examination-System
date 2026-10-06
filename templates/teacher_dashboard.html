@@ -1,12 +1,12 @@
 {% extends "base.html" %}
-{% block title %}Teacher Dashboard - ExamChain{% endblock %}
+{% block title %}Admin Dashboard - ExamChain{% endblock %}
 
 {% block content %}
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 12px;">
     <div>
-        <h2 style="margin: 0;">Teacher Dashboard</h2>
+        <h2 style="margin: 0;">Admin Dashboard</h2>
         <p style="color: var(--muted); margin: 4px 0 0; font-size: 0.95rem;">
-            Logged in as <strong>{{ session.get('name') }}</strong> (Instructor)
+            Logged in as <strong>{{ session.get('name') }}</strong> (Administrator)
         </p>
     </div>
     <div style="display: flex; gap: 10px;">
