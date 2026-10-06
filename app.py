@@ -17,7 +17,7 @@ Features:
 
 import os
 import secrets
-from datetime import datetime
+from datetime import datetime, timedelta
 from functools import wraps
 
 from dotenv import load_dotenv
@@ -441,8 +441,14 @@ def student_dashboard():
     exam_rows = []
     for exam in exams:
         attempt = database.get_attempt(exam.id, student_id)
-        if attempt:
+        if attempt and attempt.is_submitted:
             status = "attempted"
+        elif attempt and attempt.is_active:
+            deadline = database.get_effective_deadline(exam, attempt)
+            if now > deadline:
+                status = "closed"
+            else:
+                status = "in_progress"
         elif exam.status == "closed":
             status = "closed"
         elif now < exam.start_time:
@@ -468,12 +474,6 @@ def take_exam(exam_id):
     student_id = session["user_id"]
     now = datetime.now()
 
-    # Server-side enforcement -- checked on both GET and POST
-    existing = database.get_attempt(exam_id, student_id)
-    if existing:
-        flash("You have already submitted this exam.", "error")
-        return redirect(url_for("student_dashboard"))
-
     # Draft and closed exams cannot be attempted or submitted
     if exam.status == "draft":
         flash("This exam is not available.", "error")
@@ -487,15 +487,49 @@ def take_exam(exam_id):
         flash("This exam is not available.", "error")
         return redirect(url_for("student_dashboard"))
 
+    # Server-side schedule window checks
     if now < exam.start_time:
         flash(f"This exam is not open yet. It will open on {exam.start_time.strftime('%d %b %Y, %I:%M %p')}.", "error")
         return redirect(url_for("student_dashboard"))
 
-    if now > exam.end_time:
-        flash("The exam window has closed.", "error")
+    # Look up existing attempt for this student & exam
+    attempt = database.get_attempt(exam_id, student_id)
+
+    # 1. If already submitted, prevent any further action (GET or POST)
+    if attempt and attempt.is_submitted:
+        flash("You have already submitted this exam.", "error")
         return redirect(url_for("student_dashboard"))
 
+    # 2. If no attempt exists yet: verify window has not closed before creating
+    if not attempt:
+        if now > exam.end_time:
+            flash("The exam window has closed.", "error")
+            return redirect(url_for("student_dashboard"))
+
+        attempt = database.start_attempt(exam_id, student_id, len(exam.questions))
+
+    # Calculate authoritative server deadline and remaining seconds
+    effective_deadline = database.get_effective_deadline(exam, attempt)
+    remaining_seconds = database.get_remaining_seconds(exam, attempt, now)
+
+    # Grace period in seconds to account for network transit latency on auto-submission
+    GRACE_PERIOD_SECONDS = 5
+
+    # 3. Handle POST (Submission)
     if request.method == "POST":
+        # Check if deadline has strictly passed (beyond grace period)
+        if now > effective_deadline + timedelta(seconds=GRACE_PERIOD_SECONDS):
+            # Finalize attempt with score 0 / mark timed out
+            database.finalize_attempt(
+                attempt,
+                score=0,
+                total_questions=len(exam.questions),
+                block_id=None,
+                submitted_at=now,
+            )
+            flash("The exam time limit has expired. Your submission was not accepted.", "error")
+            return redirect(url_for("student_dashboard"))
+
         student = current_user()
         answers = []
         score = 0
@@ -525,20 +559,45 @@ def take_exam(exam_id):
             "answers": answers,
             "score": score,
             "total": len(exam.questions),
-            "submitted_at": datetime.now().strftime("%d %b %Y, %I:%M:%S %p"),
+            "submitted_at": now.strftime("%d %b %Y, %I:%M:%S %p"),
         }
 
         try:
             new_block = blockchain.add_block(result_data)
-            database.create_attempt(exam_id, student_id, score, len(exam.questions), new_block.index)
+            database.finalize_attempt(
+                attempt,
+                score=score,
+                total_questions=len(exam.questions),
+                block_id=new_block.index,
+                submitted_at=now,
+            )
         except IntegrityError:
             database.db.session.rollback()
             flash("You have already submitted this exam.", "error")
             return redirect(url_for("student_dashboard"))
 
+        flash("Exam submitted and sealed successfully!", "success")
         return redirect(url_for("show_result", block_index=new_block.index))
 
-    return render_template("exam.html", exam=exam)
+    # 4. Handle GET (Viewing / Resuming the exam)
+    if remaining_seconds <= 0:
+        database.finalize_attempt(
+            attempt,
+            score=0,
+            total_questions=len(exam.questions),
+            block_id=None,
+            submitted_at=now,
+        )
+        flash("The exam time limit has expired.", "error")
+        return redirect(url_for("student_dashboard"))
+
+    return render_template(
+        "exam.html",
+        exam=exam,
+        attempt=attempt,
+        remaining_seconds=remaining_seconds,
+        effective_deadline=effective_deadline.strftime("%Y-%m-%dT%H:%M:%S"),
+    )
 
 
 @app.route("/result/<int:block_index>")

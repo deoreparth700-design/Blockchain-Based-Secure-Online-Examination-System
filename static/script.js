@@ -177,10 +177,91 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Student Exam submission double-click prevention
+    // Student Exam Countdown Timer & Auto-Submission Engine
+    const timerContainer = document.getElementById("exam-timer-container");
+    const timerDisplay = document.getElementById("exam-timer-display");
     const studentExamForm = document.getElementById("student-exam-form");
+
+    let isSubmitting = false;
+
+    function formatTime(totalSeconds) {
+        if (totalSeconds <= 0) return "00:00";
+        const hours = Math.floor(totalSeconds / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = totalSeconds % 60;
+        const pad = (n) => String(n).padStart(2, "0");
+        if (hours > 0) {
+            return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+        }
+        return `${pad(minutes)}:${pad(seconds)}`;
+    }
+
+    function updateTimerClass(container, remainingSeconds) {
+        container.classList.remove("timer-normal", "timer-warning", "timer-critical");
+        if (remainingSeconds <= 60) {
+            container.classList.add("timer-critical");
+        } else if (remainingSeconds <= 300) {
+            container.classList.add("timer-warning");
+        } else {
+            container.classList.add("timer-normal");
+        }
+    }
+
+    function autoSubmitExam() {
+        if (isSubmitting || !studentExamForm) return;
+        isSubmitting = true;
+
+        const autoInput = document.getElementById("auto_submit");
+        if (autoInput) autoInput.value = "true";
+
+        const submitBtn = document.getElementById("exam-submit-btn");
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerText = "Time Expired. Submitting...";
+            submitBtn.style.opacity = "0.7";
+        }
+
+        // Bypass browser HTML5 required validation for automatic timeout submission
+        studentExamForm.noValidate = true;
+        studentExamForm.submit();
+    }
+
+    if (timerContainer && timerDisplay) {
+        const rawSeconds = parseInt(timerContainer.getAttribute("data-remaining-seconds"), 10);
+        const initialRemaining = isNaN(rawSeconds) ? 0 : rawSeconds;
+        const startTime = Date.now();
+
+        // Initial render
+        timerDisplay.textContent = formatTime(initialRemaining);
+        updateTimerClass(timerContainer, initialRemaining);
+
+        if (initialRemaining <= 0) {
+            autoSubmitExam();
+        } else {
+            const timerInterval = setInterval(() => {
+                const elapsed = Math.floor((Date.now() - startTime) / 1000);
+                const currentRemaining = Math.max(0, initialRemaining - elapsed);
+
+                timerDisplay.textContent = formatTime(currentRemaining);
+                updateTimerClass(timerContainer, currentRemaining);
+
+                if (currentRemaining <= 0) {
+                    clearInterval(timerInterval);
+                    timerDisplay.textContent = "00:00 (Expired)";
+                    autoSubmitExam();
+                }
+            }, 1000);
+        }
+    }
+
+    // Student Exam submission double-click prevention
     if (studentExamForm) {
         studentExamForm.addEventListener("submit", (e) => {
+            if (isSubmitting) {
+                e.preventDefault();
+                return;
+            }
+            isSubmitting = true;
             const submitBtn = document.getElementById("exam-submit-btn");
             if (submitBtn) {
                 submitBtn.disabled = true;

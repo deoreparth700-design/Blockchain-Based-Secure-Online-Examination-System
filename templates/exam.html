@@ -1,30 +1,39 @@
 {% extends "base.html" %}
-{% block title %}{{ exam.title }} - ExamChain{% endblock %}
+{% block title %}{{ exam.title }} - BE Final Year Examination{% endblock %}
 
 {% block content %}
-<div class="card" style="margin-bottom: 24px; border-left: 4px solid var(--accent);">
-    <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 10px;">
+<!-- Exam Header with Live Countdown Timer -->
+<div class="card" style="margin-bottom: 24px; border-left: 4px solid var(--accent); position: sticky; top: 12px; z-index: 10; box-shadow: 0 4px 12px rgba(0,0,0,0.06);">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
         <div>
-            <h2 style="margin: 0 0 6px;">{{ exam.title }}</h2>
-            <p style="color: var(--muted); margin: 0; font-size: 0.9rem;">
-                Candidate: <strong>{{ session.get('name') }}</strong> &middot; Roll No: <strong>{{ session.get('identifier') }}</strong>
+            <h2 style="margin: 0 0 4px; font-size: 1.35rem;">{{ exam.title }}</h2>
+            <p style="color: var(--muted); margin: 0; font-size: 0.88rem;">
+                Candidate: <strong>{{ session.get('name') }}</strong> &middot; PRN: <strong>{{ session.get('identifier') }}</strong>
+                &middot; Total Questions: <strong>{{ exam.questions|length }}</strong>
             </p>
         </div>
-        <div style="text-align: right;">
-            <span class="status-badge status-upcoming">Suggested Duration: {{ exam.duration_minutes }} Mins</span>
-            <p style="color: var(--muted); font-size: 0.8rem; margin: 4px 0 0;">
-                Window Closes: {{ exam.end_time.strftime('%I:%M %p, %d %b %Y') }}
-            </p>
+
+        <div style="text-align: right; display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
+            <div>
+                <div style="font-size: 0.78rem; font-weight: 700; color: var(--muted); text-transform: uppercase; margin-bottom: 3px;">
+                    Time Remaining
+                </div>
+                <div id="exam-timer-container" class="timer-container timer-normal" data-remaining-seconds="{{ remaining_seconds }}" data-deadline="{{ effective_deadline }}">
+                    &#9200; <span id="exam-timer-display">--:--</span>
+                </div>
+            </div>
         </div>
     </div>
 
-    <div style="margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border); font-size: 0.85rem; color: var(--muted);">
-        &#9888; <strong>Important Exam Instructions:</strong> Answer all questions carefully. You are permitted <strong>only one submission attempt</strong>. Once submitted, your answers will be automatically scored and permanently recorded with a SHA-256 hash onto the blockchain.
+    <div style="margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border); font-size: 0.82rem; color: var(--muted); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+        <span>&#9888; <strong>Notice:</strong> Your session deadline is enforced server-side. Auto-submission occurs immediately upon expiration.</span>
+        <span>Duration: <strong>{{ exam.duration_minutes }} min</strong></span>
     </div>
 </div>
 
 <form method="POST" id="student-exam-form">
     <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <input type="hidden" name="auto_submit" id="auto_submit" value="false">
 
     {% for q in exam.questions %}
     {% set qi = loop.index0 %}
@@ -36,7 +45,7 @@
         {% for opt in q.options %}
         {% set oi = loop.index0 %}
         <div class="option-row" style="padding: 8px 12px; border-radius: 6px; margin-bottom: 6px; background: #fff; border: 1px solid var(--border);">
-            <input type="radio" name="answer_{{ qi }}" value="{{ oi }}" id="q{{ qi }}_o{{ oi }}" required>
+            <input type="radio" name="answer_{{ qi }}" value="{{ oi }}" id="q{{ qi }}_o{{ oi }}">
             <label for="q{{ qi }}_o{{ oi }}" style="margin: 0 0 0 8px; cursor: pointer; flex: 1; color: var(--text); font-size: 0.95rem;">
                 <strong>{{ ['A', 'B', 'C', 'D'][oi] }}.</strong> {{ opt }}
             </label>
@@ -47,7 +56,7 @@
 
     <div class="card" style="text-align: center; margin-top: 24px; padding: 24px;">
         <p style="margin: 0 0 14px; color: var(--muted); font-size: 0.9rem;">
-            Please verify all selections above before clicking submit. Submissions are irreversible.
+            Please verify all selections above before clicking submit. Submissions are irreversible and permanently sealed on the blockchain.
         </p>
         <button type="submit" id="exam-submit-btn" class="btn" style="padding: 12px 36px; font-size: 1.05rem; font-weight: 600;">
             Submit Examination &amp; Seal on Blockchain
