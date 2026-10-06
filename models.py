@@ -102,6 +102,32 @@ class Question(db.Model):
     def options(self):
         return [self.option_a, self.option_b, self.option_c, self.option_d]
 
+    @options.setter
+    def options(self, value):
+        if value and len(value) >= 4:
+            self.option_a = value[0]
+            self.option_b = value[1]
+            self.option_c = value[2]
+            self.option_d = value[3]
+
+
+def format_duration(total_seconds):
+    """
+    Format duration in seconds into a clean, human-readable string:
+    e.g. 45s, 4m 32s, 17m 08s, 1h 03m.
+    """
+    if total_seconds is None or total_seconds < 0:
+        return "0s"
+    total_seconds = int(total_seconds)
+    hours = total_seconds // 3600
+    minutes = (total_seconds % 3600) // 60
+    seconds = total_seconds % 60
+    if hours > 0:
+        return f"{hours}h {minutes:02d}m"
+    if minutes > 0:
+        return f"{minutes}m {seconds:02d}s"
+    return f"{seconds}s"
+
 
 class Attempt(db.Model):
     __tablename__ = "attempts"
@@ -136,6 +162,53 @@ class Attempt(db.Model):
     @property
     def is_active(self):
         return self.started_at is not None and self.submitted_at is None
+
+    @property
+    def percentage(self):
+        if not self.total or self.total <= 0:
+            return 0.0
+        return round((self.score / self.total) * 100, 1)
+
+    @property
+    def time_used_seconds(self):
+        if not self.started_at or not self.submitted_at:
+            return 0
+        diff = (self.submitted_at - self.started_at).total_seconds()
+        return max(0, int(diff))
+
+    @property
+    def time_used_display(self):
+        return format_duration(self.time_used_seconds)
+
+    @property
+    def correct_count(self):
+        return self.score
+
+    @property
+    def unanswered_count(self):
+        if self.block and self.block.data_json:
+            try:
+                import json
+                data = json.loads(self.block.data_json)
+                if "unanswered_count" in data:
+                    return int(data["unanswered_count"])
+                answers = data.get("answers", [])
+                return sum(1 for a in answers if a.get("selected_index", -1) == -1)
+            except Exception:
+                pass
+        return max(0, self.total - self.score)
+
+    @property
+    def incorrect_count(self):
+        if self.block and self.block.data_json:
+            try:
+                import json
+                data = json.loads(self.block.data_json)
+                if "incorrect_count" in data:
+                    return int(data["incorrect_count"])
+            except Exception:
+                pass
+        return max(0, self.total - self.correct_count - self.unanswered_count)
 
 
 class Block(db.Model):

@@ -285,8 +285,8 @@ def get_attempt(exam_id, student_id):
 
 
 def get_attempts_for_exam(exam_id):
-    """Returns only submitted attempts for the exam results view."""
-    return Attempt.query.filter_by(exam_id=exam_id).filter(Attempt.submitted_at.isnot(None)).order_by(Attempt.submitted_at.asc()).all()
+    """Returns only submitted attempts for the exam results view, sorted by score descending, then submission time."""
+    return Attempt.query.filter_by(exam_id=exam_id).filter(Attempt.submitted_at.isnot(None)).order_by(Attempt.score.desc(), Attempt.submitted_at.asc()).all()
 
 
 def start_attempt(exam_id, student_id, total_questions):
@@ -316,7 +316,10 @@ def start_attempt(exam_id, student_id, total_questions):
 def finalize_attempt(attempt, score, total_questions, block_id=None, submitted_at=None):
     """
     Finalize an active attempt with evaluated score, submission time, and sealed block index.
+    If the attempt has already been submitted, it cannot be finalized again.
     """
+    if attempt.is_submitted:
+        return attempt
     attempt.score = score
     attempt.total = total_questions
     attempt.submitted_at = submitted_at or datetime.now()

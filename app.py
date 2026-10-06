@@ -27,6 +27,7 @@ from sqlalchemy.exc import IntegrityError
 import database
 import validators
 from blockchain import Blockchain
+from models import format_duration
 
 load_dotenv()
 
@@ -426,7 +427,30 @@ def exam_results(exam_id):
         return redirect(url_for("admin_dashboard"))
 
     attempts = database.get_attempts_for_exam(exam_id)
-    return render_template("exam_results.html", exam=exam, attempts=attempts)
+
+    total_submissions = len(attempts)
+    if total_submissions > 0:
+        scores = [a.score for a in attempts]
+        percentages = [a.percentage for a in attempts]
+        avg_score = round(sum(scores) / total_submissions, 1)
+        highest_score = max(scores)
+        lowest_score = min(scores)
+        avg_percentage = round(sum(percentages) / total_submissions, 1)
+    else:
+        avg_score = 0.0
+        highest_score = 0
+        lowest_score = 0
+        avg_percentage = 0.0
+
+    stats = {
+        "total_submissions": total_submissions,
+        "avg_score": avg_score,
+        "highest_score": highest_score,
+        "lowest_score": lowest_score,
+        "avg_percentage": avg_percentage,
+    }
+
+    return render_template("exam_results.html", exam=exam, attempts=attempts, stats=stats)
 
 
 # ---------- User Routes ----------
@@ -517,22 +541,29 @@ def take_exam(exam_id):
 
     # 3. Handle POST (Submission)
     if request.method == "POST":
+        is_auto_submit = (request.form.get("auto_submit") == "true")
+
         # Check if deadline has strictly passed (beyond grace period)
         if now > effective_deadline + timedelta(seconds=GRACE_PERIOD_SECONDS):
-            # Finalize attempt with score 0 / mark timed out
-            database.finalize_attempt(
-                attempt,
-                score=0,
-                total_questions=len(exam.questions),
-                block_id=None,
-                submitted_at=now,
-            )
-            flash("The exam time limit has expired. Your submission was not accepted.", "error")
-            return redirect(url_for("student_dashboard"))
+            if not is_auto_submit:
+                # Late manual submission rejected
+                database.finalize_attempt(
+                    attempt,
+                    score=0,
+                    total_questions=len(exam.questions),
+                    block_id=None,
+                    submitted_at=now,
+                )
+                flash("The exam time limit has expired. Your submission was not accepted.", "error")
+                return redirect(url_for("student_dashboard"))
 
         student = current_user()
+        total = len(exam.questions)
+        correct_count = 0
+        incorrect_count = 0
+        unanswered_count = 0
         answers = []
-        score = 0
+
         for i, q in enumerate(exam.questions):
             selected = request.form.get(f"answer_{i}")
             try:
@@ -540,26 +571,54 @@ def take_exam(exam_id):
             except (ValueError, TypeError):
                 selected_index = -1
 
-            is_correct = (selected_index == q.correct_index)
-            if is_correct:
-                score += 1
+            if selected_index == -1:
+                status = "unanswered"
+                is_correct = False
+                unanswered_count += 1
+            elif selected_index == q.correct_index:
+                status = "correct"
+                is_correct = True
+                correct_count += 1
+            else:
+                status = "incorrect"
+                is_correct = False
+                incorrect_count += 1
 
             answers.append({
                 "question": q.question_text,
+                "options": q.options,
                 "selected_index": selected_index,
                 "correct_index": q.correct_index,
                 "is_correct": is_correct,
+                "status": status,
             })
+
+        score = correct_count
+        percentage = round((score / total) * 100, 1) if total > 0 else 0.0
+        submission_time = now if now <= effective_deadline else effective_deadline
+        time_used_seconds = int((submission_time - attempt.started_at).total_seconds()) if attempt.started_at else 0
+        time_used_display = format_duration(time_used_seconds)
+        is_timeout = is_auto_submit or (now > effective_deadline)
 
         result_data = {
             "type": "exam_result",
             "student_name": student.name,
             "roll_no": student.identifier,
+            "prn": student.identifier,
+            "exam_id": exam.id,
             "exam_title": exam.title,
             "answers": answers,
             "score": score,
-            "total": len(exam.questions),
-            "submitted_at": now.strftime("%d %b %Y, %I:%M:%S %p"),
+            "total": total,
+            "percentage": percentage,
+            "correct_count": correct_count,
+            "incorrect_count": incorrect_count,
+            "unanswered_count": unanswered_count,
+            "started_at": attempt.started_at.strftime("%d %b %Y, %I:%M:%S %p") if attempt.started_at else None,
+            "submitted_at": submission_time.strftime("%d %b %Y, %I:%M:%S %p"),
+            "time_used_seconds": time_used_seconds,
+            "time_used_display": time_used_display,
+            "is_timeout": is_timeout,
         }
 
         try:
@@ -567,9 +626,9 @@ def take_exam(exam_id):
             database.finalize_attempt(
                 attempt,
                 score=score,
-                total_questions=len(exam.questions),
+                total_questions=total,
                 block_id=new_block.index,
-                submitted_at=now,
+                submitted_at=submission_time,
             )
         except IntegrityError:
             database.db.session.rollback()
@@ -600,6 +659,23 @@ def take_exam(exam_id):
     )
 
 
+@app.route("/student/exam/<int:exam_id>/result")
+@login_required
+@role_required("user")
+def student_exam_result(exam_id):
+    student_id = session.get("user_id")
+    attempt = database.get_attempt(exam_id, student_id)
+    if not attempt or not attempt.is_submitted:
+        flash("This exam has not been submitted yet.", "error")
+        return redirect(url_for("student_dashboard"))
+
+    if attempt.block_id is not None:
+        return redirect(url_for("show_result", block_index=attempt.block_id))
+
+    flash("No sealed result found for this exam attempt.", "error")
+    return redirect(url_for("student_dashboard"))
+
+
 @app.route("/result/<int:block_index>")
 @login_required
 def show_result(block_index):
@@ -612,6 +688,10 @@ def show_result(block_index):
     if not attempt:
         flash("Attempt record not found.", "error")
         return redirect(url_for("index"))
+
+    if not attempt.is_submitted:
+        flash("This exam has not been submitted yet.", "error")
+        return redirect(url_for("student_dashboard") if session.get("role") == "user" else url_for("admin_dashboard"))
 
     # Role-based authorization:
     # Users can only view their own result.
@@ -629,12 +709,53 @@ def show_result(block_index):
     chain_valid, _ = blockchain.is_chain_valid()
     is_block_tampered = (block.hash != block.recompute_hash())
 
+    # Build structured result summary with fallbacks for older blocks
+    answers = block.data.get("answers", [])
+    total = block.data.get("total", attempt.total)
+    score = block.data.get("score", attempt.score)
+    percentage = block.data.get("percentage")
+    if percentage is None:
+        percentage = round((score / total) * 100, 1) if total > 0 else 0.0
+
+    correct_count = block.data.get("correct_count")
+    if correct_count is None:
+        correct_count = sum(1 for a in answers if a.get("is_correct"))
+
+    unanswered_count = block.data.get("unanswered_count")
+    if unanswered_count is None:
+        unanswered_count = sum(1 for a in answers if a.get("selected_index", -1) == -1)
+
+    incorrect_count = block.data.get("incorrect_count")
+    if incorrect_count is None:
+        incorrect_count = max(0, total - correct_count - unanswered_count)
+
+    time_used = block.data.get("time_used_display")
+    if not time_used and attempt:
+        time_used = attempt.time_used_display
+
+    result_summary = {
+        "exam_title": block.data.get("exam_title", ""),
+        "student_name": block.data.get("student_name", attempt.student.name if attempt and attempt.student else ""),
+        "prn": block.data.get("prn", block.data.get("roll_no", attempt.student.identifier if attempt and attempt.student else "")),
+        "score": score,
+        "total": total,
+        "percentage": percentage,
+        "correct_count": correct_count,
+        "incorrect_count": incorrect_count,
+        "unanswered_count": unanswered_count,
+        "started_at": block.data.get("started_at") or (attempt.started_at.strftime("%d %b %Y, %I:%M:%S %p") if attempt.started_at else "N/A"),
+        "submitted_at": block.data.get("submitted_at") or (attempt.submitted_at.strftime("%d %b %Y, %I:%M:%S %p") if attempt.submitted_at else "N/A"),
+        "time_used": time_used or "N/A",
+        "is_timeout": block.data.get("is_timeout", False),
+    }
+
     return render_template(
         "result.html",
         block=block,
         chain_valid=chain_valid,
         is_block_tampered=is_block_tampered,
         attempt=attempt,
+        result_summary=result_summary,
     )
 
 
