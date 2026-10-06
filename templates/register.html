@@ -1,18 +1,32 @@
 {% extends "base.html" %}
-{% block title %}Create Account - ExamChain{% endblock %}
+{% block title %}Student Registration &middot; MGM University Examination Platform{% endblock %}
 
 {% block content %}
-<div class="card" style="max-width: 480px; margin: 20px auto;">
-    <h2>Create Your Account</h2>
-    <p style="color: var(--muted); font-size: 0.9rem; margin-bottom: 16px;">
-        Register for B.E. Final Year Examination Platform. All fields are required.
-    </p>
+<div class="card" style="max-width: 520px; margin: 24px auto; padding: 32px 28px;">
+    <!-- MGM Branding Header -->
+    <div style="text-align: center; margin-bottom: 20px;">
+        <img src="{{ url_for('static', filename='images/mgm_logo.svg') }}"
+             onerror="this.onerror=null; this.src='{{ url_for('static', filename='images/mgm_seal.png') }}';"
+             alt="MGM University"
+             style="height: 50px; width: auto; margin-bottom: 12px;">
 
-    <!-- Non-Editable Academic Context -->
-    <div class="academic-context-banner" style="background: rgba(99, 102, 241, 0.08); border: 1px solid rgba(99, 102, 241, 0.25); border-radius: 8px; padding: 12px 16px; margin-bottom: 20px; text-align: left;">
-        <div style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent); font-weight: 700; margin-bottom: 4px;">Academic Scope (Fixed)</div>
-        <div style="font-size: 0.95rem; font-weight: 700; color: var(--text);">Program: {{ academic_program }}</div>
-        <div style="font-size: 0.85rem; color: var(--muted); margin-top: 2px;">Academic Level: {{ academic_level }} &middot; Class: {{ academic_display }}</div>
+        <h2 style="font-size: 1.35rem; color: var(--mgm-primary); margin: 0 0 4px;">Candidate Registration</h2>
+        <p style="color: var(--text-muted); font-size: 0.88rem; margin: 0;">
+            Register your official credentials for B.E. Final Year examinations.
+        </p>
+    </div>
+
+    <!-- Non-Editable Institutional Academic Scope Banner -->
+    <div style="background: var(--mgm-accent-light); border: 1px solid #f9cdab; border-left: 4px solid var(--mgm-accent); border-radius: var(--radius-sm); padding: 12px 16px; margin-bottom: 22px;">
+        <div style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--mgm-primary); font-weight: 700; margin-bottom: 2px;">
+            Academic Cohort (Fixed &middot; Non-Editable)
+        </div>
+        <div style="font-size: 0.95rem; font-weight: 700; color: var(--text-primary);">
+            MGM University &middot; {{ academic_program }}
+        </div>
+        <div style="font-size: 0.84rem; color: var(--text-secondary); margin-top: 2px;">
+            Academic Level: <strong>{{ academic_level }}</strong> &middot; Class: <strong>{{ academic_display }}</strong>
+        </div>
     </div>
 
     <form method="POST" id="register-form" novalidate>
@@ -20,7 +34,7 @@
 
         <!-- 1. Full Name -->
         <div class="form-group">
-            <label for="name">Full Name</label>
+            <label for="name">Candidate Full Name <span style="color: var(--danger);">*</span></label>
             <input
                 type="text"
                 id="name"
@@ -36,42 +50,42 @@
                 {% if field_errors.get('name') %}
                     &#10007; {{ field_errors.get('name') }}
                 {% else %}
-                    Letters and spaces only (e.g. Priya Patil).
+                    Enter your name as per official university records.
                 {% endif %}
             </div>
         </div>
 
         <!-- 2. College PRN -->
         <div class="form-group">
-            <label for="prn">College PRN</label>
+            <label for="prn">College PRN (Permanent Registration Number) <span style="color: var(--danger);">*</span></label>
             <input
                 type="text"
                 id="prn"
                 name="prn"
                 value="{{ form_data.get('prn', '') }}"
                 required
-                placeholder="e.g. 2024-BE-101"
+                placeholder="e.g. BE2026CS001"
                 class="form-control {% if field_errors.get('prn') %}input-error{% endif %}"
             >
             <div id="prn-msg" class="field-feedback {% if field_errors.get('prn') %}feedback-error{% endif %}">
                 {% if field_errors.get('prn') %}
                     &#10007; {{ field_errors.get('prn') }}
                 {% else %}
-                    Your college permanent registration number (PRN).
+                    Your unique university PRN used for all official examinations.
                 {% endif %}
             </div>
         </div>
 
         <!-- 3. Email Address -->
         <div class="form-group">
-            <label for="email">Email Address</label>
+            <label for="email">Institutional or Personal Email Address <span style="color: var(--danger);">*</span></label>
             <input
                 type="email"
                 id="email"
                 name="email"
                 value="{{ form_data.get('email', '') }}"
                 required
-                placeholder="e.g. rahul@example.com"
+                placeholder="e.g. rahul.sharma@demo.edu"
                 autocomplete="email"
                 class="form-control {% if field_errors.get('email') %}input-error{% endif %}"
             >
@@ -79,20 +93,20 @@
                 {% if field_errors.get('email') %}
                     &#10007; {{ field_errors.get('email') }}
                 {% else %}
-                    Standard email format (e.g. student@gmail.com).
+                    Active email address for examination notifications and recovery.
                 {% endif %}
             </div>
         </div>
 
         <!-- 4. Password -->
         <div class="form-group">
-            <label for="password">Password</label>
+            <label for="password">Account Password <span style="color: var(--danger);">*</span></label>
             <input
                 type="password"
                 id="password"
                 name="password"
                 required
-                placeholder="At least 6 characters"
+                placeholder="Minimum 6 characters"
                 autocomplete="new-password"
                 class="form-control {% if field_errors.get('password') %}input-error{% endif %}"
             >
@@ -107,7 +121,7 @@
 
         <!-- 5. Confirm Password -->
         <div class="form-group">
-            <label for="confirm_password">Confirm Password</label>
+            <label for="confirm_password">Confirm Password <span style="color: var(--danger);">*</span></label>
             <input
                 type="password"
                 id="confirm_password"
@@ -126,14 +140,17 @@
             </div>
         </div>
 
-        <button type="submit" id="submit-btn" class="btn" style="width:100%; margin-top: 10px;">
-            Create Account
+        <button type="submit" id="submit-btn" class="btn btn-primary" style="width: 100%; margin-top: 10px; padding: 10px; font-weight: 600;">
+            Register Examination Account &rarr;
         </button>
     </form>
 
-    <p style="color: var(--muted); font-size: 0.85rem; margin-top: 16px; text-align: center;">
-        Already registered? <a href="{{ url_for('login') }}" style="color: var(--accent); font-weight: 600;">Log in here</a>.
-    </p>
+    <div style="margin-top: 24px; padding-top: 18px; border-top: 1px solid var(--border-subtle); text-align: center; font-size: 0.86rem; color: var(--text-muted);">
+        Already registered?
+        <a href="{{ url_for('login') }}" style="color: var(--mgm-accent); font-weight: 600; text-decoration: none;">
+            Sign in to your account &rarr;
+        </a>
+    </div>
 </div>
 
 <script>
@@ -184,7 +201,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (hasNumbers) error = "Numbers are not allowed in name.";
         if (val.length < 2) error = "Name must be at least 2 characters.";
         const valid = reName.test(val) && val.length >= 2 && val.length <= 100;
-        return setFieldState(nameInput, nameMsg, valid, "Valid name", error);
+        return setFieldState(nameInput, nameMsg, valid, "Valid name format", error);
     }
 
     function checkPrn() {
@@ -196,7 +213,7 @@ document.addEventListener("DOMContentLoaded", () => {
     function checkEmail() {
         const val = emailInput.value.trim();
         const valid = reEmail.test(val) && val.length <= 120;
-        return setFieldState(emailInput, emailMsg, valid, "Valid email address", "Please enter a valid email address (e.g. student@gmail.com).");
+        return setFieldState(emailInput, emailMsg, valid, "Valid email format", "Please enter a valid email address.");
     }
 
     function checkPass() {

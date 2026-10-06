@@ -1,142 +1,195 @@
 {% extends "base.html" %}
-{% block title %}Result - {{ result_summary.exam_title or block.data.exam_title }} - ExamChain{% endblock %}
+{% block title %}Examination Result &middot; {{ result_summary.exam_title or block.data.exam_title }} &middot; MGM University{% endblock %}
 
 {% block content %}
-<div class="card" style="max-width: 720px; margin: 0 auto; text-align: center;">
-    <h2 style="margin-bottom: 4px;">{{ result_summary.exam_title or block.data.exam_title }}</h2>
-    <p style="color: var(--muted); margin: 0 0 16px; font-size: 0.95rem;">
-        Candidate: <strong>{{ result_summary.student_name }}</strong> &middot; PRN: <strong>{{ result_summary.prn }}</strong> &middot; Class: <strong>{{ academic_display }}</strong> ({{ academic_program }})
-    </p>
-
-    <!-- Main Score & Percentage -->
-    <div class="score-big">{{ result_summary.score }} / {{ result_summary.total }}</div>
-    <div style="font-size: 1.25rem; font-weight: 700; color: var(--accent); margin-top: 4px;">
-        {{ "%.1f"|format(result_summary.percentage) }}% Score
+<div class="marksheet-card">
+    <!-- Academic Marksheet Header -->
+    <div class="marksheet-header">
+        <div style="display: flex; justify-content: center; margin-bottom: 12px;">
+            <img src="{{ url_for('static', filename='images/mgm_logo.svg') }}"
+                 onerror="this.onerror=null; this.src='{{ url_for('static', filename='images/mgm_seal.png') }}';"
+                 alt="MGM University"
+                 style="height: 48px; width: auto; filter: brightness(0) invert(1);">
+        </div>
+        <h2>MGM UNIVERSITY</h2>
+        <p>Department of Computer Science &amp; Engineering &middot; Examination Division</p>
+        <p style="font-weight: 600; color: #ffffff; margin-top: 4px; letter-spacing: 0.04em;">
+            B.E. FINAL YEAR EXAMINATION RESULT
+        </p>
     </div>
 
-    <!-- Quick Stats Grid -->
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; margin: 20px 0 16px; text-align: center;">
-        <div style="background: rgba(22, 163, 74, 0.08); border: 1px solid rgba(22, 163, 74, 0.25); border-radius: 8px; padding: 12px 8px;">
-            <div style="font-size: 0.78rem; font-weight: 700; color: var(--accent-2); text-transform: uppercase;">Correct</div>
-            <div style="font-size: 1.45rem; font-weight: 700; color: var(--accent-2); margin-top: 2px;">{{ result_summary.correct_count }}</div>
-        </div>
-        <div style="background: rgba(220, 38, 38, 0.08); border: 1px solid rgba(220, 38, 38, 0.25); border-radius: 8px; padding: 12px 8px;">
-            <div style="font-size: 0.78rem; font-weight: 700; color: var(--danger); text-transform: uppercase;">Incorrect</div>
-            <div style="font-size: 1.45rem; font-weight: 700; color: var(--danger); margin-top: 2px;">{{ result_summary.incorrect_count }}</div>
-        </div>
-        <div style="background: rgba(217, 119, 6, 0.08); border: 1px solid rgba(217, 119, 6, 0.25); border-radius: 8px; padding: 12px 8px;">
-            <div style="font-size: 0.78rem; font-weight: 700; color: #d97706; text-transform: uppercase;">Unanswered</div>
-            <div style="font-size: 1.45rem; font-weight: 700; color: #d97706; margin-top: 2px;">{{ result_summary.unanswered_count }}</div>
-        </div>
-        <div style="background: rgba(59, 91, 253, 0.08); border: 1px solid rgba(59, 91, 253, 0.25); border-radius: 8px; padding: 12px 8px;">
-            <div style="font-size: 0.78rem; font-weight: 700; color: var(--accent); text-transform: uppercase;">Time Used</div>
-            <div style="font-size: 1.45rem; font-weight: 700; color: var(--accent); margin-top: 2px;">{{ result_summary.time_used }}</div>
-        </div>
-    </div>
-
-    <!-- Session Timing Details -->
-    <div style="background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; margin-bottom: 20px; font-size: 0.85rem; color: var(--muted); text-align: left; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
-        <span>Started: <strong>{{ result_summary.started_at }}</strong></span>
-        <span>Submitted: <strong>{{ result_summary.submitted_at }}</strong></span>
-        <span>Duration Used: <strong>{{ result_summary.time_used }}</strong></span>
-    </div>
-
-    {% if result_summary.is_timeout %}
-    <div style="background: rgba(217, 119, 6, 0.12); border: 1px solid rgba(217, 119, 6, 0.35); border-radius: 8px; padding: 8px 14px; margin-bottom: 18px; font-size: 0.85rem; color: #b45309; text-align: left;">
-        &#9200; <strong>Notice:</strong> Your exam session reached the time limit. Your submitted answers were evaluated automatically.
-    </div>
-    {% endif %}
-
-    <!-- Result Integrity -->
-    <div style="margin: 20px 0; padding: 18px 20px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); text-align: left;">
-        <h3 style="margin: 0 0 10px; font-size: 1.05rem; color: var(--text);">Result Integrity</h3>
-        {% if integrity_result.valid %}
-            <div class="status-badge status-valid" style="font-size: 0.95rem; padding: 6px 16px; display: inline-flex; align-items: center; gap: 6px;">
-                &#10003; SHA-256 Integrity Verified
+    <div class="marksheet-body">
+        <!-- Candidate & Assessment Metadata -->
+        <div style="background: var(--bg-page); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px 18px; margin-bottom: 22px;">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; font-size: 0.88rem;">
+                <div>
+                    <span style="color: var(--text-muted);">Candidate Name:</span>
+                    <strong style="color: var(--text-primary); display: block;">{{ result_summary.student_name }}</strong>
+                </div>
+                <div>
+                    <span style="color: var(--text-muted);">College PRN:</span>
+                    <strong style="color: var(--text-primary); display: block; font-family: var(--font-mono);">{{ result_summary.prn }}</strong>
+                </div>
+                <div>
+                    <span style="color: var(--text-muted);">Academic Program:</span>
+                    <span style="color: var(--text-primary); display: block; font-weight: 500;">{{ academic_program }} ({{ academic_display }})</span>
+                </div>
+                <div>
+                    <span style="color: var(--text-muted);">Examination:</span>
+                    <strong style="color: var(--mgm-primary); display: block;">{{ result_summary.exam_title or block.data.exam_title }}</strong>
+                </div>
             </div>
-            <p style="color: var(--muted); font-size: 0.85rem; margin: 10px 0 14px;">
-                The stored result data matches its authoritative cryptographic fingerprint and backward ledger link.
-            </p>
-        {% else %}
-            <div class="status-badge status-invalid" style="font-size: 0.95rem; padding: 6px 16px; display: inline-flex; align-items: center; gap: 6px;">
-                &#9888; Integrity Verification Failed
+        </div>
+
+        <!-- Primary Academic Performance -->
+        <div class="score-display-box">
+            <div style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">
+                Final Evaluated Score
             </div>
-            <p style="color: var(--danger); font-size: 0.88rem; margin: 10px 0 4px; font-weight: 600;">
-                The stored result data does not match its cryptographic fingerprint.
-            </p>
-            <p style="color: var(--muted); font-size: 0.82rem; margin: 0 0 14px;">
-                {{ integrity_result.reason }}
-            </p>
+            <div class="score-big">{{ result_summary.score }} / {{ result_summary.total }}</div>
+            <div class="score-percentage">
+                {{ "%.1f"|format(result_summary.percentage) }}% Score
+            </div>
+        </div>
+
+        <!-- 4-Stat Performance Grid -->
+        <div class="stat-grid" style="margin-bottom: 22px;">
+            <div class="stat-tile tile-success">
+                <div class="stat-label">Correct</div>
+                <div class="stat-value" style="color: var(--success);">{{ result_summary.correct_count }}</div>
+                <div class="stat-subtext">Verified answers</div>
+            </div>
+            <div class="stat-tile tile-danger">
+                <div class="stat-label">Incorrect</div>
+                <div class="stat-value" style="color: var(--danger);">{{ result_summary.incorrect_count }}</div>
+                <div class="stat-subtext">Incorrect answers</div>
+            </div>
+            <div class="stat-tile tile-warning">
+                <div class="stat-label">Unanswered</div>
+                <div class="stat-value" style="color: var(--warning);">{{ result_summary.unanswered_count }}</div>
+                <div class="stat-subtext">Skipped questions</div>
+            </div>
+            <div class="stat-tile tile-primary">
+                <div class="stat-label">Time Used</div>
+                <div class="stat-value" style="font-size: 1.5rem; color: var(--mgm-primary);">{{ result_summary.time_used }}</div>
+                <div class="stat-subtext">Duration elapsed</div>
+            </div>
+        </div>
+
+        <!-- Timestamps -->
+        <div style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; font-size: 0.84rem; color: var(--text-muted); background: var(--bg-subtle); padding: 10px 16px; border-radius: var(--radius-sm); margin-bottom: 24px;">
+            <span>Started: <strong>{{ result_summary.started_at or 'Session Started' }}</strong></span>
+            <span>Submitted: <strong>{{ result_summary.submitted_at }}</strong></span>
+            <span>Evaluation: <strong>Automated (Server-Authoritative)</strong></span>
+        </div>
+
+        {% if result_summary.is_timeout %}
+        <div class="flash flash-warning" style="margin-bottom: 24px;">
+            <span>&#9200;</span>
+            <div><strong>Notice:</strong> The examination deadline elapsed before manual submission. Responses were evaluated automatically by the server.</div>
+        </div>
         {% endif %}
 
-        <div>
-            <label style="font-weight: 600; color: var(--text); font-size: 0.82rem; display: block; margin-bottom: 4px;">Tamper-evident result fingerprint (SHA-256)</label>
-            <div class="hash-box" style="margin: 0; word-break: break-all; {% if not integrity_result.valid %}border-color: var(--danger); background: #fef2f2; color: var(--danger);{% endif %}">
-                {{ block.hash }}
+        <!-- SECONDARY SECTION: RESULT INTEGRITY -->
+        <div style="border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; background: var(--bg-surface); margin-bottom: 24px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 12px;">
+                <h3 style="margin: 0; font-size: 1.05rem; color: var(--mgm-primary);">Result Integrity</h3>
+                {% if integrity_result.valid %}
+                    <span class="status-badge status-valid" style="font-size: 0.85rem; padding: 5px 14px;">
+                        &#10003; SHA-256 Integrity Verified
+                    </span>
+                {% else %}
+                    <span class="status-badge status-invalid" style="font-size: 0.85rem; padding: 5px 14px;">
+                        &#9888; Integrity Verification Failed
+                    </span>
+                {% endif %}
+            </div>
+
+            <p style="color: var(--text-muted); font-size: 0.86rem; margin: 0 0 12px; line-height: 1.5;">
+                {% if integrity_result.valid %}
+                    The stored result record matches its authoritative cryptographic fingerprint and backward ledger link. Any post-submission modification to scores or candidate data produces a detectable hash mismatch.
+                {% else %}
+                    Warning: The cryptographic hash computed from stored data does not match the ledger fingerprint. Modification detected.
+                {% endif %}
+            </p>
+
+            <div>
+                <label style="font-weight: 600; color: var(--text-secondary); font-size: 0.82rem; margin-bottom: 6px; display: block;">
+                    Tamper-evident result fingerprint (SHA-256) &middot; Block #{{ block.index }}
+                </label>
+                <div style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 4px;">
+                    <strong>Hash:</strong>
+                </div>
+                <div class="hash-box" style="{% if not integrity_result.valid %}border-color: var(--danger); background-color: var(--danger-bg); color: var(--danger);{% endif %}">
+                    {{ block.hash }}
+                </div>
+                <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 6px;">
+                    <strong>Timestamp:</strong> {{ block.timestamp }}
+                </div>
             </div>
         </div>
-    </div>
 
-    <!-- Educational Concept Box -->
-    <div style="background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; margin: 16px 0; text-align: left; font-size: 0.82rem; color: var(--muted);">
-        <strong style="color: var(--text); display: block; margin-bottom: 4px;">&#128274; Tamper-Evident Architecture:</strong>
-        Result records are bound to a backward-linked SHA-256 cryptographic chain upon submission. Any unauthorized database modification to candidates, answers, or scores produces a hash mismatch and is flagged immediately.
-    </div>
-
-    <div style="margin-top: 24px; display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
-        <a href="{{ url_for('student_dashboard') if session.get('role') == 'user' else url_for('admin_dashboard') }}" class="btn">
-            &larr; Return to Dashboard
-        </a>
-        {% if session.get('role') == 'admin' %}
-        <a href="{{ url_for('view_blockchain') }}" class="btn btn-secondary">Explore Integrity Ledger</a>
-        {% endif %}
+        <!-- Navigation Actions -->
+        <div style="display: flex; justify-content: center; gap: 12px; flex-wrap: wrap;">
+            <a href="{{ url_for('student_dashboard') if session.get('role') == 'user' else url_for('admin_dashboard') }}" class="btn btn-primary">
+                &larr; Return to Dashboard
+            </a>
+            {% if session.get('role') == 'admin' %}
+            <a href="{{ url_for('view_blockchain') }}" class="btn btn-secondary">
+                Audit Integrity Ledger
+            </a>
+            {% endif %}
+        </div>
     </div>
 </div>
 
-<!-- Detailed Question Review -->
-<div class="card" style="max-width: 720px; margin: 24px auto;">
-    <h3 style="margin-top: 0; margin-bottom: 16px;">Question-by-Question Review</h3>
-    <table>
-        <thead>
-            <tr>
-                <th style="width: 40px;">#</th>
-                <th>Question &amp; Answer Comparison</th>
-                <th style="width: 120px; text-align: center;">Evaluation</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for a in block.data.answers %}
-            <tr>
-                <td style="font-weight: 600; vertical-align: top;">{{ loop.index }}</td>
-                <td>
-                    <div style="font-weight: 600; margin-bottom: 6px; color: var(--text);">{{ a.question }}</div>
+<!-- Detailed Question-by-Question Review -->
+<div class="card" style="max-width: 780px; margin: 0 auto 30px;">
+    <div class="card-header-styled">
+        <h3>Question-by-Question Evaluation</h3>
+        <span style="font-size: 0.82rem; color: var(--text-muted);">{{ answers|length }} Questions Evaluated</span>
+    </div>
 
-                    <div style="font-size: 0.88rem; margin-bottom: 4px;">
-                        <span style="color: var(--muted); font-weight: 500;">Your answer:</span>
-                        {% if a.selected_index >= 0 %}
-                            <strong>{{ ['A', 'B', 'C', 'D'][a.selected_index] }}</strong>{% if a.options %}. {{ a.options[a.selected_index] }}{% endif %}
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 50px;">#</th>
+                    <th>Question Statement</th>
+                    <th>Your Response</th>
+                    <th>Evaluation</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for a in answers %}
+                <tr>
+                    <td style="font-weight: 600; color: var(--mgm-primary);">Q{{ loop.index }}</td>
+                    <td style="min-width: 200px;">
+                        <div style="font-weight: 500; color: var(--text-primary); margin-bottom: 4px;">{{ a.question }}</div>
+                        <small style="color: var(--text-muted);">
+                            Correct: <strong>{{ a.options[a.correct_index] if a.correct_index < a.options|length else 'N/A' }}</strong>
+                        </small>
+                    </td>
+                    <td>
+                        {% if a.selected_index == -1 %}
+                            <span style="color: var(--warning); font-style: italic;">Unanswered</span>
                         {% else %}
-                            <span style="color: #d97706; font-style: italic;">&mdash; Unanswered</span>
+                            <span style="font-weight: 500;">{{ a.options[a.selected_index] if a.selected_index < a.options|length else 'Selected' }}</span>
                         {% endif %}
-                    </div>
-
-                    <div style="font-size: 0.88rem; color: var(--accent-2);">
-                        <span style="color: var(--muted); font-weight: 500;">Correct answer:</span>
-                        <strong>{{ ['A', 'B', 'C', 'D'][a.correct_index] }}</strong>{% if a.options %}. {{ a.options[a.correct_index] }}{% endif %}
-                    </div>
-                </td>
-                <td style="text-align: center; vertical-align: top;">
-                    {% if a.is_correct %}
-                        <span class="status-badge status-valid">&#10003; Correct</span>
-                    {% elif a.selected_index == -1 %}
-                        <span class="status-badge status-draft">&#9675; Unanswered</span>
-                    {% else %}
-                        <span class="status-badge status-invalid">&#10007; Incorrect</span>
-                    {% endif %}
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+                    </td>
+                    <td>
+                        {% if a.status == 'correct' or a.is_correct %}
+                            <span class="status-badge status-valid">&#10003; Correct (+1)</span>
+                        {% elif a.status == 'unanswered' or a.selected_index == -1 %}
+                            <span class="status-badge status-upcoming">Unanswered (0)</span>
+                        {% else %}
+                            <span class="status-badge status-invalid">&#10005; Incorrect (0)</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
 {% endblock %}

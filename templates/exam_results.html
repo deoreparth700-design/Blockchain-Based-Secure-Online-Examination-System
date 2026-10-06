@@ -1,126 +1,146 @@
 {% extends "base.html" %}
-{% block title %}Results: {{ exam.title }} - ExamChain{% endblock %}
+{% block title %}Results &middot; {{ exam.title }} &middot; MGM University{% endblock %}
 
 {% block content %}
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+<!-- Academic Results Header -->
+<div class="academic-portal-header">
     <div>
+        <div class="academic-scope-tag">
+            MGM University &middot; {{ academic_program }}
+        </div>
         <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 4px;">
-            <h2 style="margin: 0;">Exam Results &mdash; {{ exam.title }}</h2>
+            <h1 style="font-size: 1.55rem; color: var(--mgm-primary); margin: 0;">
+                Exam Results: {{ exam.title }}
+            </h1>
             <span class="status-badge status-{{ exam.status }}">{{ exam.status|title }}</span>
         </div>
-        <p style="color: var(--muted); margin: 0; font-size: 0.9rem;">
-            Window: {{ exam.start_time.strftime('%d %b %Y, %I:%M %p') }} &rarr; {{ exam.end_time.strftime('%d %b %Y, %I:%M %p') }}
-            &middot; Total Questions: <strong>{{ exam.questions|length }}</strong>
-            &middot; Duration: <strong>{{ exam.duration_minutes }} min</strong>
+        <p style="color: var(--text-muted); margin: 0; font-size: 0.88rem;">
+            Window: <strong>{{ exam.start_time.strftime('%d %b %Y, %I:%M %p') }}</strong> &rarr;
+            <strong>{{ exam.end_time.strftime('%d %b %Y, %I:%M %p') }}</strong> &middot;
+            Total Questions: <strong>{{ exam.questions|length }}</strong> &middot;
+            Duration: <strong>{{ exam.duration_minutes }} min</strong>
         </p>
     </div>
     <div>
-        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary btn-sm">&larr; Back to Dashboard</a>
+        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary btn-sm">
+            &larr; Back to Dashboard
+        </a>
     </div>
 </div>
 
 {% if not attempts %}
-    <div class="card" style="text-align: center; padding: 40px 20px;">
-        <h4 style="margin: 0 0 6px;">No Submissions Recorded Yet</h4>
-        <p style="color: var(--muted); margin: 0; font-size: 0.9rem;">
-            When students complete and submit this exam, their cryptographically sealed results will appear here automatically.
+    <div class="card" style="text-align: center; padding: 48px 24px;">
+        <div style="font-size: 2.2rem; color: var(--text-muted); margin-bottom: 10px;">&#128203;</div>
+        <h4 style="margin: 0 0 6px; color: var(--mgm-primary);">No Submissions Recorded Yet</h4>
+        <p style="color: var(--text-muted); margin: 0; font-size: 0.9rem; max-width: 500px; margin: 0 auto;">
+            When students complete this examination, their evaluated marks and sealed cryptographic blockchain records will appear here automatically.
         </p>
     </div>
 {% else %}
-    <!-- Summary Statistics Cards -->
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 22px;">
-        <div class="card" style="text-align: center; padding: 16px 12px; margin-bottom: 0;">
-            <div style="color: var(--muted); font-size: 0.78rem; font-weight: 700; text-transform: uppercase;">Total Submissions</div>
-            <div style="font-size: 1.75rem; font-weight: 700; color: var(--accent); margin-top: 4px;">{{ stats.total_submissions }}</div>
+    <!-- Summary Statistics Grid -->
+    <div class="stat-grid" style="grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); margin-bottom: 24px;">
+        <div class="stat-tile tile-primary">
+            <div class="stat-label">Total Submissions</div>
+            <div class="stat-value">{{ stats.total_submissions }}</div>
+            <div class="stat-subtext">Candidates evaluated</div>
         </div>
-        <div class="card" style="text-align: center; padding: 16px 12px; margin-bottom: 0;">
-            <div style="color: var(--muted); font-size: 0.78rem; font-weight: 700; text-transform: uppercase;">Average Score</div>
-            <div style="font-size: 1.75rem; font-weight: 700; color: var(--accent-2); margin-top: 4px;">
-                {{ "%.1f"|format(stats.avg_score) }} <span style="font-size: 0.95rem; color: var(--muted);">/ {{ exam.questions|length }}</span>
+        <div class="stat-tile tile-accent">
+            <div class="stat-label">Average Score</div>
+            <div class="stat-value" style="color: var(--mgm-accent);">
+                {{ "%.1f"|format(stats.avg_score) }} <small style="font-size: 0.85rem; color: var(--text-muted);">/ {{ exam.questions|length }}</small>
             </div>
+            <div class="stat-subtext">Class mean marks</div>
         </div>
-        <div class="card" style="text-align: center; padding: 16px 12px; margin-bottom: 0;">
-            <div style="color: var(--muted); font-size: 0.78rem; font-weight: 700; text-transform: uppercase;">Average Percentage</div>
-            <div style="font-size: 1.75rem; font-weight: 700; color: var(--accent-2); margin-top: 4px;">
+        <div class="stat-tile tile-accent">
+            <div class="stat-label">Average Percentage</div>
+            <div class="stat-value" style="color: var(--mgm-accent);">
                 {{ "%.1f"|format(stats.avg_percentage) }}%
             </div>
+            <div class="stat-subtext">Class performance</div>
         </div>
-        <div class="card" style="text-align: center; padding: 16px 12px; margin-bottom: 0;">
-            <div style="color: var(--muted); font-size: 0.78rem; font-weight: 700; text-transform: uppercase;">Highest Score</div>
-            <div style="font-size: 1.75rem; font-weight: 700; color: var(--accent-2); margin-top: 4px;">
-                {{ stats.highest_score }} <span style="font-size: 0.95rem; color: var(--muted);">/ {{ exam.questions|length }}</span>
+        <div class="stat-tile tile-success">
+            <div class="stat-label">Highest Score</div>
+            <div class="stat-value" style="color: var(--success);">
+                {{ stats.highest_score }} <small style="font-size: 0.85rem; color: var(--text-muted);">/ {{ exam.questions|length }}</small>
             </div>
+            <div class="stat-subtext">Top mark</div>
         </div>
-        <div class="card" style="text-align: center; padding: 16px 12px; margin-bottom: 0;">
-            <div style="color: var(--muted); font-size: 0.78rem; font-weight: 700; text-transform: uppercase;">Lowest Score</div>
-            <div style="font-size: 1.75rem; font-weight: 700; color: var(--danger); margin-top: 4px;">
-                {{ stats.lowest_score }} <span style="font-size: 0.95rem; color: var(--muted);">/ {{ exam.questions|length }}</span>
+        <div class="stat-tile tile-danger">
+            <div class="stat-label">Lowest Score</div>
+            <div class="stat-value" style="color: var(--danger);">
+                {{ stats.lowest_score }} <small style="font-size: 0.85rem; color: var(--text-muted);">/ {{ exam.questions|length }}</small>
             </div>
+            <div class="stat-subtext">Minimum mark</div>
         </div>
     </div>
 
-    <!-- Results Table -->
-    <div class="card" style="overflow-x: auto;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-            <h3 style="margin: 0;">Student Submissions (Ranked by Score)</h3>
-            <span style="font-size: 0.85rem; color: var(--muted);">Showing {{ attempts|length }} candidate{{ 's' if attempts|length != 1 else '' }}</span>
+    <!-- Candidate Submissions Table -->
+    <div class="card" style="padding: 0; overflow: hidden;">
+        <div style="padding: 18px 20px; border-bottom: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+            <h3 style="margin: 0; font-size: 1.15rem; color: var(--mgm-primary);">
+                Student Submissions (Ranked by Score)
+            </h3>
+            <span style="font-size: 0.82rem; color: var(--text-muted);">
+                Showing {{ attempts|length }} candidate{{ 's' if attempts|length != 1 else '' }}
+            </span>
         </div>
-        <table>
-            <thead>
-                <tr>
-                    <th style="width: 50px;">Rank</th>
-                    <th>Name</th>
-                    <th>PRN</th>
-                    <th>Score</th>
-                    <th>Percentage</th>
-                    <th>Correct</th>
-                    <th>Incorrect</th>
-                    <th>Unanswered</th>
-                    <th>Time Used</th>
-                    <th>Submitted At</th>
-                    <th>Integrity Status</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for a in attempts %}
-                <tr>
-                    <td style="font-weight: 700; color: var(--accent);">#{{ loop.index }}</td>
-                    <td><strong>{{ a.student.name }}</strong></td>
-                    <td><code>{{ a.student.identifier }}</code></td>
-                    <td><strong>{{ a.score }} / {{ a.total }}</strong></td>
-                    <td><strong style="color: var(--accent-2);">{{ "%.1f"|format(a.percentage) }}%</strong></td>
-                    <td style="color: var(--accent-2); font-weight: 600;">{{ a.correct_count }}</td>
-                    <td style="color: var(--danger); font-weight: 600;">{{ a.incorrect_count }}</td>
-                    <td style="color: #d97706; font-weight: 600;">{{ a.unanswered_count }}</td>
-                    <td style="font-size: 0.85rem; color: var(--muted);">{{ a.time_used_display }}</td>
-                    <td style="font-size: 0.85rem; color: var(--muted);">{{ a.submitted_at.strftime('%d %b %Y, %I:%M %p') }}</td>
-                    <td>
-                        {% if a.block_id is not none %}
-                            <a href="{{ url_for('show_result', block_index=a.block_id) }}" class="status-badge status-valid" style="text-decoration: none; font-size: 0.78rem;">
-                                &#10003; Block #{{ a.block_id }}
-                            </a>
-                        {% else %}
-                            <span class="status-badge status-closed" style="font-size: 0.78rem;">Unsealed</span>
-                        {% endif %}
-                    </td>
-                    <td>
-                        {% if a.block_id is not none %}
-                            <a href="{{ url_for('show_result', block_index=a.block_id) }}" class="btn btn-secondary btn-sm" style="padding: 3px 8px; font-size: 0.8rem;">
-                                View
-                            </a>
-                        {% else %}
-                            <span style="font-size: 0.8rem; color: var(--muted);">&mdash;</span>
-                        {% endif %}
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+
+        <div class="table-responsive" style="margin: 0; border: none; border-radius: 0;">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 50px;">Rank</th>
+                        <th>Student Name</th>
+                        <th>PRN</th>
+                        <th>Score</th>
+                        <th>Percentage</th>
+                        <th>Correct</th>
+                        <th>Incorrect</th>
+                        <th>Unanswered</th>
+                        <th>Time Used</th>
+                        <th>Submitted At</th>
+                        <th>Integrity</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for a in attempts %}
+                    <tr>
+                        <td style="font-weight: 700; color: var(--mgm-primary);">#{{ loop.index }}</td>
+                        <td><strong style="color: var(--text-primary);">{{ a.student.name }}</strong></td>
+                        <td><code style="font-family: var(--font-mono); font-size: 0.85rem; color: var(--text-secondary);">{{ a.student.identifier }}</code></td>
+                        <td><strong>{{ a.score }} / {{ a.total }}</strong></td>
+                        <td><strong style="color: var(--mgm-accent);">{{ "%.1f"|format(a.percentage) }}%</strong></td>
+                        <td style="color: var(--success); font-weight: 600;">{{ a.correct_count }}</td>
+                        <td style="color: var(--danger); font-weight: 600;">{{ a.incorrect_count }}</td>
+                        <td style="color: var(--warning); font-weight: 600;">{{ a.unanswered_count }}</td>
+                        <td style="font-size: 0.84rem; color: var(--text-muted);">{{ a.time_used_display }}</td>
+                        <td style="font-size: 0.84rem; color: var(--text-muted); white-space: nowrap;">
+                            {{ a.submitted_at.strftime('%d %b %Y, %I:%M %p') if a.submitted_at else 'Recorded' }}
+                        </td>
+                        <td>
+                            {% if a.block_id is not none %}
+                                <a href="{{ url_for('show_result', block_index=a.block_id) }}" class="status-badge status-valid" style="font-size: 0.75rem; text-decoration: none;">
+                                    &#10003; Sealed (Block #{{ a.block_id }})
+                                </a>
+                            {% else %}
+                                <span class="status-badge status-closed" style="font-size: 0.75rem;">Pending</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if a.block_id is not none %}
+                                <a href="{{ url_for('show_result', block_index=a.block_id) }}" class="btn btn-secondary btn-sm" style="font-size: 0.78rem; padding: 4px 10px;">
+                                    View Marksheet &rarr;
+                                </a>
+                            {% else %}
+                                &mdash;
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 {% endif %}
-
-<div style="margin-top: 20px;">
-    <a href="{{ url_for('view_blockchain') }}" class="btn btn-secondary">Explore Blockchain Ledger</a>
-</div>
 {% endblock %}

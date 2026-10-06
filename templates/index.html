@@ -1,205 +1,137 @@
 {% extends "base.html" %}
-{% block title %}Home - ExamChain{% endblock %}
+{% block title %}MGM University &middot; B.E. Final Year Examination Platform{% endblock %}
+
 {% block content %}
-<div class="hero">
-    <div style="display: inline-block; background: rgba(99, 102, 241, 0.12); color: var(--accent); font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; padding: 4px 10px; border-radius: 4px; margin-bottom: 12px;">
-        B.E. Final Year Examination Platform &middot; Computer Science &amp; Engineering
+<!-- INSTITUTIONAL HERO SECTION -->
+<div class="home-hero-card">
+    <div style="display: flex; justify-content: center; margin-bottom: 16px;">
+        <img src="{{ url_for('static', filename='images/mgm_logo.svg') }}"
+             onerror="this.onerror=null; this.src='{{ url_for('static', filename='images/mgm_seal.png') }}';"
+             alt="MGM University Seal"
+             class="home-hero-logo">
     </div>
-    <h1>Blockchain-Based Secure Online Examination System</h1>
-    <p>Every submitted result is sealed into a tamper-evident, hash-linked block.</p>
-    <div style="margin-top: 18px;">
-        <a href="{{ url_for('login') }}" class="btn">Login</a>
-        <a href="{{ url_for('register') }}" class="btn btn-secondary">Create Account</a>
+
+    <div class="academic-scope-tag">
+        {{ academic_display }} &middot; {{ academic_program }}
+    </div>
+
+    <h1 class="home-hero-title">MGM University</h1>
+    <div class="home-hero-subtitle">B.E. Final Year Examination Platform</div>
+
+    <p class="home-hero-desc">
+        Welcome to the official university portal for B.E. Computer Science and Engineering examinations.
+        Designed for scheduled internal assessments, automated objective evaluation, and tamper-evident result archival.
+    </p>
+
+    <div class="home-hero-actions">
+        <a href="{{ url_for('login') }}" class="btn btn-lg btn-primary">
+            Student Login &rarr;
+        </a>
+        <a href="{{ url_for('register') }}" class="btn btn-lg btn-secondary">
+            Student Registration
+        </a>
     </div>
 </div>
 
-<!-- SECTION 1: INTERACTIVE SECURITY FLOW -->
-<section class="home-section" aria-labelledby="flow-heading">
-    <div class="section-header">
-        <h2 id="flow-heading">Secure Exam. Verified Results.</h2>
-        <p class="section-subtitle">From submission to verification, every result is protected by multiple layers of integrity.</p>
+<!-- SECTION 1: INSTITUTIONAL CAPABILITIES -->
+<section style="margin-bottom: 40px;" aria-labelledby="pillars-heading">
+    <div style="text-align: center; margin-bottom: 24px;">
+        <h2 id="pillars-heading" style="color: var(--mgm-primary); font-size: 1.45rem;">Core Examination Framework</h2>
+        <p style="color: var(--text-muted); font-size: 0.92rem; max-width: 600px; margin: 0 auto;">
+            Structured for academic rigor, transparent evaluation, and cryptographic security.
+        </p>
     </div>
 
-    <div class="security-flow">
-        <!-- CARD 1 -->
-        <div class="flow-step-card" tabindex="0">
-            <div class="flow-icon-wrap" aria-hidden="true">
-                <svg class="flow-step-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
-                    <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
-                    <path d="m9 14 2 2 4-4"/>
-                </svg>
-            </div>
-            <h3>Take Exam</h3>
-            <p>Students complete scheduled examinations within the allowed time.</p>
+    <div class="home-pillars-grid">
+        <!-- 1. Scheduled Online Examinations -->
+        <div class="home-pillar-card">
+            <div class="pillar-icon-wrap" aria-hidden="true">&#128197;</div>
+            <h3>Scheduled Examinations</h3>
+            <p>
+                Faculty configure precise opening and closing windows. Authoritative server timers govern exam access, ensuring strict adherence to academic regulations.
+            </p>
         </div>
 
-        <div class="flow-connector" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M5 12h14M12 5l7 7-7 7"/>
-            </svg>
+        <!-- 2. Automated Evaluation -->
+        <div class="home-pillar-card">
+            <div class="pillar-icon-wrap" aria-hidden="true">&#9878;</div>
+            <h3>Automated Evaluation</h3>
+            <p>
+                Objective multiple-choice answers are evaluated server-side immediately upon submission, delivering instantaneous score breakdowns and percentage calculation.
+            </p>
         </div>
 
-        <!-- CARD 2 -->
-        <div class="flow-step-card" tabindex="0">
-            <div class="flow-icon-wrap" aria-hidden="true">
-                <svg class="flow-step-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="m22 2-7 20-4-9-9-4Z"/>
-                    <path d="M22 2 11 13"/>
-                </svg>
-            </div>
-            <h3>Submit &amp; Evaluate</h3>
-            <p>Answers are automatically evaluated and the score is recorded.</p>
+        <!-- 3. Secure Result Management -->
+        <div class="home-pillar-card">
+            <div class="pillar-icon-wrap" aria-hidden="true">&#128221;</div>
+            <h3>Secure Marksheets</h3>
+            <p>
+                Comprehensive candidate reports record scores, question-by-question selections, submission timestamps, and total completion time for academic verification.
+            </p>
         </div>
 
-        <div class="flow-connector" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M5 12h14M12 5l7 7-7 7"/>
-            </svg>
-        </div>
-
-        <!-- CARD 3 -->
-        <div class="flow-step-card" tabindex="0">
-            <div class="flow-icon-wrap" aria-hidden="true">
-                <svg class="flow-step-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                    <path d="m9 12 2 2 4-4"/>
-                </svg>
-            </div>
-            <h3>Secure Result</h3>
-            <p>SHA-256 hashing and blockchain linking make unauthorized changes detectable.</p>
-        </div>
-
-        <div class="flow-connector" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M5 12h14M12 5l7 7-7 7"/>
-            </svg>
-        </div>
-
-        <!-- CARD 4 -->
-        <div class="flow-step-card" tabindex="0">
-            <div class="flow-icon-wrap" aria-hidden="true">
-                <svg class="flow-step-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"/>
-                    <path d="m9 12 2 2 4-4"/>
-                </svg>
-            </div>
-            <h3>Verify</h3>
-            <p>Results can be verified against their stored blockchain fingerprint.</p>
+        <!-- 4. Result Integrity -->
+        <div class="home-pillar-card">
+            <div class="pillar-icon-wrap" aria-hidden="true">&#128274;</div>
+            <h3>Result Integrity</h3>
+            <p>
+                Each submitted result is sealed with an authoritative SHA-256 cryptographic hash pointer linked into an immutable ledger, detecting any post-submission alteration.
+            </p>
         </div>
     </div>
 </section>
 
-<!-- SECTION 2: ROLE SELECTION -->
-<section class="home-section" aria-labelledby="portals-heading">
-    <div class="section-header">
-        <h2 id="portals-heading">Choose your portal</h2>
-        <p class="section-subtitle">Access the examination system based on your role.</p>
+<!-- SECTION 2: UNIVERSITY PORTAL ACCESS -->
+<section style="margin-bottom: 30px;" aria-labelledby="portals-heading">
+    <div style="text-align: center; margin-bottom: 24px;">
+        <h2 id="portals-heading" style="color: var(--mgm-primary); font-size: 1.45rem;">Portal Access</h2>
+        <p style="color: var(--text-muted); font-size: 0.92rem; max-width: 600px; margin: 0 auto;">
+            Access platform services tailored to students and university faculty.
+        </p>
     </div>
 
-    <div class="portals-grid">
-        <!-- ADMIN PORTAL CARD -->
-        <div class="portal-card">
+    <div class="home-portals-grid">
+        <!-- Student Portal -->
+        <div class="portal-entry-card card-accent-border">
             <div>
-                <div class="portal-card-header">
-                    <div class="portal-icon-wrap" aria-hidden="true">
-                        <svg class="portal-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
-                            <path d="M6 12v5c3 3 9 3 12 0v-5"/>
-                        </svg>
-                    </div>
-                    <h3>Admin Portal</h3>
-                </div>
-                <p>Create exams, manage questions, monitor submissions and verify student results.</p>
-            </div>
-            <div class="portal-action">
-                <a href="{{ url_for('login') }}" class="portal-btn">
-                    <span>Admin Login &rarr;</span>
-                </a>
-            </div>
-        </div>
-
-        <!-- STUDENT PORTAL CARD -->
-        <div class="portal-card">
-            <div>
-                <div class="portal-card-header">
-                    <div class="portal-icon-wrap" aria-hidden="true">
-                        <svg class="portal-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/>
-                            <path d="M6 6h10"/>
-                            <path d="M6 10h10"/>
-                            <path d="M6 14h6"/>
-                        </svg>
-                    </div>
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                    <span style="color: var(--mgm-accent); font-size: 1.25rem;">&#127891;</span>
                     <h3>Student Portal</h3>
                 </div>
-                <p>Register, join available examinations, submit answers and view your results.</p>
+                <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.5; margin-bottom: 18px;">
+                    For registered B.E. Final Year Computer Science &amp; Engineering candidates. View scheduled tests, attempt live timed examinations, and inspect sealed scorecards.
+                </p>
             </div>
-            <div class="portal-action">
-                <a href="{{ url_for('login') }}" class="portal-btn">
-                    <span>Student Login &rarr;</span>
-                </a>
-                <div class="portal-secondary-link">
-                    New student? <a href="{{ url_for('register') }}">Create account &rarr;</a>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <a href="{{ url_for('login') }}" class="btn btn-sm btn-primary">Student Login &rarr;</a>
+                <a href="{{ url_for('register') }}" class="btn btn-sm btn-secondary">New Student Registration</a>
+            </div>
+        </div>
+
+        <!-- Faculty / Admin Portal -->
+        <div class="portal-entry-card card-primary-border">
+            <div>
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                    <span style="color: var(--mgm-primary); font-size: 1.25rem;">&#128188;</span>
+                    <h3>Faculty &amp; Administration</h3>
                 </div>
+                <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.5; margin-bottom: 18px;">
+                    Authorized university faculty workspace. Draft and schedule assessments, curate MCQ question banks, analyze class submission statistics, and audit ledger integrity.
+                </p>
+            </div>
+            <div>
+                <a href="{{ url_for('login') }}" class="btn btn-sm btn-outline-primary">Faculty &amp; Admin Sign In &rarr;</a>
             </div>
         </div>
     </div>
 </section>
 
-<!-- SECTION 3: SECURITY HIGHLIGHTS -->
-<section class="home-section" aria-label="Security Architecture Highlights">
-    <div class="security-highlights-grid">
-        <!-- 1. SHA-256 -->
-        <div class="highlight-card" tabindex="0">
-            <div class="highlight-icon-wrap" aria-hidden="true">
-                <svg class="highlight-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="4" y1="9" x2="20" y2="9"/>
-                    <line x1="4" y1="15" x2="20" y2="15"/>
-                    <line x1="10" y1="3" x2="8" y2="21"/>
-                    <line x1="16" y1="3" x2="14" y2="21"/>
-                </svg>
-            </div>
-            <h4>SHA-256</h4>
-            <p>Unique fingerprint for result integrity</p>
-        </div>
-
-        <!-- 2. Private Blockchain -->
-        <div class="highlight-card" tabindex="0">
-            <div class="highlight-icon-wrap" aria-hidden="true">
-                <svg class="highlight-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <rect x="2" y="7" width="8" height="8" rx="2"/>
-                    <rect x="14" y="9" width="8" height="8" rx="2"/>
-                    <path d="M10 11h4"/>
-                </svg>
-            </div>
-            <h4>Private Blockchain</h4>
-            <p>Linked blocks help detect modifications</p>
-        </div>
-
-        <!-- 3. Backward Hash Linking -->
-        <div class="highlight-card" tabindex="0">
-            <div class="highlight-icon-wrap" aria-hidden="true">
-                <svg class="highlight-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
-                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
-                </svg>
-            </div>
-            <h4>Backward Hash Linking</h4>
-            <p>Cryptographic pointers detect chain breaks</p>
-        </div>
-
-        <!-- 4. Result Verification -->
-        <div class="highlight-card" tabindex="0">
-            <div class="highlight-icon-wrap" aria-hidden="true">
-                <svg class="highlight-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                    <path d="m9 12 2 2 4-4"/>
-                </svg>
-            </div>
-            <h4>Result Verification</h4>
-            <p>Instant tamper detection against stored SHA-256 fingerprint</p>
-        </div>
+<!-- ACADEMIC NOTICE -->
+<div style="background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 20px; font-size: 0.85rem; color: var(--text-muted); display: flex; align-items: center; gap: 12px;">
+    <span style="font-size: 1.4rem; color: var(--mgm-accent);">&#9432;</span>
+    <div>
+        <strong style="color: var(--text-primary);">Academic Scope Notice:</strong>
+        This installation is strictly provisioned for the single cohort of <strong>B.E. Final Year Computer Science and Engineering</strong> at MGM University. All examination activities are monitored and cryptographically sealed.
     </div>
-</section>
+</div>
 {% endblock %}
