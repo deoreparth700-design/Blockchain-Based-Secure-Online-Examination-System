@@ -32,6 +32,8 @@
                 <h3 style="margin: 0; font-size: 1.15rem;">{{ row.exam.title }}</h3>
                 {% if row.status == "attempted" %}
                     <span class="status-badge status-valid">&#10003; Submitted</span>
+                {% elif row.status == "in_progress" %}
+                    <span class="status-badge status-draft">&#9200; In Progress</span>
                 {% elif row.status == "open" %}
                     <span class="status-badge status-valid">&#9679; Open Now</span>
                 {% elif row.status == "upcoming" %}
@@ -62,6 +64,10 @@
                     <span style="color: var(--muted); font-size: 0.85rem;">Result Recorded</span>
                     {% endif %}
                 </div>
+            {% elif row.status == "in_progress" %}
+                <a href="{{ url_for('take_exam', exam_id=row.exam.id) }}" class="btn btn-warning btn-sm" style="font-weight: 600;">
+                    Resume Exam &rarr;
+                </a>
             {% elif row.status == "open" %}
                 <a href="{{ url_for('take_exam', exam_id=row.exam.id) }}" class="btn btn-sm" style="font-weight: 600;">
                     Take Exam &rarr;

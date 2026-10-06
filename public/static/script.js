@@ -18,11 +18,43 @@ function updateQuestionBadge() {
     }
 }
 
+function reindexQuestions() {
+    const container = document.getElementById("questions");
+    if (!container) return;
+    const blocks = container.querySelectorAll(".question-block");
+    blocks.forEach((block, idx) => {
+        block.id = `q-block-${idx}`;
+        const titleStrong = block.querySelector("strong");
+        if (titleStrong) {
+            titleStrong.textContent = `Question ${idx + 1}`;
+        }
+        const removeBtn = block.querySelector("button.btn-remove-q") || block.querySelector("button[onclick*='removeQuestion']");
+        if (removeBtn) {
+            removeBtn.setAttribute("onclick", `removeQuestion(${idx})`);
+        }
+        const radioInputs = block.querySelectorAll('input[type="radio"]');
+        radioInputs.forEach((r, j) => {
+            r.name = `correct_${idx}`;
+            r.id = `q_${idx}_opt_${j}`;
+            const label = block.querySelector(`label[for="${r.id}"]`) || r.nextElementSibling;
+            if (label && label.tagName === "LABEL") {
+                label.htmlFor = `q_${idx}_opt_${j}`;
+            }
+        });
+        const optInputs = block.querySelectorAll('input[type="text"]:not([name="question_text"])');
+        optInputs.forEach((opt, j) => {
+            opt.name = `option_${idx}_${j}`;
+        });
+    });
+    questionCount = blocks.length;
+    updateQuestionBadge();
+}
+
 function removeQuestion(idx) {
     const block = document.getElementById(`q-block-${idx}`);
     if (block) {
         block.remove();
-        updateQuestionBadge();
+        reindexQuestions();
     }
 }
 
@@ -37,7 +69,7 @@ function addQuestion() {
     div.innerHTML = `
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
             <strong style="color: var(--accent);">Question ${container.children.length + 1}</strong>
-            ${container.children.length > 0 ? `<button type="button" class="btn btn-secondary btn-sm" onclick="removeQuestion(${i})" style="padding: 2px 8px; font-size: 0.78rem; color: var(--danger);">&times; Remove</button>` : ''}
+            <button type="button" class="btn btn-secondary btn-sm btn-remove-q" onclick="removeQuestion(${i})" style="padding: 2px 8px; font-size: 0.78rem; color: var(--danger);">&times; Remove</button>
         </div>
         <div style="margin-bottom: 12px;">
             <input type="text" name="question_text" required placeholder="Enter question statement" style="font-weight: 500; margin-bottom: 6px;">
@@ -52,18 +84,24 @@ function addQuestion() {
         `).join("")}
     `;
     container.appendChild(div);
-    updateQuestionBadge();
+    reindexQuestions();
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-    // Teacher Create Exam handler
+    // Admin Create & Edit Exam handlers
     const addBtn = document.getElementById("add-question-btn");
-    const examForm = document.getElementById("create-exam-form");
+    const examForm = document.getElementById("create-exam-form") || document.getElementById("edit-exam-form");
 
     if (addBtn && examForm) {
         addBtn.addEventListener("click", addQuestion);
-        // Start with one question
-        addQuestion();
+
+        const existingBlocks = document.querySelectorAll(".question-block");
+        if (existingBlocks.length === 0) {
+            addQuestion();
+        } else {
+            questionCount = existingBlocks.length;
+            updateQuestionBadge();
+        }
 
         examForm.addEventListener("submit", (e) => {
             const startInput = document.getElementById("start_time");
@@ -139,10 +177,91 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Student Exam submission double-click prevention
+    // Student Exam Countdown Timer & Auto-Submission Engine
+    const timerContainer = document.getElementById("exam-timer-container");
+    const timerDisplay = document.getElementById("exam-timer-display");
     const studentExamForm = document.getElementById("student-exam-form");
+
+    let isSubmitting = false;
+
+    function formatTime(totalSeconds) {
+        if (totalSeconds <= 0) return "00:00";
+        const hours = Math.floor(totalSeconds / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = totalSeconds % 60;
+        const pad = (n) => String(n).padStart(2, "0");
+        if (hours > 0) {
+            return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+        }
+        return `${pad(minutes)}:${pad(seconds)}`;
+    }
+
+    function updateTimerClass(container, remainingSeconds) {
+        container.classList.remove("timer-normal", "timer-warning", "timer-critical");
+        if (remainingSeconds <= 60) {
+            container.classList.add("timer-critical");
+        } else if (remainingSeconds <= 300) {
+            container.classList.add("timer-warning");
+        } else {
+            container.classList.add("timer-normal");
+        }
+    }
+
+    function autoSubmitExam() {
+        if (isSubmitting || !studentExamForm) return;
+        isSubmitting = true;
+
+        const autoInput = document.getElementById("auto_submit");
+        if (autoInput) autoInput.value = "true";
+
+        const submitBtn = document.getElementById("exam-submit-btn");
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerText = "Time Expired. Submitting...";
+            submitBtn.style.opacity = "0.7";
+        }
+
+        // Bypass browser HTML5 required validation for automatic timeout submission
+        studentExamForm.noValidate = true;
+        studentExamForm.submit();
+    }
+
+    if (timerContainer && timerDisplay) {
+        const rawSeconds = parseInt(timerContainer.getAttribute("data-remaining-seconds"), 10);
+        const initialRemaining = isNaN(rawSeconds) ? 0 : rawSeconds;
+        const startTime = Date.now();
+
+        // Initial render
+        timerDisplay.textContent = formatTime(initialRemaining);
+        updateTimerClass(timerContainer, initialRemaining);
+
+        if (initialRemaining <= 0) {
+            autoSubmitExam();
+        } else {
+            const timerInterval = setInterval(() => {
+                const elapsed = Math.floor((Date.now() - startTime) / 1000);
+                const currentRemaining = Math.max(0, initialRemaining - elapsed);
+
+                timerDisplay.textContent = formatTime(currentRemaining);
+                updateTimerClass(timerContainer, currentRemaining);
+
+                if (currentRemaining <= 0) {
+                    clearInterval(timerInterval);
+                    timerDisplay.textContent = "00:00 (Expired)";
+                    autoSubmitExam();
+                }
+            }, 1000);
+        }
+    }
+
+    // Student Exam submission double-click prevention
     if (studentExamForm) {
         studentExamForm.addEventListener("submit", (e) => {
+            if (isSubmitting) {
+                e.preventDefault();
+                return;
+            }
+            isSubmitting = true;
             const submitBtn = document.getElementById("exam-submit-btn");
             if (submitBtn) {
                 submitBtn.disabled = true;

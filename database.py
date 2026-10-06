@@ -10,7 +10,7 @@ the first time init_db.py is run.
 """
 
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from models import db, User, Exam, Question, Attempt, Block
 
@@ -110,7 +110,7 @@ def get_admin_dashboard_stats():
     closed_exams = Exam.query.filter_by(status="closed").count()
     draft_exams = Exam.query.filter_by(status="draft").count()
     total_users = User.query.filter_by(role="user").count()
-    total_submissions = Attempt.query.count()
+    total_submissions = Attempt.query.filter(Attempt.submitted_at.isnot(None)).count()
     return {
         "total_exams": total_exams,
         "published_exams": published_exams,
@@ -285,18 +285,92 @@ def get_attempt(exam_id, student_id):
 
 
 def get_attempts_for_exam(exam_id):
-    return Attempt.query.filter_by(exam_id=exam_id).order_by(Attempt.submitted_at.asc()).all()
+    """Returns only submitted attempts for the exam results view."""
+    return Attempt.query.filter_by(exam_id=exam_id).filter(Attempt.submitted_at.isnot(None)).order_by(Attempt.submitted_at.asc()).all()
 
 
-def create_attempt(exam_id, student_id, score, total, block_id):
+def start_attempt(exam_id, student_id, total_questions):
+    """
+    Idempotently start an attempt for a student on an exam.
+    If an attempt already exists (active or submitted), returns it.
+    Otherwise, creates a new active attempt with started_at = datetime.now() and submitted_at = None.
+    """
+    existing = Attempt.query.filter_by(exam_id=exam_id, student_id=student_id).first()
+    if existing:
+        return existing
+
+    attempt = Attempt(
+        exam_id=exam_id,
+        student_id=student_id,
+        score=0,
+        total=total_questions,
+        started_at=datetime.now(),
+        submitted_at=None,
+        block_id=None,
+    )
+    db.session.add(attempt)
+    db.session.commit()
+    return attempt
+
+
+def finalize_attempt(attempt, score, total_questions, block_id=None, submitted_at=None):
+    """
+    Finalize an active attempt with evaluated score, submission time, and sealed block index.
+    """
+    attempt.score = score
+    attempt.total = total_questions
+    attempt.submitted_at = submitted_at or datetime.now()
+    attempt.block_id = block_id
+    db.session.commit()
+    return attempt
+
+
+def create_attempt(exam_id, student_id, score, total, block_id, started_at=None, submitted_at=None):
+    """
+    Helper maintained for test suites and direct creation.
+    """
+    existing = Attempt.query.filter_by(exam_id=exam_id, student_id=student_id).first()
+    now = datetime.now()
+    if existing:
+        existing.score = score
+        existing.total = total
+        existing.block_id = block_id
+        existing.submitted_at = submitted_at or now
+        if not existing.started_at:
+            existing.started_at = started_at or now
+        db.session.commit()
+        return existing
+
     attempt = Attempt(
         exam_id=exam_id,
         student_id=student_id,
         score=score,
         total=total,
         block_id=block_id,
-        submitted_at=datetime.now(),
+        started_at=started_at or now,
+        submitted_at=submitted_at or now,
     )
     db.session.add(attempt)
     db.session.commit()
     return attempt
+
+
+def get_effective_deadline(exam, attempt):
+    """
+    The effective deadline is min(exam.end_time, attempt.started_at + duration_minutes).
+    Global exam.end_time always limits the attempt even if duration would extend beyond it.
+    """
+    started = attempt.started_at or exam.start_time
+    duration_deadline = started + timedelta(minutes=exam.duration_minutes)
+    return min(exam.end_time, duration_deadline)
+
+
+def get_remaining_seconds(exam, attempt, now=None):
+    """
+    Calculates remaining seconds until the effective deadline.
+    Returns integer >= 0.
+    """
+    now = now or datetime.now()
+    deadline = get_effective_deadline(exam, attempt)
+    remaining = (deadline - now).total_seconds()
+    return max(0, int(remaining))

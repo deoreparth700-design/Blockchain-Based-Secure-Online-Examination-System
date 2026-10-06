@@ -109,9 +109,10 @@ class Attempt(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     exam_id = db.Column(db.Integer, db.ForeignKey("exams.id"), nullable=False)
     student_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
-    score = db.Column(db.Integer, nullable=False)
-    total = db.Column(db.Integer, nullable=False)
-    submitted_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    score = db.Column(db.Integer, nullable=False, default=0)
+    total = db.Column(db.Integer, nullable=False, default=0)
+    started_at = db.Column(db.DateTime, nullable=True)
+    submitted_at = db.Column(db.DateTime, nullable=True)
     block_id = db.Column(db.Integer, db.ForeignKey("blocks.id"), nullable=True)
 
     student = db.relationship("User")
@@ -127,6 +128,14 @@ class Attempt(db.Model):
     # One student can only have ONE attempt per exam -- enforced by the
     # database itself, not just by hiding a button in the UI.
     __table_args__ = (db.UniqueConstraint("exam_id", "student_id", name="one_attempt_per_student"),)
+
+    @property
+    def is_submitted(self):
+        return self.submitted_at is not None
+
+    @property
+    def is_active(self):
+        return self.started_at is not None and self.submitted_at is None
 
 
 class Block(db.Model):

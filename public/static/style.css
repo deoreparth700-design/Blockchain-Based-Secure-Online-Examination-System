@@ -81,6 +81,7 @@ h1, h2, h3 { color: var(--text); }
 .btn:hover { opacity: 0.9; }
 .btn-secondary { background: transparent; border: 1px solid var(--border); color: var(--text); }
 .btn-danger { background: var(--danger); }
+.btn-warning { background: #d97706; color: #fff; }
 .btn-sm { padding: 6px 14px; font-size: 0.85rem; }
 
 .status-badge {
@@ -94,6 +95,7 @@ h1, h2, h3 { color: var(--text); }
 .status-invalid { background: rgba(220,38,38,0.12); color: var(--danger); }
 .status-upcoming { background: rgba(59,91,253,0.12); color: var(--accent); }
 .status-closed { background: rgba(107,118,136,0.15); color: var(--muted); }
+.status-draft { background: rgba(217,119,6,0.15); color: #d97706; }
 
 .flash {
     padding: 12px 16px;
@@ -551,8 +553,54 @@ th { color: var(--muted); font-weight: 600; }
     .portal-btn,
     .highlight-card,
     .highlight-icon-wrap,
-    .flow-connector {
+    .flow-connector,
+    .timer-critical {
         transition: none !important;
         transform: none !important;
+        animation: none !important;
+    }
+}
+
+/* ---------------- Exam Countdown Timer ---------------- */
+.timer-container {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 1.05rem;
+    font-weight: 700;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    letter-spacing: 0.5px;
+    transition: all 0.25s ease-in-out;
+}
+
+.timer-normal {
+    background: rgba(59, 91, 253, 0.1);
+    color: var(--accent);
+    border: 1px solid rgba(59, 91, 253, 0.3);
+}
+
+.timer-warning {
+    background: rgba(217, 119, 6, 0.12);
+    color: #d97706;
+    border: 1px solid rgba(217, 119, 6, 0.35);
+}
+
+.timer-critical {
+    background: rgba(220, 38, 38, 0.14);
+    color: var(--danger);
+    border: 1px solid rgba(220, 38, 38, 0.45);
+    animation: pulse-danger 1s infinite alternate;
+}
+
+@keyframes pulse-danger {
+    from {
+        box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.4);
+        opacity: 1;
+    }
+    to {
+        box-shadow: 0 0 0 6px rgba(220, 38, 38, 0);
+        opacity: 0.82;
     }
 }
