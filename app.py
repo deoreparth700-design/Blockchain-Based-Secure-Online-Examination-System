@@ -189,9 +189,10 @@ def login():
 
     form_data = {}
     if request.method == "POST":
-        identifier = request.form.get("identifier", "")
+        raw_identifier = request.form.get("identifier") or request.form.get("username") or ""
+        identifier = raw_identifier.strip()
         password = request.form.get("password", "")
-        form_data["identifier"] = identifier
+        form_data["identifier"] = raw_identifier
 
         is_valid, err_msg, clean_ident = validators.validate_login_input(identifier, password)
         if not is_valid:
