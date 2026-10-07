@@ -12,6 +12,8 @@ the first time init_db.py is run.
 import os
 from datetime import datetime, timedelta
 
+from sqlalchemy import or_
+
 from models import db, User, Exam, Question, Attempt, Block
 
 # Fallback SQLite path for local development when DATABASE_URL is not set.
@@ -74,9 +76,12 @@ def get_user_by_login(login_value):
         return None
     val = login_value.strip()
     return User.query.filter(
-        (User.username == val) |
-        (User.identifier == val) |
-        (User.email.ilike(val))
+        or_(
+            User.username == val,
+            User.identifier == val,
+            User.identifier.ilike(val),
+            User.email.ilike(val)
+        )
     ).first()
 
 
