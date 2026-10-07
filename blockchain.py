@@ -75,10 +75,11 @@ class Blockchain:
     def _ensure_genesis(self):
         if BlockModel.query.count() == 0:
             genesis_data = {"info": "Genesis Block - Exam Chain Initialized"}
-            genesis_hash = compute_hash(0, time.time(), genesis_data, "0")
+            now = time.time()
+            genesis_hash = compute_hash(0, now, genesis_data, "0")
             genesis = BlockModel(
                 id=0,
-                timestamp=time.time(),
+                timestamp=now,
                 data_json=json.dumps(genesis_data, sort_keys=True),
                 previous_hash="0",
                 hash=genesis_hash,
