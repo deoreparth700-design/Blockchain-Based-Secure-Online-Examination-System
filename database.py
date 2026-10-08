@@ -12,7 +12,7 @@ the first time init_db.py is run.
 import os
 from datetime import datetime, timedelta
 
-from sqlalchemy import or_
+from sqlalchemy import or_, inspect, text
 
 from models import db, User, Exam, Question, Attempt, Block
 
@@ -45,6 +45,19 @@ def init_app(app):
             "pool_recycle": 300,
         }
     db.init_app(app)
+
+    with app.app_context():
+        try:
+            insp = inspect(db.engine)
+            if "users" in insp.get_table_names():
+                cols = [c["name"] for c in insp.get_columns("users")]
+                if "created_at" not in cols:
+                    with db.engine.begin() as conn:
+                        col_type = "TIMESTAMP" if "postgres" in str(db.engine.url) else "DATETIME"
+                        conn.execute(text(f"ALTER TABLE users ADD COLUMN created_at {col_type}"))
+                        conn.execute(text("UPDATE users SET created_at = CURRENT_TIMESTAMP WHERE created_at IS NULL"))
+        except Exception:
+            pass
 
 
 # ---------- Users ----------
@@ -89,18 +102,130 @@ def get_user_by_id(user_id):
     return db.session.get(User, user_id)
 
 
-def create_user(name, identifier, password, role, username=None, email=None):
+def create_user(name, identifier, password, role, username=None, email=None, created_at=None):
     user = User(
         name=name,
         username=username,
         identifier=identifier,
         email=email.strip().lower() if email else None,
         role=role,
+        created_at=created_at or datetime.now(),
     )
     user.set_password(password)
     db.session.add(user)
     db.session.commit()
     return user
+
+
+def get_registered_students(search_query=None, filter_status=None):
+    """
+    Returns all registered students (role='user'), sorted by newest registration (id desc).
+    Optionally filters by full name, college PRN (identifier), or email address.
+    Optionally filters by exam activity: 'attempted' or 'not_attempted'.
+    Batch loads attempt activity and summary metrics to prevent N+1 queries.
+    """
+    query = User.query.filter_by(role="user")
+    if search_query:
+        term = f"%{search_query.strip()}%"
+        query = query.filter(
+            or_(
+                User.name.ilike(term),
+                User.identifier.ilike(term),
+                User.email.ilike(term),
+            )
+        )
+    students = query.order_by(User.id.desc()).all()
+    if not students:
+        return []
+
+    # Batch load all attempts for these students in a single query
+    student_ids = [s.id for s in students]
+    all_attempts = (
+        Attempt.query.filter(Attempt.student_id.in_(student_ids))
+        .join(Exam, Attempt.exam_id == Exam.id)
+        .order_by(Attempt.submitted_at.desc(), Attempt.started_at.desc(), Attempt.id.desc())
+        .all()
+    )
+
+    attempts_by_student = {}
+    for att in all_attempts:
+        attempts_by_student.setdefault(att.student_id, []).append(att)
+
+    for s in students:
+        s_attempts = attempts_by_student.get(s.id, [])
+        s.exams_attempted = len(s_attempts)
+        completed = [a for a in s_attempts if a.is_submitted]
+        s.exams_completed = len(completed)
+
+        if s_attempts:
+            latest_att = s_attempts[0]
+            s.latest_attempt_date = latest_att.submitted_at or latest_att.started_at
+        else:
+            s.latest_attempt_date = None
+
+        if completed:
+            s.avg_score = round(sum(a.percentage for a in completed) / len(completed), 1)
+            latest_comp = completed[0]
+            s.latest_result = {
+                "exam_title": latest_comp.exam.title,
+                "score": latest_comp.score,
+                "total": latest_comp.total,
+                "percentage": latest_comp.percentage,
+                "submitted_at": latest_comp.submitted_at,
+            }
+        else:
+            s.avg_score = None
+            s.latest_result = None
+
+    if filter_status == "attempted":
+        students = [s for s in students if s.exams_attempted > 0]
+    elif filter_status == "not_attempted":
+        students = [s for s in students if s.exams_attempted == 0]
+
+    return students
+
+
+def get_student_detail(student_id):
+    """
+    Returns (student, summary, attempts) for a student user (role='user').
+    Returns (None, None, None) if student not found or role != 'user'.
+    """
+    student = db.session.get(User, student_id)
+    if not student or student.role != "user":
+        return None, None, None
+
+    attempts = (
+        Attempt.query.filter_by(student_id=student.id)
+        .join(Exam, Attempt.exam_id == Exam.id)
+        .order_by(Attempt.submitted_at.desc(), Attempt.started_at.desc(), Attempt.id.desc())
+        .all()
+    )
+
+    completed = [a for a in attempts if a.is_submitted]
+    latest_att = attempts[0] if attempts else None
+    latest_attempt_date = (latest_att.submitted_at or latest_att.started_at) if latest_att else None
+    avg_score = round(sum(a.percentage for a in completed) / len(completed), 1) if completed else None
+
+    summary = {
+        "exams_attempted": len(attempts),
+        "exams_completed": len(completed),
+        "latest_attempt_date": latest_attempt_date,
+        "avg_score": avg_score,
+        "latest_result": {
+            "exam_title": completed[0].exam.title,
+            "score": completed[0].score,
+            "total": completed[0].total,
+            "percentage": completed[0].percentage,
+            "submitted_at": completed[0].submitted_at,
+        } if completed else None,
+    }
+
+    return student, summary, attempts
+
+
+def get_total_students_count():
+    """Returns the total number of registered students with role='user'."""
+    return User.query.filter_by(role="user").count()
 
 
 # ---------- Exams ----------

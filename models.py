@@ -38,6 +38,7 @@ class User(db.Model):
     password_hash = db.Column(db.String(255), nullable=False)
     # User role: either "admin" or "user"
     role = db.Column(db.String(20), nullable=False, default="user")  # "admin" or "user"
+    created_at = db.Column(db.DateTime, nullable=True, default=datetime.now)
 
     def set_password(self, raw_password):
         self.password_hash = generate_password_hash(raw_password)

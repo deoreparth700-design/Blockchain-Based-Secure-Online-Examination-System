@@ -54,6 +54,7 @@
                 {% if session.get('role') == 'admin' %}
                     <a href="{{ url_for('admin_dashboard') }}" class="mgm-nav-item {% if request.path in ['/admin', '/admin/exams', '/teacher'] %}active{% endif %}">Admin Dashboard</a>
                     <a href="{{ url_for('create_exam') }}" class="mgm-nav-item {% if request.path in ['/admin/exams/create', '/teacher/create_exam'] %}active{% endif %}">+ Create Exam</a>
+                    <a href="{{ url_for('admin_students') }}" class="mgm-nav-item {% if request.path in ['/admin/students', '/teacher/students'] %}active{% endif %}">Registered Students</a>
                     <a href="{{ url_for('view_blockchain') }}" class="mgm-nav-item {% if request.path == '/blockchain' %}active{% endif %}">Integrity Ledger</a>
                     <span class="mgm-user-badge role-admin">{{ session.get('name') }} (Admin)</span>
                     <a href="{{ url_for('logout') }}" class="mgm-logout-btn">Logout</a>

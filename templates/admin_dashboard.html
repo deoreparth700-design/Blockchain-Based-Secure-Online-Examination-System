@@ -16,6 +16,9 @@
         </p>
     </div>
     <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+        <a href="{{ url_for('admin_students') }}" class="btn btn-secondary btn-sm">
+            Registered Students
+        </a>
         <a href="{{ url_for('view_blockchain') }}" class="btn btn-secondary btn-sm">
             Integrity Ledger
         </a>
@@ -47,8 +50,8 @@
         <div class="stat-value" id="stat-closed-exams" style="color: var(--text-secondary);">{{ stats.closed_exams }}</div>
         <div class="stat-subtext">Concluded</div>
     </div>
-    <div class="stat-tile tile-primary">
-        <div class="stat-label">REGISTERED USERS</div>
+    <div class="stat-tile tile-primary" onclick="window.location='{{ url_for('admin_students') }}'" style="cursor: pointer;" title="View all registered students">
+        <div class="stat-label">REGISTERED USERS &rarr;</div>
         <div class="stat-value" id="stat-total-users">{{ stats.total_users }}</div>
         <div class="stat-subtext">B.E. Final Year</div>
     </div>

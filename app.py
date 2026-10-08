@@ -250,6 +250,47 @@ def teacher_dashboard():
     return admin_dashboard()
 
 
+@app.route("/admin/students", endpoint="admin_students")
+@app.route("/teacher/students", endpoint="teacher_students")
+@login_required
+@role_required("admin")
+def admin_students():
+    """Admin-only view for all registered students (role='user')."""
+    search_query = request.args.get("q", "").strip()
+    filter_status = request.args.get("filter", "all").strip()
+    students = database.get_registered_students(
+        search_query if search_query else None,
+        filter_status=filter_status if filter_status in ["attempted", "not_attempted"] else None,
+    )
+    total_count = database.get_total_students_count()
+    return render_template(
+        "admin_students.html",
+        students=students,
+        total_students=total_count,
+        search_query=search_query,
+        filter_status=filter_status,
+    )
+
+
+@app.route("/admin/students/<int:student_id>", endpoint="admin_student_detail")
+@app.route("/teacher/students/<int:student_id>", endpoint="teacher_student_detail")
+@login_required
+@role_required("admin")
+def admin_student_detail(student_id):
+    """Admin-only view for detailed information and exam history of a specific student."""
+    student, summary, attempts = database.get_student_detail(student_id)
+    if not student:
+        flash("Student record not found.", "error")
+        return redirect(url_for("admin_students"))
+
+    return render_template(
+        "admin_student_detail.html",
+        student=student,
+        summary=summary,
+        attempts=attempts,
+    )
+
+
 @app.route("/admin/exams/create", methods=["GET", "POST"])
 @app.route("/teacher/create_exam", methods=["GET", "POST"])
 @login_required
