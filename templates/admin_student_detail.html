@@ -1,0 +1,264 @@
+{% extends "base.html" %}
+{% block title %}Student Details &middot; {{ student.name }} &middot; MGM University{% endblock %}
+
+{% block content %}
+<!-- Academic Administration Header -->
+<div class="academic-portal-header">
+    <div>
+        <div class="academic-scope-tag">
+            MGM University &middot; {{ academic_program }} ({{ academic_level }})
+        </div>
+        <h1 style="font-size: 1.6rem; color: var(--mgm-primary); margin: 0 0 4px;">
+            Student Profile: {{ student.name }}
+        </h1>
+        <p style="color: var(--text-secondary); margin: 0; font-size: 0.92rem;">
+            College PRN: <strong style="color: var(--text-primary); font-family: var(--font-mono);">{{ student.identifier }}</strong> &middot; Database ID: <strong style="color: var(--text-primary);">#{{ student.id }}</strong>
+        </p>
+    </div>
+    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+        <a href="{{ url_for('admin_students') }}" class="btn btn-secondary btn-sm">
+            &larr; Back to Registered Students
+        </a>
+        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary btn-sm">
+            Admin Dashboard
+        </a>
+    </div>
+</div>
+
+<!-- Section 1: Personal & Registration Details -->
+<div class="card" style="margin-bottom: 24px; padding: 0; overflow: hidden;">
+    <div style="padding: 16px 20px; border-bottom: 1px solid var(--border-subtle); background: var(--bg-surface); display: flex; justify-content: space-between; align-items: center;">
+        <h3 style="margin: 0; font-size: 1.15rem; color: var(--mgm-primary); display: flex; align-items: center; gap: 8px;">
+            <span>&#128100;</span> Personal &amp; Registration Details
+        </h3>
+        <span class="status-badge status-published" style="font-size: 0.75rem; padding: 3px 10px;">
+            Active
+        </span>
+    </div>
+    <div style="padding: 22px 20px;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px 24px;">
+            <div>
+                <span style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); font-weight: 600; display: block; margin-bottom: 4px;">
+                    Full Name
+                </span>
+                <strong style="font-size: 1.05rem; color: var(--text-primary);">{{ student.name }}</strong>
+            </div>
+
+            <div>
+                <span style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); font-weight: 600; display: block; margin-bottom: 4px;">
+                    College PRN
+                </span>
+                <code class="prn-badge" style="background: var(--bg-page); border: 1px solid var(--border); padding: 4px 10px; border-radius: 4px; font-size: 0.95rem; font-weight: 600; color: var(--text-primary); font-family: var(--font-mono);">
+                    {{ student.identifier }}
+                </code>
+            </div>
+
+            <div>
+                <span style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); font-weight: 600; display: block; margin-bottom: 4px;">
+                    Email Address
+                </span>
+                <span style="color: var(--text-secondary); font-size: 0.95rem;">
+                    {{ student.email or '—' }}
+                </span>
+            </div>
+
+            <div>
+                <span style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); font-weight: 600; display: block; margin-bottom: 4px;">
+                    Username
+                </span>
+                <span style="color: var(--text-primary); font-size: 0.95rem; font-family: var(--font-mono);">
+                    {{ student.username if student.username else '—' }}
+                </span>
+            </div>
+
+            <div>
+                <span style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); font-weight: 600; display: block; margin-bottom: 4px;">
+                    Role
+                </span>
+                <span style="background: rgba(18, 53, 91, 0.08); color: var(--mgm-primary); font-size: 0.82rem; padding: 4px 10px; border-radius: 4px; font-weight: 600;">
+                    Student
+                </span>
+            </div>
+
+            <div>
+                <span style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); font-weight: 600; display: block; margin-bottom: 4px;">
+                    Registration Date
+                </span>
+                <span style="color: var(--text-primary); font-size: 0.95rem;">
+                    {{ student.created_at.strftime('%d %b %Y, %I:%M %p') if student.created_at else '—' }}
+                </span>
+            </div>
+
+            <div>
+                <span style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); font-weight: 600; display: block; margin-bottom: 4px;">
+                    Account Status
+                </span>
+                <span style="color: var(--success); font-weight: 600; font-size: 0.95rem;">
+                    Active
+                </span>
+            </div>
+
+            <div>
+                <span style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); font-weight: 600; display: block; margin-bottom: 4px;">
+                    Student ID
+                </span>
+                <span style="color: var(--text-muted); font-size: 0.95rem; font-family: var(--font-mono);">
+                    #{{ student.id }}
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Section 2: Examination Activity Summary -->
+<div style="margin-bottom: 12px;">
+    <h3 style="font-size: 1.15rem; color: var(--mgm-primary); margin: 0 0 12px; display: flex; align-items: center; gap: 8px;">
+        <span>&#128202;</span> Examination Activity
+    </h3>
+</div>
+
+<div class="stat-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 28px;">
+    <div class="stat-tile tile-accent">
+        <div class="stat-label">TOTAL EXAMS ATTEMPTED</div>
+        <div class="stat-value" id="stat-total-attempted">{{ summary.exams_attempted }}</div>
+        <div class="stat-subtext">Registered attempts</div>
+    </div>
+
+    <div class="stat-tile tile-success">
+        <div class="stat-label">COMPLETED EXAMS</div>
+        <div class="stat-value" id="stat-completed-exams" style="color: var(--success);">{{ summary.exams_completed }}</div>
+        <div class="stat-subtext">Submitted &amp; sealed</div>
+    </div>
+
+    <div class="stat-tile tile-primary">
+        <div class="stat-label">AVERAGE SCORE</div>
+        <div class="stat-value" id="stat-avg-score">
+            {% if summary.avg_score is not none %}
+                {{ "%.1f"|format(summary.avg_score) }}%
+            {% else %}
+                —
+            {% endif %}
+        </div>
+        <div class="stat-subtext">Across completed tests</div>
+    </div>
+
+    <div class="stat-tile tile-warning">
+        <div class="stat-label">LATEST ATTEMPT</div>
+        <div class="stat-value" id="stat-latest-attempt" style="font-size: 1.15rem; font-weight: 600; padding-top: 4px;">
+            {% if summary.latest_attempt_date %}
+                {{ summary.latest_attempt_date.strftime('%d %b %Y') }}
+            {% else %}
+                —
+            {% endif %}
+        </div>
+        <div class="stat-subtext">
+            {% if summary.latest_attempt_date %}
+                {{ summary.latest_attempt_date.strftime('%I:%M %p') }}
+            {% else %}
+                No attempts recorded
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Section 3: Exam History -->
+<div class="card" style="padding: 0; overflow: hidden; margin-bottom: 24px;">
+    <div style="padding: 16px 20px; border-bottom: 1px solid var(--border-subtle); background: var(--bg-surface); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+        <div>
+            <h3 style="margin: 0; font-size: 1.15rem; color: var(--mgm-primary); display: flex; align-items: center; gap: 8px;">
+                <span>&#128221;</span> Exam History
+            </h3>
+            <span style="font-size: 0.82rem; color: var(--text-muted);">
+                Chronological record of examinations taken by this student
+            </span>
+        </div>
+        <span style="font-size: 0.85rem; color: var(--text-secondary);">
+            {{ attempts|length }} record{{ 's' if attempts|length != 1 else '' }}
+        </span>
+    </div>
+
+    {% if not attempts %}
+        <!-- Empty Exam History State -->
+        <div id="empty-history-card" style="text-align: center; padding: 48px 24px;">
+            <div style="font-size: 2.5rem; color: var(--text-muted); margin-bottom: 12px;">&#128221;</div>
+            <h4 style="margin: 0 0 6px; color: var(--mgm-primary); font-size: 1.1rem;">No Examination Attempts Yet</h4>
+            <p style="color: var(--text-muted); margin: 0 auto; font-size: 0.9rem; max-width: 480px;">
+                This student has not attempted or submitted any examinations in the system yet. Once they start or submit an exam, full performance metrics will appear here.
+            </p>
+        </div>
+    {% else %}
+        <div class="table-responsive" style="margin: 0; border: none; border-radius: 0;">
+            <table id="exam-history-table">
+                <thead>
+                    <tr>
+                        <th style="width: 45px;">#</th>
+                        <th>Exam Name</th>
+                        <th>Score</th>
+                        <th>Total</th>
+                        <th>Percentage</th>
+                        <th>Submitted At</th>
+                        <th>Status</th>
+                        <th style="text-align: right;">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for a in attempts %}
+                    <tr>
+                        <td style="color: var(--text-muted); font-size: 0.85rem;">{{ loop.index }}</td>
+                        <td>
+                            <strong style="color: var(--mgm-primary);">{{ a.exam.title }}</strong>
+                        </td>
+                        <td>
+                            <strong style="font-size: 0.95rem;">{{ a.score }}</strong>
+                        </td>
+                        <td>
+                            <span style="color: var(--text-secondary);">{{ a.total }}</span>
+                        </td>
+                        <td>
+                            {% if a.is_submitted %}
+                                <strong style="color: var(--mgm-accent);">{{ "%.1f"|format(a.percentage) }}%</strong>
+                            {% else %}
+                                <span style="color: var(--text-muted); font-size: 0.85rem;">—</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span style="font-size: 0.85rem; color: var(--text-muted);">
+                                {% if a.submitted_at %}
+                                    {{ a.submitted_at.strftime('%d %b %Y, %I:%M %p') }}
+                                {% elif a.started_at %}
+                                    Started {{ a.started_at.strftime('%d %b %Y, %I:%M %p') }}
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </span>
+                        </td>
+                        <td>
+                            {% if a.is_submitted %}
+                                <span class="status-badge status-published" style="font-size: 0.75rem; padding: 3px 10px;">
+                                    Completed
+                                </span>
+                            {% else %}
+                                <span class="status-badge status-draft" style="font-size: 0.75rem; padding: 3px 10px;">
+                                    In Progress
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td style="text-align: right;">
+                            {% if a.block_id is not none %}
+                                <a href="{{ url_for('show_result', block_index=a.block_id) }}"
+                                   class="btn btn-secondary btn-sm"
+                                   style="padding: 4px 10px; font-size: 0.8rem; white-space: nowrap;">
+                                    View Sealed Result &rarr;
+                                </a>
+                            {% else %}
+                                <span style="color: var(--text-muted); font-size: 0.85rem;">—</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

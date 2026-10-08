@@ -1,0 +1,257 @@
+{% extends "base.html" %}
+{% block title %}Registered Students &middot; MGM University{% endblock %}
+
+{% block content %}
+<!-- Academic Administration Header -->
+<div class="academic-portal-header">
+    <div>
+        <div class="academic-scope-tag">
+            MGM University &middot; {{ academic_program }} ({{ academic_level }})
+        </div>
+        <h1 style="font-size: 1.6rem; color: var(--mgm-primary); margin: 0 0 4px;">
+            Registered Students
+        </h1>
+        <p style="color: var(--text-secondary); margin: 0; font-size: 0.92rem;">
+            B.E. Final Year &middot; Computer Science &amp; Engineering &middot; Administrator: <strong style="color: var(--text-primary);">{{ session.get('name') }}</strong>
+        </p>
+    </div>
+    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary btn-sm">
+            &larr; Admin Dashboard
+        </a>
+        <a href="{{ url_for('view_blockchain') }}" class="btn btn-secondary btn-sm">
+            Integrity Ledger
+        </a>
+    </div>
+</div>
+
+<!-- Summary Statistics Metrics Grid -->
+<div class="stat-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin-bottom: 24px;">
+    <div class="stat-tile tile-primary">
+        <div class="stat-label">TOTAL REGISTERED STUDENTS</div>
+        <div class="stat-value" id="stat-total-students">{{ total_students }}</div>
+        <div class="stat-subtext">B.E. Computer Science &amp; Engineering cohort</div>
+    </div>
+</div>
+
+<!-- Search & Filtering Bar -->
+<div class="card" style="margin-bottom: 24px; padding: 18px 20px;">
+    <form method="GET" action="{{ url_for('admin_students') }}" style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+        <div style="flex: 1; min-width: 240px; position: relative;">
+            <input type="text"
+                   id="student-search-input"
+                   name="q"
+                   value="{{ search_query or '' }}"
+                   placeholder="Search students by Full Name, College PRN, or Email..."
+                   autocomplete="off"
+                   class="form-control"
+                   style="padding-left: 36px; margin: 0; width: 100%;">
+            <span style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 0.95rem; pointer-events: none;">
+                &#128269;
+            </span>
+        </div>
+        <div style="min-width: 190px;">
+            <select name="filter" id="attempt-filter-select" class="form-control" style="margin: 0; width: 100%;">
+                <option value="all" {% if not filter_status or filter_status == 'all' %}selected{% endif %}>All Students</option>
+                <option value="attempted" {% if filter_status == 'attempted' %}selected{% endif %}>Has Attempted Exam</option>
+                <option value="not_attempted" {% if filter_status == 'not_attempted' %}selected{% endif %}>Has Not Attempted Exam</option>
+            </select>
+        </div>
+        <div style="display: flex; gap: 8px;">
+            <button type="submit" class="btn btn-primary btn-sm" style="padding: 9px 18px;">
+                Search
+            </button>
+            {% if search_query or (filter_status and filter_status != 'all') %}
+                <a href="{{ url_for('admin_students') }}" class="btn btn-secondary btn-sm" style="padding: 9px 14px;">
+                    Clear
+                </a>
+            {% endif %}
+        </div>
+    </form>
+    <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 8px;">
+        Instant live filtering enabled &mdash; results update dynamically as you type or change filters.
+    </div>
+</div>
+
+<!-- Registered Students Table Section -->
+{% if not students and not search_query and (not filter_status or filter_status == 'all') %}
+    <!-- Empty Database State -->
+    <div class="card" id="empty-state-card" style="text-align: center; padding: 48px 24px;">
+        <div style="font-size: 2.5rem; color: var(--text-muted); margin-bottom: 12px;">&#128101;</div>
+        <h3 style="margin: 0 0 6px; color: var(--mgm-primary);">No Registered Students Yet</h3>
+        <p style="color: var(--text-muted); margin: 0 auto; font-size: 0.9rem; max-width: 500px;">
+            No student accounts have been registered for this batch yet. When students register via the portal registration flow, their verified academic details will appear here.
+        </p>
+    </div>
+{% else %}
+    <div class="card" style="padding: 0; overflow: hidden;">
+        <div style="padding: 16px 20px; border-bottom: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; background: var(--bg-surface);">
+            <div>
+                <h3 style="margin: 0; font-size: 1.15rem; color: var(--mgm-primary);">
+                    Registered Student Roster
+                </h3>
+                <span style="font-size: 0.82rem; color: var(--text-muted);">
+                    Sorted by newest registration first
+                </span>
+            </div>
+            <span style="font-size: 0.85rem; color: var(--text-secondary);">
+                Showing <strong id="visible-students-count">{{ students|length }}</strong> of {{ total_students }} student{{ 's' if total_students != 1 else '' }}
+            </span>
+        </div>
+
+        <div class="table-responsive" style="margin: 0; border: none; border-radius: 0;">
+            <table id="students-table">
+                <thead>
+                    <tr>
+                        <th style="width: 45px;">ID</th>
+                        <th>Full Name</th>
+                        <th>College PRN</th>
+                        <th>Email Address</th>
+                        <th>Username</th>
+                        <th>Role</th>
+                        <th>Registered</th>
+                        <th>Exams Attempted</th>
+                        <th>Latest Score</th>
+                        <th>Status</th>
+                        <th style="text-align: right;">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for s in students %}
+                    <tr class="student-row"
+                        data-name="{{ s.name|lower }}"
+                        data-prn="{{ s.identifier|lower }}"
+                        data-email="{{ (s.email or '')|lower }}"
+                        data-attempted="{{ 'true' if (s.exams_attempted and s.exams_attempted > 0) else 'false' }}">
+                        <td style="color: var(--text-muted); font-size: 0.85rem;">#{{ s.id }}</td>
+                        <td>
+                            <strong style="color: var(--mgm-primary);">{{ s.name }}</strong>
+                        </td>
+                        <td>
+                            <code class="prn-badge" style="background: var(--bg-page); border: 1px solid var(--border); padding: 3px 8px; border-radius: 4px; font-size: 0.85rem; font-weight: 600; color: var(--text-primary);">
+                                {{ s.identifier }}
+                            </code>
+                        </td>
+                        <td>
+                            <span style="color: var(--text-secondary); font-size: 0.88rem;">
+                                {{ s.email or '—' }}
+                            </span>
+                        </td>
+                        <td>
+                            <span style="color: var(--text-muted); font-size: 0.85rem;">
+                                {{ s.username if s.username else '—' }}
+                            </span>
+                        </td>
+                        <td>
+                            <span style="background: rgba(18, 53, 91, 0.08); color: var(--mgm-primary); font-size: 0.75rem; padding: 3px 8px; border-radius: 4px; font-weight: 600;">
+                                Student
+                            </span>
+                        </td>
+                        <td>
+                            <span style="font-size: 0.85rem; color: var(--text-muted);">
+                                {{ s.created_at.strftime('%d %b %Y') if s.created_at else '—' }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if s.exams_attempted and s.exams_attempted > 0 %}
+                                <strong style="color: var(--text-primary); font-size: 0.88rem;">{{ s.exams_attempted }} attempted</strong>
+                                <span style="font-size: 0.78rem; color: var(--text-muted);">({{ s.exams_completed }} completed)</span>
+                            {% else %}
+                                <span style="color: var(--text-muted); font-size: 0.85rem;">0 attempted</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if s.latest_result %}
+                                <div style="font-size: 0.88rem;">
+                                    <strong>{{ s.latest_result.score }}/{{ s.latest_result.total }}</strong>
+                                    <span style="color: var(--mgm-accent); font-weight: 600; font-size: 0.82rem;">({{ "%.1f"|format(s.latest_result.percentage) }}%)</span>
+                                </div>
+                                <div style="font-size: 0.74rem; color: var(--text-muted); max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="{{ s.latest_result.exam_title }}">
+                                    {{ s.latest_result.exam_title }}
+                                </div>
+                            {% else %}
+                                <span style="color: var(--text-muted); font-size: 0.85rem;">—</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="status-badge status-published" style="font-size: 0.75rem; padding: 3px 10px;">
+                                Active
+                            </span>
+                        </td>
+                        <td style="text-align: right;">
+                            <a href="{{ url_for('admin_student_detail', student_id=s.id) }}"
+                               class="btn btn-secondary btn-sm"
+                               style="padding: 5px 12px; font-size: 0.82rem; white-space: nowrap;">
+                                View Details &rarr;
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    <!-- Dynamic empty row when search filters all rows out -->
+                    <tr id="no-search-results-row" style="display: none;">
+                        <td colspan="11" style="text-align: center; padding: 32px 16px; color: var(--text-muted);">
+                            <div style="font-size: 1.5rem; margin-bottom: 6px;">&#128269;</div>
+                            <strong>No matching students found</strong>
+                            <div style="font-size: 0.85rem; margin-top: 4px;">Try searching by a different name, PRN, or email address.</div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Client-side Instant Filter Script -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('student-search-input');
+        const filterSelect = document.getElementById('attempt-filter-select');
+        const tableRows = document.querySelectorAll('.student-row');
+        const noResultsRow = document.getElementById('no-search-results-row');
+        const visibleCountEl = document.getElementById('visible-students-count');
+
+        function applyFilters() {
+            const query = searchInput ? searchInput.value.toLowerCase().trim() : '';
+            const filter = filterSelect ? filterSelect.value : 'all';
+            let matches = 0;
+
+            tableRows.forEach(function(row) {
+                const name = row.getAttribute('data-name') || '';
+                const prn = row.getAttribute('data-prn') || '';
+                const email = row.getAttribute('data-email') || '';
+                const hasAttempted = row.getAttribute('data-attempted') === 'true';
+
+                const matchesQuery = !query || name.includes(query) || prn.includes(query) || email.includes(query);
+                let matchesFilter = true;
+                if (filter === 'attempted') {
+                    matchesFilter = hasAttempted;
+                } else if (filter === 'not_attempted') {
+                    matchesFilter = !hasAttempted;
+                }
+
+                if (matchesQuery && matchesFilter) {
+                    row.style.display = '';
+                    matches++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            if (noResultsRow) {
+                noResultsRow.style.display = (matches === 0) ? '' : 'none';
+            }
+
+            if (visibleCountEl) {
+                visibleCountEl.textContent = matches;
+            }
+        }
+
+        if (searchInput) {
+            searchInput.addEventListener('input', applyFilters);
+        }
+        if (filterSelect) {
+            filterSelect.addEventListener('change', applyFilters);
+        }
+    });
+    </script>
+{% endif %}
+{% endblock %}
