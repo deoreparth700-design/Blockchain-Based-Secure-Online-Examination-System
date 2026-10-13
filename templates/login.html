@@ -1,13 +1,13 @@
 {% extends "base.html" %}
-{% block title %}Sign In &middot; MGM University Examination Platform{% endblock %}
+{% block title %}Sign In &middot; Blockchain Examination System{% endblock %}
 
 {% block content %}
 <div class="card" style="max-width: 440px; margin: 30px auto; padding: 32px 28px;">
-    <!-- MGM Branding Badge -->
+    <!-- BES Branding Badge -->
     <div style="text-align: center; margin-bottom: 20px;">
-        <img src="{{ url_for('static', filename='images/mgm_logo.svg') }}"
-             onerror="this.onerror=null; this.src='{{ url_for('static', filename='images/mgm_seal.png') }}';"
-             alt="MGM University"
+        <img src="{{ url_for('static', filename='images/bes_logo.svg') }}"
+             onerror="this.onerror=null; this.src='{{ url_for('static', filename='images/bes_logo.png') }}';"
+             alt="Blockchain Examination System"
              style="height: 52px; width: auto; margin-bottom: 12px;">
 
         <div class="academic-scope-tag" style="margin-bottom: 6px;">
@@ -16,7 +16,7 @@
 
         <h2 style="font-size: 1.35rem; color: var(--mgm-primary); margin: 0 0 4px;">Portal Sign In</h2>
         <p style="color: var(--text-muted); font-size: 0.88rem; margin: 0;">
-            Enter your college PRN or registered email to continue.
+            Enter your registered PRN or email to continue.
         </p>
     </div>
 
@@ -60,7 +60,7 @@
 
     <div style="margin-top: 24px; padding-top: 18px; border-top: 1px solid var(--border-subtle); text-align: center; font-size: 0.86rem; color: var(--text-muted);">
         <p style="margin: 0 0 6px;">
-            B.E. Final Year CSE Candidate?
+            Examination Candidate?
             <a href="{{ url_for('register') }}" style="color: var(--mgm-accent); font-weight: 600; text-decoration: none;">
                 Register for Examination Account &rarr;
             </a>

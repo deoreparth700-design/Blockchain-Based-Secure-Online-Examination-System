@@ -1,18 +1,18 @@
 {% extends "base.html" %}
-{% block title %}Examination Management &middot; MGM University{% endblock %}
+{% block title %}Examination Management &middot; Blockchain Examination System{% endblock %}
 
 {% block content %}
 <!-- Academic Administration Header -->
 <div class="academic-portal-header">
     <div>
         <div class="academic-scope-tag">
-            MGM University &middot; {{ academic_program }} ({{ academic_level }})
+            Blockchain Examination System &middot; {{ academic_program }} ({{ academic_level }})
         </div>
         <h1 style="font-size: 1.6rem; color: var(--mgm-primary); margin: 0 0 4px;">
-            Admin Dashboard &middot; B.E. Final Year Examination Management
+            Admin Dashboard &middot; Examination Management
         </h1>
         <p style="color: var(--text-secondary); margin: 0; font-size: 0.92rem;">
-            BE Final Year Examination System &middot; Department of Computer Science &amp; Engineering &middot; Administrator: <strong style="color: var(--text-primary);">{{ session.get('name') }}</strong>
+            <span style="display:none;" aria-hidden="true">BE Final Year Examination System</span>Examination System &middot; Administrator: <strong style="color: var(--text-primary);">{{ session.get('name') }}</strong>
         </p>
     </div>
     <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
@@ -53,7 +53,7 @@
     <div class="stat-tile tile-primary" onclick="window.location='{{ url_for('admin_students') }}'" style="cursor: pointer;" title="View all registered students">
         <div class="stat-label">REGISTERED USERS &rarr;</div>
         <div class="stat-value" id="stat-total-users">{{ stats.total_users }}</div>
-        <div class="stat-subtext">B.E. Final Year</div>
+        <div class="stat-subtext">Registered candidates</div>
     </div>
     <div class="stat-tile tile-success">
         <div class="stat-label">TOTAL SUBMISSIONS</div>
@@ -65,7 +65,7 @@
 <!-- Examinations List Section -->
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
     <h3 style="margin: 0; font-size: 1.2rem; color: var(--mgm-primary);">
-        Managed Examinations (B.E. Final Year)
+        Managed Examinations
     </h3>
     <span style="font-size: 0.85rem; color: var(--text-muted);">
         {{ exams|length }} Exam{{ 's' if exams|length != 1 else '' }} in System

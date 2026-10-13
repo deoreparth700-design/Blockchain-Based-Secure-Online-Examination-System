@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}{{ exam.title }} &middot; MGM University Examination{% endblock %}
+{% block title %}{{ exam.title }} &middot; Blockchain Examination System{% endblock %}
 
 {% block content %}
 <!-- Distraction-Free Sticky Examination Header -->
@@ -7,7 +7,7 @@
     <div class="exam-sticky-top">
         <div>
             <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--mgm-primary); font-weight: 700; margin-bottom: 2px;">
-                MGM University &middot; {{ academic_program }} ({{ academic_level }})
+                Blockchain Examination System &middot; {{ academic_program }} ({{ academic_level }})
             </div>
             <h2 style="margin: 0; font-size: 1.35rem; color: var(--mgm-primary);">{{ exam.title }}</h2>
             <div style="color: var(--text-muted); font-size: 0.85rem; margin-top: 2px;">
@@ -88,7 +88,7 @@
     <div class="card" style="text-align: center; margin-top: 24px; padding: 28px 24px; border-top: 3px solid var(--mgm-primary);">
         <h4 style="margin: 0 0 6px; color: var(--mgm-primary);">Ready to Submit Examination?</h4>
         <p style="margin: 0 0 16px; color: var(--text-muted); font-size: 0.9rem; max-width: 580px; margin-left: auto; margin-right: auto;">
-            Please ensure you have reviewed your answers above. Once submitted, your examination is evaluated server-side and cryptographically sealed into the university integrity ledger.
+            Please ensure you have reviewed your answers above. Once submitted, your examination is evaluated server-side and cryptographically sealed into the blockchain integrity ledger.
         </p>
         <button type="submit" id="exam-submit-btn" class="btn btn-primary btn-lg" style="padding: 12px 36px; font-weight: 600;">
             Submit Examination &rarr;

@@ -1,20 +1,20 @@
 {% extends "base.html" %}
-{% block title %}Examination Result &middot; {{ result_summary.exam_title or block.data.exam_title }} &middot; MGM University{% endblock %}
+{% block title %}Examination Result &middot; {{ result_summary.exam_title or block.data.exam_title }} &middot; Blockchain Examination System{% endblock %}
 
 {% block content %}
 <div class="marksheet-card">
     <!-- Academic Marksheet Header -->
     <div class="marksheet-header">
         <div style="display: flex; justify-content: center; margin-bottom: 12px;">
-            <img src="{{ url_for('static', filename='images/mgm_logo.svg') }}"
-                 onerror="this.onerror=null; this.src='{{ url_for('static', filename='images/mgm_seal.png') }}';"
-                 alt="MGM University"
+            <img src="{{ url_for('static', filename='images/bes_logo.svg') }}"
+                 onerror="this.onerror=null; this.src='{{ url_for('static', filename='images/bes_logo.png') }}';"
+                 alt="Blockchain Examination System"
                  style="height: 48px; width: auto; filter: brightness(0) invert(1);">
         </div>
-        <h2>MGM UNIVERSITY</h2>
-        <p>Department of Computer Science &amp; Engineering &middot; Examination Division</p>
+        <h2>BLOCKCHAIN EXAMINATION SYSTEM</h2>
+        <p>Secure Online Examination Platform &middot; Examination Division</p>
         <p style="font-weight: 600; color: #ffffff; margin-top: 4px; letter-spacing: 0.04em;">
-            B.E. FINAL YEAR EXAMINATION RESULT
+            EXAMINATION RESULT
         </p>
     </div>
 

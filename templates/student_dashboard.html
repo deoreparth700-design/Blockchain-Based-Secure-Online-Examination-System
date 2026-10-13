@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Student Dashboard &middot; MGM University Examination Platform{% endblock %}
+{% block title %}Student Dashboard &middot; Blockchain Examination System{% endblock %}
 
 {% block content %}
 <!-- Academic Student Header -->
@@ -12,8 +12,8 @@
             Welcome, {{ session.get('name') }}
         </h1>
         <p style="color: var(--text-secondary); margin: 0; font-size: 0.92rem;">
-            College PRN: <strong style="color: var(--text-primary);">{{ session.get('identifier') }}</strong> &middot;
-            Department of Computer Science &amp; Engineering &middot; {{ academic_level }}
+            PRN: <strong style="color: var(--text-primary);">{{ session.get('identifier') }}</strong> &middot;
+            {{ academic_level }}
         </p>
     </div>
 </div>
@@ -47,7 +47,7 @@
         <div style="font-size: 2.4rem; color: var(--text-muted); margin-bottom: 12px;">&#128221;</div>
         <h3 style="margin: 0 0 8px; color: var(--mgm-primary);">No Examinations Scheduled</h3>
         <p style="color: var(--text-muted); margin: 0; font-size: 0.92rem; max-width: 500px; margin: 0 auto;">
-            There are currently no active or upcoming examinations scheduled for B.E. Final Year Computer Science &amp; Engineering. Please check back later.
+            There are currently no active or upcoming examinations scheduled. Please check back later.
         </p>
     </div>
 {% else %}
