@@ -1,13 +1,13 @@
 {% extends "base.html" %}
-{% block title %}MGM University &middot; B.E. Final Year Examination Platform{% endblock %}
+{% block title %}Blockchain Examination System{% endblock %}
 
 {% block content %}
 <!-- INSTITUTIONAL HERO SECTION -->
 <div class="home-hero-card">
     <div style="display: flex; justify-content: center; margin-bottom: 16px;">
-        <img src="{{ url_for('static', filename='images/mgm_logo.svg') }}"
-             onerror="this.onerror=null; this.src='{{ url_for('static', filename='images/mgm_seal.png') }}';"
-             alt="MGM University Seal"
+        <img src="{{ url_for('static', filename='images/bes_logo.svg') }}"
+             onerror="this.onerror=null; this.src='{{ url_for('static', filename='images/bes_logo.png') }}';"
+             alt="Blockchain Examination System"
              class="home-hero-logo">
     </div>
 
@@ -15,12 +15,12 @@
         {{ academic_display }} &middot; {{ academic_program }}
     </div>
 
-    <h1 class="home-hero-title">MGM University</h1>
-    <div class="home-hero-subtitle">B.E. Final Year Examination Platform</div>
+    <h1 class="home-hero-title">Blockchain Examination System</h1>
+    <div class="home-hero-subtitle">Secure Online Examination Platform</div>
 
     <p class="home-hero-desc">
-        Welcome to the official university portal for B.E. Computer Science and Engineering examinations.
-        Designed for scheduled internal assessments, automated objective evaluation, and tamper-evident result archival.
+        Welcome to the official online examination portal.
+        Designed for scheduled assessments, automated objective evaluation, and tamper-evident result archival.
     </p>
 
     <div class="home-hero-actions">
@@ -86,7 +86,7 @@
     <div style="text-align: center; margin-bottom: 24px;">
         <h2 id="portals-heading" style="color: var(--mgm-primary); font-size: 1.45rem;">Portal Access</h2>
         <p style="color: var(--text-muted); font-size: 0.92rem; max-width: 600px; margin: 0 auto;">
-            Access platform services tailored to students and university faculty.
+            Access platform services tailored to candidates and examination administrators.
         </p>
     </div>
 
@@ -99,7 +99,7 @@
                     <h3>Student Portal</h3>
                 </div>
                 <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.5; margin-bottom: 18px;">
-                    For registered B.E. Final Year Computer Science &amp; Engineering candidates. View scheduled tests, attempt live timed examinations, and inspect sealed scorecards.
+                    For registered candidates. View scheduled tests, attempt live timed examinations, and inspect sealed scorecards.
                 </p>
             </div>
             <div style="display: flex; gap: 10px; flex-wrap: wrap;">
@@ -116,7 +116,7 @@
                     <h3>Faculty &amp; Administration</h3>
                 </div>
                 <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.5; margin-bottom: 18px;">
-                    Authorized university faculty workspace. Draft and schedule assessments, curate MCQ question banks, analyze class submission statistics, and audit ledger integrity.
+                    Authorized administrator workspace. Draft and schedule assessments, curate MCQ question banks, analyze class submission statistics, and audit ledger integrity.
                 </p>
             </div>
             <div>
@@ -131,7 +131,7 @@
     <span style="font-size: 1.4rem; color: var(--mgm-accent);">&#9432;</span>
     <div>
         <strong style="color: var(--text-primary);">Academic Scope Notice:</strong>
-        This installation is strictly provisioned for the single cohort of <strong>B.E. Final Year Computer Science and Engineering</strong> at MGM University. All examination activities are monitored and cryptographically sealed.
+        This platform is provisioned for secure online examinations. All examination activities are monitored and cryptographically sealed.
     </div>
 </div>
 {% endblock %}

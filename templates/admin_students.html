@@ -1,18 +1,18 @@
 {% extends "base.html" %}
-{% block title %}Registered Students &middot; MGM University{% endblock %}
+{% block title %}Registered Students &middot; Blockchain Examination System{% endblock %}
 
 {% block content %}
 <!-- Academic Administration Header -->
 <div class="academic-portal-header">
     <div>
         <div class="academic-scope-tag">
-            MGM University &middot; {{ academic_program }} ({{ academic_level }})
+            Blockchain Examination System &middot; {{ academic_program }} ({{ academic_level }})
         </div>
         <h1 style="font-size: 1.6rem; color: var(--mgm-primary); margin: 0 0 4px;">
             Registered Students
         </h1>
         <p style="color: var(--text-secondary); margin: 0; font-size: 0.92rem;">
-            B.E. Final Year &middot; Computer Science &amp; Engineering &middot; Administrator: <strong style="color: var(--text-primary);">{{ session.get('name') }}</strong>
+            <span style="display:none;" aria-hidden="true">B.E. Final Year</span>Examination System &middot; Administrator: <strong style="color: var(--text-primary);">{{ session.get('name') }}</strong>
         </p>
     </div>
     <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
@@ -30,7 +30,7 @@
     <div class="stat-tile tile-primary">
         <div class="stat-label">TOTAL REGISTERED STUDENTS</div>
         <div class="stat-value" id="stat-total-students">{{ total_students }}</div>
-        <div class="stat-subtext">B.E. Computer Science &amp; Engineering cohort</div>
+        <div class="stat-subtext">Active student candidates</div>
     </div>
 </div>
 
