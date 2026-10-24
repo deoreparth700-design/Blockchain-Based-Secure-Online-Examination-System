@@ -7,7 +7,7 @@
 [![Live Demo](https://img.shields.io/badge/Live-Demo-success)](https://blockchain-based-secure-online-exam.vercel.app/)
 [![Python](https://img.shields.io/badge/Python-3.x-blue?logo=python)](https://www.python.org/)
 [![Flask](https://img.shields.io/badge/Flask-Web_Framework-black?logo=flask)](https://flask.palletsprojects.com/)
-[![Tests](https://img.shields.io/badge/Tests-135%2F135%20Passing-brightgreen)](#testing)
+[![Tests](https://img.shields.io/badge/Tests-185%20test%20cases-blue)](#testing)
 
 ## Overview
 
@@ -123,6 +123,8 @@ Admin closes → Closed (no new attempts)
             └───────────────┘          └────────────────┘
 ```
 
+The ledger is not a separate database: its blocks are stored in the `blocks` table of the same database (Neon PostgreSQL in production, SQLite locally). The hash links between blocks are what make tampering detectable.
+
 ## Technology Stack
 
 ### Frontend
@@ -168,15 +170,28 @@ Blockchain-Based-Secure-Online-Examination-System/
 ├── models.py                       # ORM models (User, Exam, Question, Attempt, Block)
 ├── validators.py                   # Input validation (registration, login, exam creation)
 ├── init_db.py                      # First-time database setup and admin creation
+├── seed_demo_pilot.py              # Seeds a fictional demo dataset (local SQLite only)
+├── demo_tamper.py                  # Tamper-detection demonstration script
+├── migrate_roles.py                # One-off migration: old role names -> admin/user
+├── migrate_exams_status.py         # One-off migration: adds exams.status
+├── migrate_attempts_started_at.py  # One-off migration: adds attempts.started_at
+├── migrate_users_created_at.py     # One-off migration: adds users.created_at
 ├── requirements.txt                # Python dependencies
 ├── vercel.json                     # Vercel deployment configuration
 ├── .env.example                    # Environment variable template
 │
+├── scripts/
+│   └── reset_student_accounts.py   # Maintenance: wipe students and results before a new batch
+│
+├── docs/
+│   └── BE_FINAL_YEAR_V1_DEMO.md    # Step-by-step teacher/student demo guide
+│
 ├── static/
 │   ├── style.css                   # Application stylesheet
-│   └── script.js                   # Client-side JavaScript
+│   ├── script.js                   # Client-side JavaScript
+│   └── images/                     # Logos and favicons
 │
-├── public/static/                  # Vercel static asset mirror
+├── public/static/                  # Vercel static asset mirror (keep in sync with static/)
 │
 ├── templates/
 │   ├── base.html                   # Base template with navigation
@@ -184,6 +199,9 @@ Blockchain-Based-Secure-Online-Examination-System/
 │   ├── login.html                  # Login form
 │   ├── register.html               # Registration form
 │   ├── admin_dashboard.html        # Admin dashboard with stats
+│   ├── admin_students.html         # Admin list of registered students
+│   ├── admin_student_detail.html   # Admin view of one student's exam history
+│   ├── teacher_dashboard.html      # Legacy teacher dashboard template
 │   ├── create_exam.html            # Exam creation form
 │   ├── edit_exam.html              # Exam editing form
 │   ├── exam.html                   # Exam-taking interface with countdown
@@ -195,7 +213,7 @@ Blockchain-Based-Secure-Online-Examination-System/
 ├── experimental/
 │   └── ethereum/                   # Archived Ethereum/MetaMask integration (not used in V1)
 │
-└── tests/
+└── tests/                          # 12 test files, 185 test cases (see Testing)
     ├── test_phase1_roles.py        # Authentication and role tests
     ├── test_phase2_registration.py # Registration and PRN tests
     ├── test_phase3_admin_exam_management.py  # Admin exam lifecycle tests
@@ -203,7 +221,11 @@ Blockchain-Based-Secure-Online-Examination-System/
     ├── test_phase5_results.py      # Evaluation and result tests
     ├── test_phase6_security_integrity.py    # Security and integrity tests
     ├── test_phase8_be_final_v1.py  # B.E. Final Year V1 completion tests
-    └── test_phase9_pilot_readiness.py # Pilot readiness and end-to-end tests
+    ├── test_phase9_pilot_readiness.py # Pilot readiness and end-to-end tests
+    ├── test_admin_students.py      # Admin student list and detail pages
+    ├── test_genesis_verification.py # Genesis block (Block #0) integrity
+    ├── test_login_regression.py    # Login regression cases
+    └── test_reset_maintenance.py   # Student reset maintenance workflow
 ```
 
 ## Local Setup
@@ -271,15 +293,31 @@ http://localhost:5000
 
 ## Testing
 
-The project includes 135 automated tests across 8 phase-specific test suites.
+The project includes 185 automated test cases across 12 test files.
 
-Run all tests:
+Each test file sets up its own SQLite database when it is imported, so **run each file in its own process**. Running several files in a single `unittest` command shares one app instance between them and causes spurious errors.
+
+Run one test file:
 
 ```bash
-python -m unittest tests/test_phase1_roles.py tests/test_phase2_registration.py tests/test_phase3_admin_exam_management.py tests/test_phase4_exam_engine.py tests/test_phase5_results.py tests/test_phase6_security_integrity.py tests/test_phase8_be_final_v1.py tests/test_phase9_pilot_readiness.py
+python -m unittest tests/test_phase1_roles.py
+```
+
+Run every test file, one process per file:
+
+```bash
+# macOS / Linux / Git Bash
+for f in tests/test_*.py; do python -m unittest "$f"; done
+```
+
+```powershell
+# Windows PowerShell
+Get-ChildItem tests\test_*.py | ForEach-Object { python -m unittest $_.FullName }
 ```
 
 All test suites use isolated SQLite databases and do not touch the production Neon PostgreSQL database.
+
+> **Known issue:** `tests/test_phase6_security_integrity.py` deletes its SQLite file after every test. On Windows that delete is skipped while the file is still open, so the suite passes. On Linux and macOS the file is really removed and every test after the first one fails with `attempt to write a readonly database`. The application code is not affected; the test cleanup needs fixing (for example by disposing the database engine before deleting the file).
 
 | Suite | Coverage |
 |-------|----------|
@@ -291,7 +329,12 @@ All test suites use isolated SQLite databases and do not touch the production Ne
 | Phase 6 | Ethereum removal, ledger privacy, integrity verification, CSRF, IDOR |
 | Phase 8 | B.E. Final Year academic scope, registration, state organization, tamper detection |
 | Phase 9 | Pilot readiness audit, access control failure cases, client injection immunity, seed integrity, E2E demo workflow |
-| Phase 10 & 11 | MGM University visual identity redesign, responsive & accessibility QA, final release |
+| Admin students | Admin registered-students list and student detail pages, search, empty states, password hashes never rendered |
+| Genesis verification | Block #0 invariants, tamper detection on the genesis block, chain validation and the `/verify` endpoints |
+| Login regression | Login by admin username, PRN or email, whitespace and case handling, wrong credentials and empty input |
+| Reset maintenance | Student reset workflow: student accounts and their attempts removed, admin account kept and still able to log in |
+
+The visual redesign and responsive/accessibility work (Phases 10 and 11) has no dedicated automated test file.
 
 A formatting check can also be performed with:
 
@@ -402,7 +445,14 @@ Example:
 python demo_tamper.py 1 100
 ```
 
-This simulates an attacker modifying blockchain data without recalculating the original block hash. The application can then detect the inconsistency when validating the blockchain.
+This simulates an attacker modifying blockchain data without recalculating the original block hash. The application can then detect the inconsistency when validating the blockchain: log in as an admin, open `/blockchain` and click **Verify Blockchain**.
+
+Run `python seed_demo_pilot.py` first so that Block #1 exists. The script edits the database your `DATABASE_URL` points to (local SQLite when it is unset), so never run it against a database you care about.
+
+## Maintenance Scripts
+
+- `scripts/reset_student_accounts.py` deletes **all student accounts and their attempts and result blocks**, keeps the genesis block, exams and questions, and resets the `admin_demo` admin account. Usage: `python scripts/reset_student_accounts.py --admin-password <password>` (or set `ADMIN_PASSWORD`). It loads your `.env`, so check that `DATABASE_URL` points to the database you intend to reset before running it.
+- `migrate_roles.py`, `migrate_exams_status.py`, `migrate_attempts_started_at.py` and `migrate_users_created_at.py` are one-off, non-destructive migrations for databases created before those columns or role names existed. A fresh database created with `init_db.py` does not need them.
 
 > This is a demonstration of tamper detection, not a claim that the application itself is an immutable decentralized database.
 
