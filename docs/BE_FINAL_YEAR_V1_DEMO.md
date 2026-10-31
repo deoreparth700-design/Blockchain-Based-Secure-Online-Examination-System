@@ -19,14 +19,17 @@
 3. **Demo Accounts (Placeholders)**:
    - **Teacher / Administrator**:
      - Identifier: `admin_demo` (or custom created via `python init_db.py`)
+     - Password: `<ADMIN_PASSWORD>` (Passwords are printed once when you run seed_demo_pilot.py, or set ADMIN_PASSWORD / DEMO_STUDENT_PASSWORD before running it.)
      - Role: `admin`
      - Permissions: Exam scheduling, drafting, publishing, reviewing submissions, ledger auditing.
    - **Student (Completed Attempt)**:
      - PRN: `BE2026CS001` (Rahul Sharma)
+     - Password: `<STUDENT_PASSWORD>`
      - Role: `user`
      - Status: Already completed *Distributed Systems & Consensus V1* (Score: 3/3, sealed into Block).
    - **Student (Fresh / Ready to Attempt)**:
      - PRN: `BE2026CS002` (Priya Patil)
+     - Password: `<STUDENT_PASSWORD>`
      - Role: `user`
      - Status: Ready to take published examinations live during demonstration.
 
@@ -36,7 +39,7 @@
 
 ### Step 1: Administrator Sign In
 1. Navigate to `/login`.
-2. Enter the administrator credentials (`admin_demo` / `AdminDemoPass123!`).
+2. Enter the administrator credentials (`admin_demo` / `<ADMIN_PASSWORD>`). Passwords are printed once when you run seed_demo_pilot.py, or set ADMIN_PASSWORD / DEMO_STUDENT_PASSWORD before running it.
 3. Click **Sign In**.
 4. **Expected Outcome**:
    - Redirects to `/admin` (Admin Dashboard).
@@ -87,7 +90,7 @@
 ### Step 1: Student Sign In
 1. Click **Logout** from the Admin session.
 2. Navigate to `/login`.
-3. Sign in as student `Priya Patil` (PRN: `BE2026CS002`, Password: `StudentPass123!`).
+3. Sign in as student `Priya Patil` (PRN: `BE2026CS002`, Password: `<STUDENT_PASSWORD>`).
 4. **Expected Outcome**:
    - Redirects to `/student` (Student Portal).
    - Header displays: `Student Portal`, `B.E. Final Year &middot; B.E. Computer Science and Engineering`, Logged in as `Priya Patil &middot; College PRN: BE2026CS002`.
