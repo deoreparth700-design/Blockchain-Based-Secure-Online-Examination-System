@@ -14,6 +14,7 @@ Features:
 - Neon PostgreSQL cloud database with local SQLite fallback.
 """
 
+import logging
 import os
 import secrets
 from datetime import datetime, timedelta
@@ -39,7 +40,13 @@ app = Flask(
 )
 
 # Secret key from environment with fallback for local dev
-app.secret_key = os.environ.get("SECRET_KEY", "dev-fallback-not-for-production")
+if os.environ.get("SECRET_KEY"):
+    app.secret_key = os.environ["SECRET_KEY"]
+elif os.environ.get("VERCEL"):
+    raise RuntimeError("SECRET_KEY must be set in production")
+else:
+    app.secret_key = secrets.token_hex(32)
+    logging.warning("SECRET_KEY environment variable not set; using temporary key for local development.")
 
 # Security headers and cookie configurations
 app.config["SESSION_COOKIE_HTTPONLY"] = True

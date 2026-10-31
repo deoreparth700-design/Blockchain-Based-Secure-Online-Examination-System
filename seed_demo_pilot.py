@@ -21,6 +21,7 @@ Safety:
 """
 
 import os
+import secrets
 import sys
 import time
 from datetime import datetime, timedelta
@@ -37,6 +38,11 @@ import blockchain
 
 
 def seed_demo():
+    env_admin_pass = os.environ.get("ADMIN_PASSWORD")
+    env_student_pass = os.environ.get("DEMO_STUDENT_PASSWORD")
+    admin_password = env_admin_pass or secrets.token_urlsafe(12)
+    student_password = env_student_pass or secrets.token_urlsafe(12)
+
     with app.app_context():
         db.create_all()
 
@@ -45,6 +51,7 @@ def seed_demo():
         print("=" * 60)
 
         # 1. Admin Account
+        admin_created = False
         admin = database.get_user_by_identifier("admin_demo")
         if not admin:
             admin = database.create_user(
@@ -52,20 +59,22 @@ def seed_demo():
                 identifier="admin_demo",
                 username="admin_demo",
                 email="amit.kulkarni@demo.edu",
-                password="AdminDemoPass123!",
+                password=admin_password,
                 role="admin",
             )
-            print("[+] Created Admin Account: admin_demo (Password: AdminDemoPass123!)")
+            admin_created = True
+            print("[+] Created Admin Account: admin_demo")
         else:
             print("[*] Admin Account already exists: admin_demo")
 
         # 2. Three Fictional B.E. Final Year Students
         students_data = [
-            ("Rahul Sharma", "BE2026CS001", "rahul.sharma@demo.edu", "StudentPass123!"),
-            ("Priya Patil", "BE2026CS002", "priya.patil@demo.edu", "StudentPass123!"),
-            ("Sneha Deshmukh", "BE2026CS003", "sneha.deshmukh@demo.edu", "StudentPass123!"),
+            ("Rahul Sharma", "BE2026CS001", "rahul.sharma@demo.edu", student_password),
+            ("Priya Patil", "BE2026CS002", "priya.patil@demo.edu", student_password),
+            ("Sneha Deshmukh", "BE2026CS003", "sneha.deshmukh@demo.edu", student_password),
         ]
 
+        created_student_prns = set()
         students = []
         for name, prn, email, pwd in students_data:
             s = database.get_user_by_identifier(prn)
@@ -78,7 +87,8 @@ def seed_demo():
                     role="user",
                     username=None,
                 )
-                print(f"[+] Created Student Account: {name} | PRN: {prn} (Password: {pwd})")
+                created_student_prns.add(prn)
+                print(f"[+] Created Student Account: {name} | PRN: {prn}")
             else:
                 print(f"[*] Student Account already exists: {name} ({prn})")
             students.append(s)
@@ -221,18 +231,44 @@ def seed_demo():
         else:
             print(f"[*] Closed Exam already exists: {closed_exam.title}")
 
+        # Check if any password was printed
+        any_password_printed = False
+        if admin_created and not env_admin_pass:
+            any_password_printed = True
+        if any(prn in created_student_prns for prn in ["BE2026CS001", "BE2026CS002", "BE2026CS003"]) and not env_student_pass:
+            any_password_printed = True
+
         print("=" * 60)
         print("DEMO PILOT DATA SEEDING COMPLETE")
         print("=" * 60)
         print("\nDemo Login Credentials:")
         print("-----------------------")
+        if any_password_printed:
+            print("Save these now; they are not stored anywhere else.")
         print("Admin Portal:")
         print("  Identifier: admin_demo")
-        print("  Password:   AdminDemoPass123!")
+        if admin_created:
+            if env_admin_pass:
+                print("  Password:   (taken from the ADMIN_PASSWORD env var)")
+            else:
+                print(f"  Password:   {admin_password}")
+        else:
+            print("  (account already existed, password unchanged)")
+
         print("\nStudent Portal:")
-        print("  Student 1 (Completed attempt): PRN: BE2026CS001 | Password: StudentPass123!")
-        print("  Student 2 (Ready to take):     PRN: BE2026CS002 | Password: StudentPass123!")
-        print("  Student 3 (Ready to take):     PRN: BE2026CS003 | Password: StudentPass123!")
+        student_rows = [
+            ("Student 1 (Completed attempt)", "BE2026CS001"),
+            ("Student 2 (Ready to take)", "BE2026CS002"),
+            ("Student 3 (Ready to take)", "BE2026CS003"),
+        ]
+        for label, prn in student_rows:
+            if prn in created_student_prns:
+                if env_student_pass:
+                    print(f"  {label}: PRN: {prn} | Password: (taken from the DEMO_STUDENT_PASSWORD env var)")
+                else:
+                    print(f"  {label}: PRN: {prn} | Password: {student_password}")
+            else:
+                print(f"  {label}: PRN: {prn} | (account already existed, password unchanged)")
         print("-----------------------\n")
 
 
