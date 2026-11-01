@@ -7,7 +7,7 @@
 [![Live Demo](https://img.shields.io/badge/Live-Demo-success)](https://blockchain-based-secure-online-exam.vercel.app/)
 [![Python](https://img.shields.io/badge/Python-3.x-blue?logo=python)](https://www.python.org/)
 [![Flask](https://img.shields.io/badge/Flask-Web_Framework-black?logo=flask)](https://flask.palletsprojects.com/)
-[![Tests](https://img.shields.io/badge/Tests-185%20test%20cases-blue)](#testing)
+[![Tests](https://github.com/deoreparth700-design/Blockchain-Based-Secure-Online-Examination-System/actions/workflows/tests.yml/badge.svg)](https://github.com/deoreparth700-design/Blockchain-Based-Secure-Online-Examination-System/actions/workflows/tests.yml)
 
 ## Overview
 
@@ -316,8 +316,6 @@ Get-ChildItem tests\test_*.py | ForEach-Object { python -m unittest $_.FullName 
 ```
 
 All test suites use isolated SQLite databases and do not touch the production Neon PostgreSQL database.
-
-> **Known issue:** `tests/test_phase6_security_integrity.py` deletes its SQLite file after every test. On Windows that delete is skipped while the file is still open, so the suite passes. On Linux and macOS the file is really removed and every test after the first one fails with `attempt to write a readonly database`. The application code is not affected; the test cleanup needs fixing (for example by disposing the database engine before deleting the file).
 
 | Suite | Coverage |
 |-------|----------|
