@@ -63,6 +63,18 @@ class TestPhase6SecurityIntegrity(unittest.TestCase):
         app.config["TESTING"] = True
         cls.client = app.test_client()
 
+    @classmethod
+    def tearDownClass(cls):
+        with app.app_context():
+            db.session.remove()
+            db.drop_all()
+            db.engine.dispose()
+        if os.path.exists(TEST_DB_PATH):
+            try:
+                os.remove(TEST_DB_PATH)
+            except OSError:
+                pass
+
     def setUp(self):
         with app.app_context():
             db.drop_all()
@@ -149,12 +161,6 @@ class TestPhase6SecurityIntegrity(unittest.TestCase):
     def tearDown(self):
         with app.app_context():
             db.session.remove()
-            db.drop_all()
-        if os.path.exists(TEST_DB_PATH):
-            try:
-                os.remove(TEST_DB_PATH)
-            except OSError:
-                pass
 
     def _login_session(self, user_id, role, name="Test User", identifier="TEST001"):
         c = app.test_client()
