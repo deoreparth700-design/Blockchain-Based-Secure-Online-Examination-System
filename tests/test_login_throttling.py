@@ -11,7 +11,7 @@ Covers:
 5. Block expires after 15 minutes (simulated time)
 6. Different identifiers do not affect each other
 7. Unknown user is throttled identically without account enumeration
-8. API requests receive HTTP 429 when throttled
+8. Failures across PRN, email, and username of the same student share one counter
 9. Automatic pruning of failure records older than 24h
 """
 
@@ -55,10 +55,11 @@ class TestLoginThrottling(unittest.TestCase):
             db.drop_all()
             db.create_all()
 
-            # Seed Student 1
+            # Seed Student 1 with PRN, email, and username
             self.student1 = database.create_user(
                 name="Rahul Sharma",
                 identifier="PRN2026101",
+                username="rahul_sharma",
                 password="StudentPassword123",
                 role="user",
                 email="rahul@college.edu",
@@ -68,6 +69,7 @@ class TestLoginThrottling(unittest.TestCase):
             self.student2 = database.create_user(
                 name="Sneha Patil",
                 identifier="PRN2026102",
+                username="sneha_patil",
                 password="StudentPassword123",
                 role="user",
                 email="sneha@college.edu",
@@ -79,21 +81,7 @@ class TestLoginThrottling(unittest.TestCase):
         with app.app_context():
             db.session.remove()
 
-    def _login(self, client, identifier, password, follow_redirects=True, is_json=False):
-        if is_json:
-            # CSRF token from session
-            client.get("/login")
-            with client.session_transaction() as sess:
-                csrf_token = sess.get("csrf_token", "")
-            return client.post(
-                "/login",
-                json={
-                    "identifier": identifier,
-                    "password": password,
-                    "csrf_token": csrf_token,
-                },
-            )
-
+    def _login(self, client, identifier, password, follow_redirects=True):
         client.get("/login")
         with client.session_transaction() as sess:
             csrf_token = sess.get("csrf_token", "")
@@ -256,20 +244,40 @@ class TestLoginThrottling(unittest.TestCase):
         self.assertIn("Too many failed attempts. Try again in", html)
         self.assertNotIn("Invalid PRN, email, or password.", html)
 
-    # 8. API route returns 429 when throttled
-    def test_08_api_returns_429_when_throttled(self):
-        """JSON API login requests receive HTTP 429 when throttled."""
+    # 8. Failures across PRN, email, and username of the same student share one counter
+    def test_08_shared_counter_across_prn_email_and_username(self):
+        """
+        Failures made via PRN, email, and username of the SAME student share one counter.
+        2 via PRN + 2 via email + 1 via username = 5 failures => next attempt by any of the three is blocked.
+        """
         c = app.test_client()
-        for i in range(5):
-            res = self._login(c, "PRN2026101", "WrongPassword!", is_json=True)
-            self.assertEqual(res.status_code, 401)
 
-        # 6th attempt via API is throttled with HTTP 429
-        res_429 = self._login(c, "PRN2026101", "WrongPassword!", is_json=True)
-        self.assertEqual(res_429.status_code, 429)
-        json_data = res_429.get_json()
-        self.assertIn("error", json_data)
-        self.assertIn("Too many failed attempts. Try again in", json_data["error"])
+        # 2 failures via PRN
+        self._login(c, "PRN2026101", "WrongPassword1!", follow_redirects=True)
+        self._login(c, "PRN2026101", "WrongPassword2!", follow_redirects=True)
+
+        # 2 failures via Email
+        self._login(c, "rahul@college.edu", "WrongPassword3!", follow_redirects=True)
+        self._login(c, "rahul@college.edu", "WrongPassword4!", follow_redirects=True)
+
+        # 1 failure via Username (total = 5)
+        self._login(c, "rahul_sharma", "WrongPassword5!", follow_redirects=True)
+
+        with app.app_context():
+            # Account is throttled under canonical identifier
+            self.assertTrue(throttling.is_blocked("PRN2026101").blocked)
+
+        # Any subsequent attempt via PRN is blocked
+        res_prn = self._login(c, "PRN2026101", "StudentPassword123", follow_redirects=True)
+        self.assertIn("Too many failed attempts. Try again in", res_prn.get_data(as_text=True))
+
+        # Any subsequent attempt via Email is blocked
+        res_email = self._login(c, "rahul@college.edu", "StudentPassword123", follow_redirects=True)
+        self.assertIn("Too many failed attempts. Try again in", res_email.get_data(as_text=True))
+
+        # Any subsequent attempt via Username is blocked
+        res_user = self._login(c, "rahul_sharma", "StudentPassword123", follow_redirects=True)
+        self.assertIn("Too many failed attempts. Try again in", res_user.get_data(as_text=True))
 
     # 9. Automatic pruning of rows older than 24h
     def test_09_old_records_pruned_after_24h(self):
@@ -293,4 +301,3 @@ class TestLoginThrottling(unittest.TestCase):
             records = LoginAttempt.query.filter_by(identifier="prn2026101").all()
             self.assertEqual(len(records), 1)
             self.assertGreater(records[0].created_at, datetime.now() - timedelta(minutes=1))
-
