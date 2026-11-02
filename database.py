@@ -14,7 +14,7 @@ from datetime import datetime, timedelta
 
 from sqlalchemy import or_, inspect, text
 
-from models import db, User, Exam, Question, Attempt, Block
+from models import db, User, Exam, Question, Attempt, Block, LoginAttempt
 
 # Fallback SQLite path for local development when DATABASE_URL is not set.
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -49,7 +49,10 @@ def init_app(app):
     with app.app_context():
         try:
             insp = inspect(db.engine)
-            if "users" in insp.get_table_names():
+            table_names = insp.get_table_names()
+            if "login_attempts" not in table_names:
+                LoginAttempt.__table__.create(db.engine, checkfirst=True)
+            if "users" in table_names:
                 cols = [c["name"] for c in insp.get_columns("users")]
                 if "created_at" not in cols:
                     with db.engine.begin() as conn:
