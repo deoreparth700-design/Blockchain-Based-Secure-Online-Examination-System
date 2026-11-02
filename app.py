@@ -220,8 +220,11 @@ def login():
             flash(err_msg, "error")
             return render_template("login.html", form_data=form_data)
 
+        user = database.get_user_by_login(clean_ident)
+        throttle_key = user.identifier if user else clean_ident
+
         # Check throttling before checking credentials
-        throttle_status = throttling.is_blocked(clean_ident)
+        throttle_status = throttling.is_blocked(throttle_key)
         if throttle_status:
             msg = f"Too many failed attempts. Try again in {throttle_status.minutes} minutes."
             if request.is_json:
@@ -229,23 +232,16 @@ def login():
             flash(msg, "error")
             return render_template("login.html", form_data=form_data)
 
-        user = database.get_user_by_login(clean_ident)
         if not user or not user.check_password(password):
-            throttling.record_failure(clean_ident, ip_address=request.remote_addr)
+            throttling.record_failure(throttle_key, ip_address=request.remote_addr)
             # Generic error to prevent account enumeration
             if request.is_json:
                 return jsonify({"error": "Invalid PRN, email, or password."}), 401
             flash("Invalid PRN, email, or password.", "error")
             return render_template("login.html", form_data=form_data)
 
-        # Successful login: clear recorded failures
-        throttling.clear_failures(clean_ident)
-        if user.identifier and user.identifier != clean_ident:
-            throttling.clear_failures(user.identifier)
-        if user.username and user.username != clean_ident:
-            throttling.clear_failures(user.username)
-        if user.email and user.email != clean_ident:
-            throttling.clear_failures(user.email)
+        # Successful login: clear recorded failures for this account
+        throttling.clear_failures(throttle_key)
 
         # Normalize role value: ensure it's either "admin" or "user"
         effective_role = "admin" if user.role in ("admin", "teacher") else "user"
