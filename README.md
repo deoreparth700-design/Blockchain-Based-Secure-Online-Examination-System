@@ -348,7 +348,7 @@ git diff --check
 The application includes several security-related controls:
 
 - Password hashing using Werkzeug security utilities
-- Database-backed login attempt throttling (5 failed attempts per identifier within 15 minutes blocks further attempts until the oldest failure is 15 minutes old; failure records older than 24 hours are automatically purged)
+- Database-backed login attempt throttling: failures are counted per account (5 failed attempts within 15 minutes blocks further login attempts for that account until the 5th most recent failure is 15 minutes old). Known trade-off: anyone who knows a PRN can temporarily lock that account for 15 minutes; there is no per-IP limiting.
 - Server-side and client-side input validation
 - CSRF protection on all state-changing POST routes
 - HTTP-only session cookies with SameSite=Lax
