@@ -1,24 +1,30 @@
-# MGM University — B.E. Final Year Examination Platform
+# Hash-Chained Online Examination System
 
 **Version:** B.E. Final Year Examination Platform (V1)<br>
 **Academic Scope:** Department of Computer Science & Engineering · Final Year (2025–2026)<br>
-**Security Framework:** Server-Authoritative Evaluation & SHA-256 Tamper-Evident Ledger
+**Security Framework:** Server-Authoritative Evaluation & SHA-256 Hash Chain
 
 [![Live Demo](https://img.shields.io/badge/Live-Demo-success)](https://blockchain-based-secure-online-exam.vercel.app/)
 [![Python](https://img.shields.io/badge/Python-3.x-blue?logo=python)](https://www.python.org/)
 [![Flask](https://img.shields.io/badge/Flask-Web_Framework-black?logo=flask)](https://flask.palletsprojects.com/)
-[![Tests](https://github.com/deoreparth700-design/Blockchain-Based-Secure-Online-Examination-System/actions/workflows/tests.yml/badge.svg)](https://github.com/deoreparth700-design/Blockchain-Based-Secure-Online-Examination-System/actions/workflows/tests.yml)
+[![Tests](https://github.com/deoreparth700-design/hash-chained-exam-system/actions/workflows/tests.yml/badge.svg)](https://github.com/deoreparth700-design/hash-chained-exam-system/actions/workflows/tests.yml)
 
 ## Overview
 
-The **MGM University B.E. Final Year Examination Platform** is an institutional web-based examination portal designed for conducting scheduled MCQ examinations and maintaining tamper-evident marksheet records. The user interface adheres to the visual identity and institutional design principles of **MGM University** ([mgmu.ac.in](https://mgmu.ac.in/)).
+An online examination system with a tamper-evident hash chain running on a single server (each sealed result block stores the hash of the previous block). The user interface adheres to the visual identity and institutional design principles of **MGM University** ([mgmu.ac.in](https://mgmu.ac.in/)).
 
 The platform supports two roles:
 
 - **Admin / Faculty** — Author examination papers, configure start/end windows and timers, manage draft/published/closed lifecycle, review class submission metrics, and audit the cryptographic ledger.
 - **Student (Candidate)** — Register with official college PRN, access scheduled examinations within designated windows, take distraction-free timed exams, and receive server-evaluated marksheets.
 
-Cryptographic security is provided via a private, hash-linked **SHA-256 integrity ledger**. When an examination attempt is finalized, an immutable cryptographic fingerprint is sealed into the chain. Any post-submission tampering with marks or candidate data immediately breaks hash validation and is flagged upon audit.
+When an examination attempt is finalized, each sealed result block stores the SHA-256 hash of the previous block. Any post-submission tampering with marks or candidate data immediately breaks hash validation and is flagged upon audit.
+
+## What This Is and Is Not
+
+- **Single-server hash chain, not a distributed blockchain:** It is a single-server hash chain, not a distributed blockchain; there is no consensus, no multiple nodes and no cryptocurrency.
+- **Detects after-the-fact tampering only:** It detects after-the-fact tampering with stored results; it does not prevent someone with database admin access from rewriting the whole chain.
+- **Student learning project:** It is a final-year student project built for learning, with a demo dataset and limited security hardening beyond the controls listed in the Security section.
 
 ## Live Application
 
@@ -162,7 +168,7 @@ The ledger is not a separate database: its blocks are stored in the `blocks` tab
 ## Project Structure
 
 ```text
-Blockchain-Based-Secure-Online-Examination-System/
+hash-chained-exam-system/
 │
 ├── app.py                          # Flask application and routes
 ├── blockchain.py                   # SHA-256 blockchain logic and verification
@@ -236,8 +242,8 @@ Blockchain-Based-Secure-Online-Examination-System/
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/deoreparth700-design/Blockchain-Based-Secure-Online-Examination-System.git
-cd Blockchain-Based-Secure-Online-Examination-System
+git clone https://github.com/deoreparth700-design/hash-chained-exam-system.git
+cd hash-chained-exam-system
 ```
 
 ### 2. Create a virtual environment
