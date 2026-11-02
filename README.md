@@ -169,6 +169,7 @@ Blockchain-Based-Secure-Online-Examination-System/
 ├── database.py                     # Database layer (SQLAlchemy helpers)
 ├── models.py                       # ORM models (User, Exam, Question, Attempt, Block)
 ├── validators.py                   # Input validation (registration, login, exam creation)
+├── throttling.py                   # Database-backed login attempt throttling
 ├── init_db.py                      # First-time database setup and admin creation
 ├── seed_demo_pilot.py              # Seeds a fictional demo dataset (local SQLite only)
 ├── demo_tamper.py                  # Tamper-detection demonstration script
@@ -213,7 +214,8 @@ Blockchain-Based-Secure-Online-Examination-System/
 ├── experimental/
 │   └── ethereum/                   # Archived Ethereum/MetaMask integration (not used in V1)
 │
-└── tests/                          # 12 test files, 185 test cases (see Testing)
+└── tests/                          # 13 test files, 194 test cases (see Testing)
+    ├── test_login_throttling.py    # Database-backed login throttling tests
     ├── test_phase1_roles.py        # Authentication and role tests
     ├── test_phase2_registration.py # Registration and PRN tests
     ├── test_phase3_admin_exam_management.py  # Admin exam lifecycle tests
@@ -293,7 +295,7 @@ http://localhost:5000
 
 ## Testing
 
-The project includes 185 automated test cases across 12 test files.
+The project includes 194 automated test cases across 13 test files.
 
 Each test file sets up its own SQLite database when it is imported, so **run each file in its own process**. Running several files in a single `unittest` command shares one app instance between them and causes spurious errors.
 
@@ -331,6 +333,7 @@ All test suites use isolated SQLite databases and do not touch the production Ne
 | Genesis verification | Block #0 invariants, tamper detection on the genesis block, chain validation and the `/verify` endpoints |
 | Login regression | Login by admin username, PRN or email, whitespace and case handling, wrong credentials and empty input |
 | Reset maintenance | Student reset workflow: student accounts and their attempts removed, admin account kept and still able to log in |
+| Login throttling | Database-backed throttling (5 failures / 15 min), lockout release, credential reset, 24h cleanup |
 
 The visual redesign and responsive/accessibility work (Phases 10 and 11) has no dedicated automated test file.
 
@@ -345,6 +348,7 @@ git diff --check
 The application includes several security-related controls:
 
 - Password hashing using Werkzeug security utilities
+- Database-backed login attempt throttling (5 failed attempts per identifier within 15 minutes blocks further attempts until the oldest failure is 15 minutes old; failure records older than 24 hours are automatically purged)
 - Server-side and client-side input validation
 - CSRF protection on all state-changing POST routes
 - HTTP-only session cookies with SameSite=Lax
