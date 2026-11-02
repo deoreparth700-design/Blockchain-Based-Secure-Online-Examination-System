@@ -26,6 +26,7 @@ from sqlalchemy.exc import IntegrityError
 
 import database
 import validators
+import throttling
 from blockchain import Blockchain, verify_result_integrity
 from models import format_duration
 
@@ -66,8 +67,14 @@ def handle_csrf():
         # Allow read-only verification query for AJAX integrity check
         if request.path == "/verify":
             return
-        token = request.form.get("csrf_token")
+        token = request.form.get("csrf_token") or request.headers.get("X-CSRFToken")
+        if not token and request.is_json:
+            json_body = request.get_json(silent=True)
+            if isinstance(json_body, dict):
+                token = json_body.get("csrf_token")
         if not token or token != session.get("csrf_token"):
+            if request.is_json:
+                return jsonify({"error": "Session expired or invalid security token. Please try again."}), 400
             flash("Session expired or invalid security token. Please try again.", "error")
             return redirect(request.referrer or url_for("index"))
 
@@ -196,21 +203,49 @@ def login():
 
     form_data = {}
     if request.method == "POST":
-        raw_identifier = request.form.get("identifier") or request.form.get("username") or ""
+        if request.is_json:
+            json_body = request.get_json(silent=True) or {}
+            raw_identifier = json_body.get("identifier") or json_body.get("username") or ""
+            password = json_body.get("password", "")
+        else:
+            raw_identifier = request.form.get("identifier") or request.form.get("username") or ""
+            password = request.form.get("password", "")
         identifier = raw_identifier.strip()
-        password = request.form.get("password", "")
         form_data["identifier"] = raw_identifier
 
         is_valid, err_msg, clean_ident = validators.validate_login_input(identifier, password)
         if not is_valid:
+            if request.is_json:
+                return jsonify({"error": err_msg}), 400
             flash(err_msg, "error")
+            return render_template("login.html", form_data=form_data)
+
+        # Check throttling before checking credentials
+        throttle_status = throttling.is_blocked(clean_ident)
+        if throttle_status:
+            msg = f"Too many failed attempts. Try again in {throttle_status.minutes} minutes."
+            if request.is_json:
+                return jsonify({"error": msg}), 429
+            flash(msg, "error")
             return render_template("login.html", form_data=form_data)
 
         user = database.get_user_by_login(clean_ident)
         if not user or not user.check_password(password):
+            throttling.record_failure(clean_ident, ip_address=request.remote_addr)
             # Generic error to prevent account enumeration
+            if request.is_json:
+                return jsonify({"error": "Invalid PRN, email, or password."}), 401
             flash("Invalid PRN, email, or password.", "error")
             return render_template("login.html", form_data=form_data)
+
+        # Successful login: clear recorded failures
+        throttling.clear_failures(clean_ident)
+        if user.identifier and user.identifier != clean_ident:
+            throttling.clear_failures(user.identifier)
+        if user.username and user.username != clean_ident:
+            throttling.clear_failures(user.username)
+        if user.email and user.email != clean_ident:
+            throttling.clear_failures(user.email)
 
         # Normalize role value: ensure it's either "admin" or "user"
         effective_role = "admin" if user.role in ("admin", "teacher") else "user"
@@ -225,6 +260,8 @@ def login():
         session["name"] = user.name
         session["identifier"] = user.identifier
         session["csrf_token"] = secrets.token_hex(16)
+        if request.is_json:
+            return jsonify({"success": True, "role": effective_role, "name": user.name})
         return redirect(url_for("index"))
 
     return render_template("login.html", form_data=form_data)
