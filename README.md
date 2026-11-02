@@ -144,7 +144,7 @@ The ledger is not a separate database: its blocks are stored in the `blocks` tab
 
 ### Database
 
-- Neon PostgreSQL (production deployment)
+- Neon PostgreSQL (production deployment, via `psycopg` 3)
 - SQLite (local development fallback)
 
 ### Integrity
@@ -214,7 +214,8 @@ Blockchain-Based-Secure-Online-Examination-System/
 ├── experimental/
 │   └── ethereum/                   # Archived Ethereum/MetaMask integration (not used in V1)
 │
-└── tests/                          # 13 test files, 194 test cases (see Testing)
+└── tests/                          # 14 test files, 202 test cases (see Testing)
+    ├── test_database_url.py        # Database URL normalization and psycopg v3 driver tests
     ├── test_login_throttling.py    # Database-backed login throttling tests
     ├── test_phase1_roles.py        # Authentication and role tests
     ├── test_phase2_registration.py # Registration and PRN tests
@@ -271,6 +272,8 @@ SECRET_KEY=your-random-secret-key
 FLASK_DEBUG=False
 ```
 
+The database connection string accepts `postgres://`, `postgresql://`, or `postgresql+psycopg://` schemes and automatically normalizes to use the `psycopg` (v3) driver.
+
 For local development, `DATABASE_URL` can be omitted and the application will fall back to SQLite.
 
 ### 5. Initialize the database
@@ -295,7 +298,7 @@ http://localhost:5000
 
 ## Testing
 
-The project includes 194 automated test cases across 13 test files.
+The project includes 202 automated test cases across 14 test files.
 
 Each test file sets up its own SQLite database when it is imported, so **run each file in its own process**. Running several files in a single `unittest` command shares one app instance between them and causes spurious errors.
 
@@ -334,6 +337,7 @@ All test suites use isolated SQLite databases and do not touch the production Ne
 | Login regression | Login by admin username, PRN or email, whitespace and case handling, wrong credentials and empty input |
 | Reset maintenance | Student reset workflow: student accounts and their attempts removed, admin account kept and still able to log in |
 | Login throttling | Database-backed throttling (5 failures / 15 min), lockout release, credential reset, 24h cleanup |
+| Database URL | URL normalization (postgres://, postgresql://, postgresql+psycopg://, sqlite:///), whitespace/quote stripping, and psycopg v3 lazy engine initialization |
 
 The visual redesign and responsive/accessibility work (Phases 10 and 11) has no dedicated automated test file.
 
@@ -400,7 +404,7 @@ SECRET_KEY
 The application supports:
 
 ```text
-Production → Neon PostgreSQL
+Production → Neon PostgreSQL (psycopg v3 driver; accepts postgres://, postgresql://, or postgresql+psycopg://)
 Local Development → SQLite fallback
 ```
 

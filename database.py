@@ -21,6 +21,18 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 SQLITE_PATH = os.path.join(BASE_DIR, "exam_system.db")
 
 
+def normalize_database_url(url):
+    """Normalize DATABASE_URL to use psycopg v3 for PostgreSQL connections."""
+    if not url:
+        return url
+    url_str = url.strip().strip("'\"")
+    if url_str.startswith("postgres://"):
+        return "postgresql+psycopg://" + url_str[len("postgres://"):]
+    if url_str.startswith("postgresql://"):
+        return "postgresql+psycopg://" + url_str[len("postgresql://"):]
+    return url_str
+
+
 def init_app(app):
     """Wire SQLAlchemy up to this Flask app. Called once from app.py."""
     database_url = os.environ.get("DATABASE_URL")
@@ -29,12 +41,7 @@ def init_app(app):
         # Fall back to local SQLite for development without a .env file
         database_url = f"sqlite:///{SQLITE_PATH}"
     else:
-        database_url = database_url.strip().strip("'\"")
-
-    # Some providers give "postgres://" which SQLAlchemy 1.4+ requires
-    # as "postgresql://".
-    if database_url.startswith("postgres://"):
-        database_url = database_url.replace("postgres://", "postgresql://", 1)
+        database_url = normalize_database_url(database_url)
 
     app.config["SQLALCHEMY_DATABASE_URI"] = database_url
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
