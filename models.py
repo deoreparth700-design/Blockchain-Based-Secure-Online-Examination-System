@@ -14,6 +14,7 @@ Five tables:
     Question  - one MCQ question belonging to an Exam
     Attempt   - one student's finished submission for an Exam
     Block     - the blockchain itself, one row per sealed Attempt
+    LoginAttempt - failed login attempts for brute-force rate limiting
 """
 
 from datetime import datetime, timezone
@@ -220,3 +221,12 @@ class Block(db.Model):
     data_json = db.Column(db.Text, nullable=False)  # canonical JSON string of the block's data
     previous_hash = db.Column(db.String(64), nullable=False)
     hash = db.Column(db.String(64), nullable=False)
+
+
+class LoginAttempt(db.Model):
+    __tablename__ = "login_attempts"
+
+    id = db.Column(db.Integer, primary_key=True)
+    identifier = db.Column(db.String(120), nullable=False, index=True)
+    ip_address = db.Column(db.String(45), nullable=True)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.now, index=True)

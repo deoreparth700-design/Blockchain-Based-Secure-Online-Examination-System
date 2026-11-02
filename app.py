@@ -26,6 +26,7 @@ from sqlalchemy.exc import IntegrityError
 
 import database
 import validators
+import throttling
 from blockchain import Blockchain, verify_result_integrity
 from models import format_duration
 
@@ -207,10 +208,22 @@ def login():
             return render_template("login.html", form_data=form_data)
 
         user = database.get_user_by_login(clean_ident)
+        throttle_key = user.identifier if user else clean_ident
+
+        # Check throttling before checking credentials
+        throttle_status = throttling.is_blocked(throttle_key)
+        if throttle_status:
+            flash(f"Too many failed attempts. Try again in {throttle_status.minutes} minutes.", "error")
+            return render_template("login.html", form_data=form_data)
+
         if not user or not user.check_password(password):
+            throttling.record_failure(throttle_key, ip_address=request.remote_addr)
             # Generic error to prevent account enumeration
             flash("Invalid PRN, email, or password.", "error")
             return render_template("login.html", form_data=form_data)
+
+        # Successful login: clear recorded failures for this account
+        throttling.clear_failures(throttle_key)
 
         # Normalize role value: ensure it's either "admin" or "user"
         effective_role = "admin" if user.role in ("admin", "teacher") else "user"
