@@ -18,13 +18,13 @@ The platform supports two roles:
 - **Admin / Faculty** — Author examination papers, configure start/end windows and timers, manage draft/published/closed lifecycle, review class submission metrics, and audit the cryptographic ledger.
 - **Student (Candidate)** — Register with official college PRN, access scheduled examinations within designated windows, take distraction-free timed exams, and receive server-evaluated marksheets.
 
-When an examination attempt is finalized, each sealed result block stores the SHA-256 hash of the previous block. Any post-submission tampering with marks or candidate data immediately breaks hash validation and is flagged upon audit.
+Any post-submission tampering with marks or candidate data immediately breaks hash validation and is flagged upon audit.
 
 ## What This Is and Is Not
 
-- **Single-server hash chain, not a distributed blockchain:** It is a single-server hash chain, not a distributed blockchain; there is no consensus, no multiple nodes and no cryptocurrency.
-- **Detects after-the-fact tampering only:** It detects after-the-fact tampering with stored results; it does not prevent someone with database admin access from rewriting the whole chain.
-- **Student learning project:** It is a final-year student project built for learning, with a demo dataset and limited security hardening beyond the controls listed in the Security section.
+- **Single-server hash chain, not a distributed blockchain.** There is no consensus, no multiple nodes and no cryptocurrency.
+- **Detects tampering after the fact.** It flags changes to stored results, but it cannot stop someone with database admin access from rewriting the whole chain.
+- **A student learning project.** Built for learning, with a demo dataset and only the security controls listed in the Security section.
 
 ## Live Application
 
@@ -55,13 +55,13 @@ Deployed on Vercel with Neon PostgreSQL cloud database and local SQLite developm
 - HTTP-only, SameSite session cookies
 - Role-based access control
 - IDOR protection on results (users cannot view other users' results)
-- Admin-only integrity ledger (students cannot access raw blockchain data)
+- Admin-only integrity ledger (students cannot access raw ledger data)
 - Client parameter injection protection (score, percentage, student_id ignored)
 
 ### SHA-256 Integrity System
 
 - SHA-256 based result hashing
-- Private hash-linked blockchain (each block references previous block's hash)
+- Private hash-linked chain (each block references previous block's hash)
 - Automatic block sealing on exam submission
 - Per-block integrity verification (`verify_result_integrity`)
 - Full chain validation (Genesis to latest block)
@@ -124,7 +124,7 @@ Admin closes → Closed (no new attempts)
                     ▼                           ▼
             ┌───────────────┐          ┌────────────────┐
             │ Neon PostgreSQL│          │ Private SHA-256│
-            │   Application  │          │   Blockchain   │
+            │   Application  │          │   Hash Chain   │
             │      Data      │          │    Ledger      │
             └───────────────┘          └────────────────┘
 ```
@@ -157,7 +157,7 @@ The ledger is not a separate database: its blocks are stored in the `blocks` tab
 
 - Python `hashlib`
 - SHA-256
-- Private hash-linked blockchain ledger
+- Single-server hash-linked ledger
 
 ### Deployment
 
@@ -366,7 +366,7 @@ The application includes several security-related controls:
 - Server-enforced exam time windows (server clock is authoritative)
 - Database-enforced single-attempt constraint per student per exam
 - IDOR protection: users cannot view another user's result
-- Admin-only blockchain ledger: students cannot access raw chain data
+- Admin-only hash chain ledger: students cannot access raw chain data
 - Client parameter injection protection: score, percentage, student_id, hash, block_id, time_used are server-derived and cannot be overridden by POST data
 - Custom error handlers: no Python tracebacks or SQL details exposed to users
 - Cryptographic SHA-256 hash verification with per-block and full-chain validation
@@ -457,7 +457,7 @@ Example:
 python demo_tamper.py 1 100
 ```
 
-This simulates an attacker modifying blockchain data without recalculating the original block hash. The application can then detect the inconsistency when validating the blockchain: log in as an admin, open `/blockchain` and click **Verify Blockchain**.
+This simulates an attacker modifying block data without recalculating the original block hash. The application can then detect the inconsistency when validating the chain: log in as an admin, open `/blockchain` and click **Verify Blockchain**.
 
 Run `python seed_demo_pilot.py` first so that Block #1 exists. The script edits the database your `DATABASE_URL` points to (local SQLite when it is unset), so never run it against a database you care about.
 
@@ -475,7 +475,7 @@ This project is primarily an academic and demonstration system.
 Current limitations include:
 
 - The system is designed for a single BE Final Year class (not multi-class or college-wide)
-- The private blockchain is application-controlled rather than decentralized
+- The hash chain is application-controlled on a single server rather than a decentralized network
 - Production deployment would require stronger operational controls, monitoring, backup strategy, and scalability considerations
 - Future multi-class/college-wide expansion is planned but not implemented
 
@@ -492,7 +492,7 @@ Possible future enhancements include:
 - Audit logging
 - Improved administration dashboard
 
-## Why Blockchain Is Used
+## Why a Hash Chain Is Used
 
 Traditional database storage can be modified by someone with sufficient database access.
 
@@ -503,12 +503,12 @@ Result Data
     ↓
 SHA-256 Hash
     ↓
-Private Hash-Linked Blockchain
+Private Hash-Linked Chain
     ↓
 Tamper Detection via Hash Mismatch
 ```
 
-The goal is not to store the complete exam on a public blockchain. Instead, blockchain technology is used to create a **verifiable integrity fingerprint** for the result. Any modification to stored data causes the SHA-256 hash to change, which is immediately detectable through chain validation.
+The goal is not to store the complete exam on a distributed blockchain. Instead, a sequential SHA-256 hash chain creates a **verifiable integrity fingerprint** for each result. Any modification to stored data causes the SHA-256 hash to change, which is immediately detectable through chain validation.
 
 ## Author
 
