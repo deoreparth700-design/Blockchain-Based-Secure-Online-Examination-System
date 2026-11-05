@@ -11,7 +11,6 @@ Dedicated regression test suite verifying Block #0 Genesis block:
 7. Admin blockchain dashboard: page contains no mismatch warnings for genesis block.
 """
 
-import json
 import os
 import sys
 import unittest
@@ -22,10 +21,10 @@ os.environ["DATABASE_URL"] = f"sqlite:///{TEST_DB_PATH}"
 
 sys.path.insert(0, BASE_DIR)
 
-from app import app
-from models import db, Block as BlockModel
-from blockchain import Blockchain
-import database
+from app import app  # noqa: E402  # required after environment/path setup
+from models import db  # noqa: E402  # required after environment/path setup
+from blockchain import Blockchain  # noqa: E402  # required after environment/path setup
+import database  # noqa: E402  # required after environment/path setup
 
 
 class TestGenesisVerification(unittest.TestCase):

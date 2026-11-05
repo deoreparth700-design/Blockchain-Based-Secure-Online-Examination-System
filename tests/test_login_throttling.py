@@ -26,10 +26,10 @@ os.environ["DATABASE_URL"] = f"sqlite:///{TEST_DB_PATH}"
 
 sys.path.insert(0, BASE_DIR)
 
-from app import app
-from models import db, User, LoginAttempt
-import database
-import throttling
+from app import app  # noqa: E402  # required after environment/path setup
+from models import db, LoginAttempt  # noqa: E402  # required after environment/path setup
+import database  # noqa: E402  # required after environment/path setup
+import throttling  # noqa: E402  # required after environment/path setup
 
 
 class TestLoginThrottling(unittest.TestCase):

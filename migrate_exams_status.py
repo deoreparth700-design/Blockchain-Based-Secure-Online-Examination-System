@@ -42,7 +42,7 @@ def migrate_database(db_url=None):
             print("Column 'status' already exists in 'exams' table.")
 
         # Backfill existing exams to 'published' if null or empty
-        res = conn.execute(text("UPDATE exams SET status = 'published' WHERE status IS NULL OR status = ''"))
+        conn.execute(text("UPDATE exams SET status = 'published' WHERE status IS NULL OR status = ''"))
         print("Existing exams successfully assigned 'published' status.")
 
 

@@ -22,8 +22,6 @@ Safety:
 
 import os
 import secrets
-import sys
-import time
 from datetime import datetime, timedelta
 
 # Safety guard: Force local SQLite for pilot demonstration seeding to guarantee production safety
@@ -31,10 +29,10 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 SQLITE_DB = os.path.join(BASE_DIR, "exam_system.db")
 os.environ["DATABASE_URL"] = f"sqlite:///{SQLITE_DB}"
 
-from app import app
-from models import db, User, Exam, Question, Attempt, Block
-import database
-import blockchain
+from app import app  # noqa: E402  # required after environment/path setup
+from models import db, Exam  # noqa: E402  # required after environment/path setup
+import database  # noqa: E402  # required after environment/path setup
+import blockchain  # noqa: E402  # required after environment/path setup
 
 
 def seed_demo():

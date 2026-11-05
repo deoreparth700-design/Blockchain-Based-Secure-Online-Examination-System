@@ -30,9 +30,9 @@ os.environ["DATABASE_URL"] = f"sqlite:///{TEST_DB_PATH}"
 
 sys.path.insert(0, BASE_DIR)
 
-from app import app
-from models import db, User
-import database
+from app import app  # noqa: E402  # required after environment/path setup
+from models import db  # noqa: E402  # required after environment/path setup
+import database  # noqa: E402  # required after environment/path setup
 
 
 class TestPhase1Roles(unittest.TestCase):
@@ -251,7 +251,7 @@ class TestPhase1Roles(unittest.TestCase):
     # ---------- 7. Legacy Role Auto-Normalization ----------
     def test_12_legacy_roles_normalized_on_login(self):
         with app.app_context():
-            legacy_teacher = database.create_user(
+            database.create_user(
                 name="Legacy Teacher",
                 username="legacy_teacher",
                 identifier="legacy_teacher",
@@ -259,7 +259,7 @@ class TestPhase1Roles(unittest.TestCase):
                 password="Password123",
                 role="teacher"
             )
-            legacy_student = database.create_user(
+            database.create_user(
                 name="Legacy Student",
                 username="legacy_student",
                 identifier="legacy_student",

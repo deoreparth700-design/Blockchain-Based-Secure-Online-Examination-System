@@ -14,7 +14,7 @@ from datetime import datetime, timedelta
 
 from sqlalchemy import or_, inspect, text
 
-from models import db, User, Exam, Question, Attempt, Block, LoginAttempt
+from models import db, User, Exam, Question, Attempt, LoginAttempt
 
 # Fallback SQLite path for local development when DATABASE_URL is not set.
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))

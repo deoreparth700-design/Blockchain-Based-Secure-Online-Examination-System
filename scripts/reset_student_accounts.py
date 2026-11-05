@@ -28,9 +28,9 @@ if BASE_DIR not in sys.path:
 
 load_dotenv(os.path.join(BASE_DIR, ".env"))
 
-from app import app
-from models import db, User, Attempt, Block
-import database
+from app import app  # noqa: E402  # required after environment/path setup
+from models import db, User, Attempt, Block  # noqa: E402  # required after environment/path setup
+import database  # noqa: E402  # required after environment/path setup
 
 
 def reset_student_accounts(admin_password=None, print_summary=True):
@@ -147,7 +147,7 @@ def main():
     db_display = active_db.split("@")[-1] if "@" in active_db else active_db
     print(f"Active Database Target: ...@{db_display}")
 
-    stats = reset_student_accounts(admin_password=admin_password, print_summary=True)
+    reset_student_accounts(admin_password=admin_password, print_summary=True)
     print("--- Platform Reset Successfully Completed ---")
 
 

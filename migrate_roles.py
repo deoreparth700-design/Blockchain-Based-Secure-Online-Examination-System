@@ -16,7 +16,7 @@ def migrate_roles():
         teachers_updated = User.query.filter_by(role="teacher").update({"role": "admin"})
         students_updated = User.query.filter_by(role="student").update({"role": "user"})
         db.session.commit()
-        print(f"Migration completed successfully.")
+        print("Migration completed successfully.")
         print(f"Updated {teachers_updated} teacher account(s) to 'admin'.")
         print(f"Updated {students_updated} student account(s) to 'user'.")
 

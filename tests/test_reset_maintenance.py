@@ -23,11 +23,11 @@ os.environ["DATABASE_URL"] = f"sqlite:///{TEST_DB_PATH}"
 
 sys.path.insert(0, BASE_DIR)
 
-from app import app
-from models import db, User, Exam, Question, Attempt, Block
-import database
-from blockchain import Blockchain
-from scripts.reset_student_accounts import reset_student_accounts
+from app import app  # noqa: E402  # required after environment/path setup
+from models import db, User, Attempt, Block  # noqa: E402  # required after environment/path setup
+import database  # noqa: E402  # required after environment/path setup
+from blockchain import Blockchain  # noqa: E402  # required after environment/path setup
+from scripts.reset_student_accounts import reset_student_accounts  # noqa: E402  # required after environment/path setup
 
 
 class TestResetMaintenance(unittest.TestCase):

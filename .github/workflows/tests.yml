@@ -34,3 +34,23 @@ jobs:
           for f in tests/test_*.py; do python -m unittest "$f" || failed=1; done
           exit $failed
 
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install linter and type checker
+        run: |
+          pip install ruff==0.17.4 mypy==2.4.1
+          pip install -r requirements.txt
+
+      - name: Run ruff check
+        run: ruff check .
+
+      - name: Run mypy
+        run: mypy --ignore-missing-imports --explicit-package-bases app.py blockchain.py database.py demo_tamper.py init_db.py migrate_attempts_started_at.py migrate_exams_status.py migrate_roles.py migrate_users_created_at.py models.py seed_demo_pilot.py throttling.py validators.py scripts/reset_student_accounts.py

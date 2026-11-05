@@ -33,10 +33,10 @@ os.environ["DATABASE_URL"] = f"sqlite:///{TEST_DB_PATH}"
 
 sys.path.insert(0, BASE_DIR)
 
-from app import app
-from models import db, User, Exam, Question, Attempt, Block
-import database
-import blockchain
+from app import app  # noqa: E402  # required after environment/path setup
+from models import db, Exam, Attempt  # noqa: E402  # required after environment/path setup
+import database  # noqa: E402  # required after environment/path setup
+import blockchain  # noqa: E402  # required after environment/path setup
 
 
 class TestPhase9PilotReadiness(unittest.TestCase):
@@ -110,7 +110,7 @@ class TestPhase9PilotReadiness(unittest.TestCase):
                 username="admin_p9_1",
                 email="admin_p9_1@demo.edu",
             )
-            student = database.create_user(
+            database.create_user(
                 name="Pilot Student 1",
                 identifier="BE2026CS901",
                 password="StudentPassword123!",
@@ -198,7 +198,7 @@ class TestPhase9PilotReadiness(unittest.TestCase):
         """IDOR protection: Student B cannot view Student A's result page."""
         with app.app_context():
             # Create Student B
-            student2 = database.create_user(
+            database.create_user(
                 name="Pilot Student 2",
                 identifier="BE2026CS902",
                 password="StudentPassword123!",
@@ -231,7 +231,7 @@ class TestPhase9PilotReadiness(unittest.TestCase):
     def test_07_admin_object_level_result_isolation(self):
         """Admin 2 cannot view results of an exam created by Admin 1."""
         with app.app_context():
-            admin2 = database.create_user(
+            database.create_user(
                 name="Prof. Second Admin",
                 identifier="admin_p9_2",
                 password="AdminPassword123!",
@@ -254,7 +254,7 @@ class TestPhase9PilotReadiness(unittest.TestCase):
 
         # Admin 2 attempts to view Admin 1's exam results summary
         res_summary = c_admin2.get(f"/admin/exams/{exam1_id}/results", follow_redirects=True)
-        html_summary = res_summary.get_data(as_text=True)
+        res_summary.get_data(as_text=True)
         # Should redirect to admin dashboard because exam was not created by admin2
         self.assertEqual(res_summary.status_code, 200)
 
@@ -262,7 +262,7 @@ class TestPhase9PilotReadiness(unittest.TestCase):
         """Submitting after the effective deadline marks attempt as timeout."""
         with app.app_context():
             admin = database.get_user_by_identifier("admin_p9_1")
-            student2 = database.get_user_by_identifier("BE2026CS902")
+            database.get_user_by_identifier("BE2026CS902")
             # Exam that expired 1 minute ago
             expired_exam = database.create_exam(
                 title="Expired Window Exam",
@@ -348,7 +348,7 @@ class TestPhase9PilotReadiness(unittest.TestCase):
     def test_12_complete_pilot_workflow(self):
         """End-to-end pilot workflow: Teacher creates draft -> publishes -> Student attempts -> Evaluates -> Seals -> Admin audits ledger."""
         with app.app_context():
-            admin = database.create_user(
+            database.create_user(
                 name="Prof. Pilot Lead",
                 identifier="admin_pilot_lead",
                 password="AdminLeadPassword123!",
@@ -356,7 +356,7 @@ class TestPhase9PilotReadiness(unittest.TestCase):
                 username="admin_pilot_lead",
                 email="pilot_lead@demo.edu",
             )
-            student = database.create_user(
+            database.create_user(
                 name="Pilot Candidate",
                 identifier="BE2026CSPILOT",
                 password="PilotCandidatePass123!",

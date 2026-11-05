@@ -31,10 +31,10 @@ os.environ["DATABASE_URL"] = f"sqlite:///{TEST_DB_PATH}"
 
 sys.path.insert(0, BASE_DIR)
 
-from app import app
-from models import db, User, Exam, Question, Attempt, Block
-import database
-import blockchain
+from app import app  # noqa: E402  # required after environment/path setup
+from models import db, Block  # noqa: E402  # required after environment/path setup
+import database  # noqa: E402  # required after environment/path setup
+import blockchain  # noqa: E402  # required after environment/path setup
 
 
 class TestPhase8BEFinalV1(unittest.TestCase):
@@ -219,7 +219,7 @@ class TestPhase8BEFinalV1(unittest.TestCase):
                 username="admin_phase8",
                 email="admin8@engg.edu",
             )
-            exam = database.create_exam(
+            database.create_exam(
                 title="Draft Cryptography Exam",
                 created_by=admin.id,
                 start_time=datetime.now() - timedelta(hours=1),
@@ -242,7 +242,7 @@ class TestPhase8BEFinalV1(unittest.TestCase):
             admin = database.get_user_by_identifier("admin_phase8")
 
             # 1. Upcoming exam
-            upcoming = database.create_exam(
+            database.create_exam(
                 title="Upcoming Cloud Computing Exam",
                 created_by=admin.id,
                 start_time=datetime.now() + timedelta(days=2),
@@ -253,7 +253,7 @@ class TestPhase8BEFinalV1(unittest.TestCase):
             )
 
             # 2. Available Now exam
-            available = database.create_exam(
+            database.create_exam(
                 title="Available Distributed Systems Exam",
                 created_by=admin.id,
                 start_time=datetime.now() - timedelta(hours=1),

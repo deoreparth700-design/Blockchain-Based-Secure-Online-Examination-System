@@ -13,7 +13,7 @@ import sqlalchemy
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, BASE_DIR)
 
-from database import normalize_database_url
+from database import normalize_database_url  # noqa: E402  # required after environment/path setup
 
 
 class TestDatabaseUrlNormalization(unittest.TestCase):

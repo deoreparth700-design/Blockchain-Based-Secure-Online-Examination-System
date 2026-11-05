@@ -39,9 +39,9 @@ os.environ["DATABASE_URL"] = f"sqlite:///{TEST_DB_PATH}"
 
 sys.path.insert(0, BASE_DIR)
 
-from app import app
-from models import db, User, Exam, Attempt
-import database
+from app import app  # noqa: E402  # required after environment/path setup
+from models import db  # noqa: E402  # required after environment/path setup
+import database  # noqa: E402  # required after environment/path setup
 
 
 class TestAdminStudents(unittest.TestCase):
@@ -382,7 +382,7 @@ class TestAdminStudents(unittest.TestCase):
                 password="Pass123!",
                 role="user",
             )
-            s2 = database.create_user(
+            database.create_user(
                 name="Passive Student",
                 identifier="2026-CS-5002",
                 email="s2@demo.edu",
