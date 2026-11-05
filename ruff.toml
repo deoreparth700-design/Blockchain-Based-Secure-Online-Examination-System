@@ -1,0 +1,14 @@
+target-version = "py312"
+line-length = 100
+exclude = [
+    ".venv",
+    "venv",
+    "migrations",
+    "generated",
+    "scratch",
+    "experimental",
+]
+
+[lint]
+select = ["E", "F", "W"]
+ignore = ["E501"]

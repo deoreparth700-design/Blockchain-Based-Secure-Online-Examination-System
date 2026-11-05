@@ -17,7 +17,7 @@ Five tables:
     LoginAttempt - failed login attempts for brute-force rate limiting
 """
 
-from datetime import datetime, timezone
+from datetime import datetime
 
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -25,7 +25,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 db = SQLAlchemy()
 
 
-class User(db.Model):
+class User(db.Model):  # type: ignore[name-defined]
     __tablename__ = "users"
 
     id = db.Column(db.Integer, primary_key=True)
@@ -57,7 +57,7 @@ class User(db.Model):
         self.identifier = value
 
 
-class Exam(db.Model):
+class Exam(db.Model):  # type: ignore[name-defined]
     __tablename__ = "exams"
 
     id = db.Column(db.Integer, primary_key=True)
@@ -88,7 +88,7 @@ class Exam(db.Model):
         return self.start_time <= now <= self.end_time
 
 
-class Question(db.Model):
+class Question(db.Model):  # type: ignore[name-defined]
     __tablename__ = "questions"
 
     id = db.Column(db.Integer, primary_key=True)
@@ -131,7 +131,7 @@ def format_duration(total_seconds):
     return f"{seconds}s"
 
 
-class Attempt(db.Model):
+class Attempt(db.Model):  # type: ignore[name-defined]
     __tablename__ = "attempts"
 
     id = db.Column(db.Integer, primary_key=True)
@@ -213,7 +213,7 @@ class Attempt(db.Model):
         return max(0, self.total - self.correct_count - self.unanswered_count)
 
 
-class Block(db.Model):
+class Block(db.Model):  # type: ignore[name-defined]
     __tablename__ = "blocks"
 
     id = db.Column(db.Integer, primary_key=True)  # this IS the block index
@@ -223,7 +223,7 @@ class Block(db.Model):
     hash = db.Column(db.String(64), nullable=False)
 
 
-class LoginAttempt(db.Model):
+class LoginAttempt(db.Model):  # type: ignore[name-defined]
     __tablename__ = "login_attempts"
 
     id = db.Column(db.Integer, primary_key=True)

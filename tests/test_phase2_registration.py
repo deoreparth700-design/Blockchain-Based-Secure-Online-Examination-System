@@ -29,10 +29,9 @@ os.environ["DATABASE_URL"] = f"sqlite:///{TEST_DB_PATH}"
 
 sys.path.insert(0, BASE_DIR)
 
-from app import app
-from models import db, User
-import database
-import validators
+from app import app  # noqa: E402  # required after environment/path setup
+from models import db  # noqa: E402  # required after environment/path setup
+import database  # noqa: E402  # required after environment/path setup
 
 
 class TestPhase2Registration(unittest.TestCase):
@@ -257,7 +256,7 @@ class TestPhase2Registration(unittest.TestCase):
     # ---------- 7. Admin Login Compatibility & Regression Checks ----------
     def test_12_admin_login_still_works(self):
         with app.app_context():
-            admin = database.create_user(
+            database.create_user(
                 name="Prof Head Admin",
                 identifier="admin_coordinator",
                 username="admin_coordinator",

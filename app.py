@@ -27,7 +27,7 @@ from sqlalchemy.exc import IntegrityError
 import database
 import validators
 import throttling
-from blockchain import Blockchain, verify_result_integrity
+from blockchain import Blockchain
 from models import format_duration
 
 load_dotenv()
@@ -352,7 +352,7 @@ def create_exam():
             return render_template("create_exam.html")
 
         # Newly created exams start as DRAFT
-        exam = database.create_exam(
+        database.create_exam(
             title=cleaned["title"],
             created_by=session["user_id"],
             start_time=cleaned["start_time"],

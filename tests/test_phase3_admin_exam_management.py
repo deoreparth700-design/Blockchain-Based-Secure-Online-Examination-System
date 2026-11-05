@@ -52,9 +52,9 @@ os.environ["DATABASE_URL"] = f"sqlite:///{TEST_DB_PATH}"
 
 sys.path.insert(0, BASE_DIR)
 
-from app import app
-from models import db, User, Exam, Question, Attempt
-import database
+from app import app  # noqa: E402  # required after environment/path setup
+from models import db, User, Exam  # noqa: E402  # required after environment/path setup
+import database  # noqa: E402  # required after environment/path setup
 
 
 class TestPhase3AdminExamManagement(unittest.TestCase):
@@ -81,7 +81,7 @@ class TestPhase3AdminExamManagement(unittest.TestCase):
 
     def _login(self, client, identifier, password):
         # Visit login page to get CSRF token in session
-        res = client.get("/login")
+        client.get("/login")
         with client.session_transaction() as sess:
             csrf_token = sess.get("csrf_token", "")
         return client.post("/login", data={

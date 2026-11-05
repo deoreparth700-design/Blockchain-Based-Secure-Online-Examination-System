@@ -51,9 +51,9 @@ os.environ["DATABASE_URL"] = f"sqlite:///{TEST_DB_PATH}"
 
 sys.path.insert(0, BASE_DIR)
 
-from app import app, blockchain
-from models import db, User, Exam, Question, Attempt, Block
-import database
+from app import app, blockchain  # noqa: E402  # required after environment/path setup
+from models import db, User, Exam, Question, Attempt, Block  # noqa: E402  # required after environment/path setup
+import database  # noqa: E402  # required after environment/path setup
 
 
 class TestPhase5Results(unittest.TestCase):

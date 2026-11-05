@@ -28,9 +28,9 @@ os.environ["DATABASE_URL"] = f"sqlite:///{TEST_DB_PATH}"
 
 sys.path.insert(0, BASE_DIR)
 
-from app import app
-from models import db, User
-import database
+from app import app  # noqa: E402  # required after environment/path setup
+from models import db  # noqa: E402  # required after environment/path setup
+import database  # noqa: E402  # required after environment/path setup
 
 
 class TestLoginRegression(unittest.TestCase):
