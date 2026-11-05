@@ -521,3 +521,5 @@ GitHub: `deoreparth700-design`
 ## License
 
 This project is intended for educational and academic use.
+
+License: MIT
